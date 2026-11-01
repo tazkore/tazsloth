@@ -400,9 +400,17 @@ export function redes(app: string, sessions: Sessions, cards: () => Card[], avis
       `Si es uno de varios cortes de un episodio (por ejemplo \`out/redes/2-algo.mp4\`), habla solo de ese corte; \`out/el-diff-final.mp4\` (o \`out/redes/0-completo.mp4\`, en los de antes) es el episodio entero.`,
       ``,
       `- Una o dos frases cortas (menos de 200 caracteres) con el planteamiento y su giro completos, sin guardarte el giro para el video (en una noticia: quién prometió o hizo qué, y cómo le salió al revés). No inventes nada que no esté en los archivos.`,
-      `- Que lo entienda alguien que no sigue la tecnología: nombra lo que la gente conoce (Photoshop, Call of Duty, ElevenLabs) y nada de jerga («DNS», «throughput», «prefijo»). Lo que mejor funcionó: «Pidió frenar a los hackers de IA que metieron patinetas en Call of Duty. El hacker era él.»`,
-      `- Sin hashtags en el texto, sin emojis de relleno y sin «en este video».`,
-      `- Aparte, de 2 a 4 hashtags del tema, sin # ni espacios (por ejemplo: IA, Claude, Photoshop).`,
+      ...(card.id === 'kold-gold'
+        ? [
+            `- Es de Kold Gold (logística integrada global): habla a importadores y gerentes de compras o logística en México, de tú y en tono ejecutivo cercano. Di qué aprende y cierra con «Comenta <PALABRA> y te mando…» usando la palabra clave del guion (IMPORTAR, CHINA, FRIO, ADUANA, GPS o PORTAL). Sin ofertas ni descuentos y sin «el mejor» ni «líder».`,
+            `- Sin hashtags en el texto, sin emojis de relleno y sin «en este video».`,
+            `- Aparte, de 2 a 4 hashtags del sector, sin # ni espacios (por ejemplo: ComercioExterior, Logistica, Importacion, CadenaDeFrio).`
+          ]
+        : [
+            `- Que lo entienda alguien que no sigue la tecnología: nombra lo que la gente conoce (Photoshop, Call of Duty, ElevenLabs) y nada de jerga («DNS», «throughput», «prefijo»). Lo que mejor funcionó: «Pidió frenar a los hackers de IA que metieron patinetas en Call of Duty. El hacker era él.»`,
+            `- Sin hashtags en el texto, sin emojis de relleno y sin «en este video».`,
+            `- Aparte, de 2 a 4 hashtags del tema, sin # ni espacios (por ejemplo: IA, Claude, Photoshop).`
+          ]),
       ``,
       `Responde solo con JSON: {"texto": "…", "tags": ["…"]}`,
       contexto

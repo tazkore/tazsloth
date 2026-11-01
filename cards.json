@@ -147,6 +147,52 @@
     ]
   },
   {
+    "id": "kold-gold",
+    "title": "Kold Gold",
+    "description": "Un video explicativo de Kold Gold con la zorra anfitriona: un solo mundo 3D que recorre el viaje de la carga, el texto palabra por palabra en carbón, plata y cobre, y el cierre a kold.gold. Le das el tema y él investiga en kold.gold, escribe el guion y arma el video.",
+    "skill": "kold-gold",
+    "icon": "globo",
+    "etapas": [
+      {
+        "nombre": "Investigación",
+        "listo": "fuentes/investigacion.md",
+        "fase": "idea"
+      },
+      {
+        "nombre": "Guion",
+        "listo": "guion.md",
+        "copiar": true,
+        "fase": "guion"
+      },
+      {
+        "nombre": "Tu voz",
+        "listo": "fuentes/voz/original.wav",
+        "espera": "Graba el guion (con el celular basta) y súbelo aquí o mándalo por el chat.",
+        "fase": "sonido"
+      },
+      {
+        "nombre": "Voz lista",
+        "listo": "fuentes/voz/rapida.wav",
+        "fase": "sonido"
+      },
+      {
+        "nombre": "Revisión",
+        "listo": "revision/borrador-*.png",
+        "fase": "video"
+      },
+      {
+        "nombre": "Video",
+        "listo": "out/!(render*|borrador*|_*).mp4",
+        "fase": "video"
+      },
+      {
+        "nombre": "Portada",
+        "listo": "{portada.png,portada/*.png}",
+        "fase": "entrega"
+      }
+    ]
+  },
+  {
     "id": "reel-collage",
     "title": "Reel de comedia",
     "description": "Un sketch de comedia sobre cualquier tema o tu propio guion: un experto muy serio enseña a resolver una situación con pasos físicos absurdos, con tus poses recortadas sobre fotos reales y la voz que elijas.",

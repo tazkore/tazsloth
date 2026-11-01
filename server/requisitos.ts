@@ -24,14 +24,14 @@ import { correr } from './version.ts'
  * skills que lo importan. La card de cada estilo pide solo los de su skill; Opciones, todos.
  */
 const PAQUETES: Record<string, { pip: string; nombre: string; uso: string; skills: string[]; fueraDeWindows?: true }> = {
-  PIL: { pip: 'pillow', nombre: 'Pillow', uso: 'imágenes', skills: ['video-el-diff', 'video-explicativo', 'reel-collage', 'video-documental'] },
-  numpy: { pip: 'numpy', nombre: 'NumPy', uso: 'sonido', skills: ['video-el-diff', 'video-explicativo', 'reel-collage', 'video-documental'] },
+  PIL: { pip: 'pillow', nombre: 'Pillow', uso: 'imágenes', skills: ['video-el-diff', 'video-explicativo', 'kold-gold', 'reel-collage', 'video-documental'] },
+  numpy: { pip: 'numpy', nombre: 'NumPy', uso: 'sonido', skills: ['video-el-diff', 'video-explicativo', 'kold-gold', 'reel-collage', 'video-documental'] },
   cv2: { pip: 'opencv-python-headless', nombre: 'OpenCV', uso: 'el color de las imágenes', skills: ['video-documental'] },
   soundfile: { pip: 'soundfile', nombre: 'soundfile', uso: 'sonido', skills: ['video-documental'] },
-  scipy: { pip: 'scipy', nombre: 'SciPy', uso: 'sonido', skills: ['video-el-diff', 'video-explicativo'] },
+  scipy: { pip: 'scipy', nombre: 'SciPy', uso: 'sonido', skills: ['video-el-diff', 'video-explicativo', 'kold-gold'] },
   playwright: { pip: 'playwright', nombre: 'Playwright', uso: 'capturas', skills: ['reel-collage'] },
   // El Diff recorta con `recorte.py` de video-base.
-  rembg: { pip: 'rembg[cpu]', nombre: 'rembg', uso: 'recortes', skills: ['video-el-diff', 'video-explicativo', 'reel-collage'] },
+  rembg: { pip: 'rembg[cpu]', nombre: 'rembg', uso: 'recortes', skills: ['video-el-diff', 'video-explicativo', 'kold-gold', 'reel-collage'] },
   edge_tts: { pip: 'edge-tts', nombre: 'edge-tts', uso: 'voz', skills: ['reel-collage'] },
   // El OCR de `ubicar.py` en Mac y Linux (en Windows usa el del sistema). Corre con el onnxruntime que trae rembg[cpu].
   rapidocr: { pip: 'rapidocr', nombre: 'RapidOCR', uso: 'leer texto en imágenes', skills: ['video-el-diff'], fueraDeWindows: true }

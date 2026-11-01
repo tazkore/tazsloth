@@ -26,3 +26,15 @@ los módulos de `%LOCALAPPDATA%\sloth-modulos` y `%LOCALAPPDATA%\video-el-diff\m
 
 Sin cambios todavía: el servidor de actualizaciones (`COBRO` sigue apuntando a api.sloth.vancci.org, pero apagado), textos de la interfaz,
 iconos, y el sistema de licencias (solo se activa al compilar con `VENTA`).
+
+## Fase 3 · Estilo Kold Gold (1-nov-2026)
+
+| Qué | Archivos |
+| --- | --- |
+| Estilo `kold-gold`: copia del Video explicativo con la marca de Kold Gold (zorra anfitriona, paleta carbón/plata/cobre, cierre a kold.gold, reglas de fuentes, guion «vender sin vender», mundo 3D del viaje de la carga) | `skills/kold-gold/` (`KOLD-GOLD.md` manda sobre el resto) |
+| La marca y la zorra se copian solas a la carpeta de la card la primera vez | `skills/kold-gold/scripts/marca.py` (`leer`), `skills/kold-gold/marca.json`, `skills/kold-gold/personajes/zorra-kold/` |
+| Caja de selección y protagonista en cobre `#D07E26`, fondo `#111827` | `skills/kold-gold/plantilla/src/tema.ts` |
+| Card «Kold Gold» (icono globo) | `cards.json` |
+| Requisitos de Python también para `kold-gold` | `server/requisitos.ts` |
+| Texto para redes de Kold Gold (palabra clave de comentario, hashtags del sector, sin ofertas) | `server/redes/index.ts` |
+| Series «Un embarque, paso a paso» y «Mitos de la importación» | `skills/video-base/series/kold-gold-*.md` |
