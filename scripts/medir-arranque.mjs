@@ -24,8 +24,8 @@ const dormir = (ms) => new Promise((r) => setTimeout(r, ms))
 const WINDOWS = process.platform === 'win32'
 const MAC = process.platform === 'darwin'
 const CASA = join(resolve(carpeta), 'casa-de-medir')
-const APP = WINDOWS ? join(carpeta, 'app') : MAC ? join(CASA, 'Library', 'Application Support', 'Sloth') : join(CASA, '.local', 'share', 'sloth')
-const PROGRAMA = join(carpeta, WINDOWS ? 'Sloth.exe' : MAC ? join('Sloth.app', 'Contents', 'MacOS', 'Sloth') : 'sloth')
+const APP = WINDOWS ? join(carpeta, 'app') : MAC ? join(CASA, 'Library', 'Application Support', 'TazSloth') : join(CASA, '.local', 'share', 'tazsloth')
+const PROGRAMA = join(carpeta, WINDOWS ? 'TazSloth.exe' : MAC ? join('TazSloth.app', 'Contents', 'MacOS', 'TazSloth') : 'tazsloth')
 
 const sesiones = join(APP, 'data', 'sessions')
 mkdirSync(sesiones, { recursive: true })

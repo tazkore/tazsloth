@@ -87,7 +87,7 @@ npm ci
 npm start
 ```
 
-`npm start` levanta el servidor en `http://localhost:4848` y abre la ventana de Sloth. Sus agentes leen las skills de
+`npm start` levanta el servidor en `http://localhost:4850` y abre la ventana de Sloth. Sus agentes leen las skills de
 `skills/` de este repo, con su propia configuración de Claude en `data/claude` (la cuenta se conecta una vez desde
 Sloth): tu `~/.claude` no cambia, y una Sloth instalada en la misma computadora sigue con las suyas.
 

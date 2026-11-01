@@ -62,6 +62,7 @@ function modulosDe(skill) {
       .filter((nm) => existsSync(join(nm, 'remotion', 'package.json')))
       .sort((a, b) => statSync(b).mtimeMs - statSync(a).mtimeMs)[0]
   return (
+    buscar(`Programs/tazsloth/app/trabajo/${skill}/*/node_modules`, `tazsloth-dev/trabajo/${skill}/*/node_modules`) ??
     buscar(`Programs/sloth/app/trabajo/${skill}/*/node_modules`, `sloth-dev/trabajo/${skill}/*/node_modules`) ??
     buscar(`${skill}/modulos/*/node_modules`, `sloth-modulos/${skill}-*/node_modules`)
   )

@@ -13,10 +13,16 @@ Uso interno, sin venta. Los cambios propios viven en la rama `tazkore`; `main` s
 | Datos de usuario | `%APPDATA%\sloth` | `%APPDATA%\tazsloth` | `server/*`, `scripts/*` |
 | Trabajo en desarrollo | `%LOCALAPPDATA%\sloth-dev` | `%LOCALAPPDATA%\tazsloth-dev` | `server/trabajo.ts` |
 | Carpeta instalada | `Programs\sloth` | `Programs\tazsloth` | `scripts/compilar.mjs`, `server/espacio.ts` |
-| Instaladores | `Sloth-*` | `TazSloth-*` | `scripts/compilar.mjs` |
+| Instaladores | `Sloth-*` | `TazSloth-*` | `scripts/compilar.mjs`, `scripts/publicar.mjs` |
+| Caché del actualizador | `sloth-updater` | `tazsloth-updater` | `electron/main.ts` |
+| Acceso del menú Inicio (ayudante) | `Sloth.lnk` | `TazSloth.lnk` | `scripts/ayudante/Accesos.cs` |
+| Puerto en skills | 4848 | 4850 | `skills/video-el-diff/scripts/buscar.mjs`, `skills/reel-collage/scripts/voz.py` |
+| Actualización automática | Encendida (feed de Vancci) | Apagada; `TAZSLOTH_ACTUALIZAR=1` la enciende | `electron/main.ts` |
 
 Se comparten a propósito con la Sloth original (ahorran varios GB): el Python de `%APPDATA%\youtube\piezas\python` y
-los módulos de `%LOCALAPPDATA%\sloth-modulos`. Ojo: el desinstalador de cualquiera de las dos los borra.
+los módulos de `%LOCALAPPDATA%\sloth-modulos` y `%LOCALAPPDATA%\video-el-diff\modulos`. Por eso el botón de sobrantes
+(`server/espacio.ts`) también mira los videos de la Sloth original. Ojo: el desinstalador de cualquiera de las dos
+(`scripts/instalador.nsh`) los borra.
 
-Sin cambios todavía: el servidor de actualizaciones (`COBRO`, apunta a api.sloth.vancci.org), textos de la interfaz,
+Sin cambios todavía: el servidor de actualizaciones (`COBRO` sigue apuntando a api.sloth.vancci.org, pero apagado), textos de la interfaz,
 iconos, y el sistema de licencias (solo se activa al compilar con `VENTA`).

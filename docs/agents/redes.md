@@ -26,9 +26,9 @@ están en la cabecera de `scripts/redes.ts`: `nube` (lo que espera en el Worker 
   que ya está en TikTok se queda a su hora.
 - Una hora fuera del ritmo (p. ej. hoy a las 17:00) no tiene API: `quitar` la que aún está en `cola`, parar el servidor,
   poner en `data/redes/redes.json` su `estado: "cola"` y su `cuando`, y arrancarlo otra vez; la sube con esa hora.
-- La API está en `http://127.0.0.1:$PORT`. El puerto de la copia en que trabajas está en `$PORT`, y no siempre es 4848.
+- La API está en `http://127.0.0.1:$PORT`. El puerto de la copia en que trabajas está en `$PORT`, y no siempre es 4850.
   La app instalada (la de venta) no trae redes: la cola vive en el Sloth del repo, que se arranca con
-  `PORT=4849 node --import tsx server/index.ts` si la instalada ya ocupa el 4848.
+  `PORT=4849 node --import tsx server/index.ts` si la instalada ya ocupa el 4850.
 - Los finales de El Diff pesan cerca de 1 GB. Varios a Instagram a la vez, o junto con una subida a TikTok, saturan la
   conexión y la nube responde «No llegué a la nube de Sloth: fetch failed»: reintenta de uno en uno (unos 11 minutos
   cada uno; 25 de octubre).

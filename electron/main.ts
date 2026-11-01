@@ -33,7 +33,7 @@ const URL_SLOTH = SOLO_VENTANA ?? `http://localhost:${process.env.PORT ?? '4850'
 const WINDOWS = process.platform === 'win32'
 const MAC = process.platform === 'darwin'
 /** Fuera de Windows, dónde viven Sloth y lo tuyo: la app no se puede escribir. */
-const DATOS = MAC ? join(homedir(), 'Library', 'Application Support', 'TazSloth') : join(process.env.XDG_DATA_HOME || join(homedir(), '.local', 'share'), 'sloth')
+const DATOS = MAC ? join(homedir(), 'Library', 'Application Support', 'TazSloth') : join(process.env.XDG_DATA_HOME || join(homedir(), '.local', 'share'), 'tazsloth')
 /** La carpeta de Sloth.exe. */
 const RAIZ = dirname(process.execPath)
 const APP = SOLO_VENTANA ? (process.env.SLOTH_APP ?? process.cwd()) : WINDOWS ? join(RAIZ, 'app') : DATOS
@@ -512,9 +512,12 @@ function anotar(texto: unknown) {
  * versión. Luego cierra Sloth, el instalador la pone y la vuelve a abrir.
  */
 function actualizaciones() {
+  // TazSloth: el feed de `COBRO` es el de Vancci y bajaría la Sloth original. Apagado hasta tener uno propio (fase 3);
+  // TAZSLOTH_ACTUALIZAR=1 lo vuelve a encender.
+  if (!process.env.TAZSLOTH_ACTUALIZAR) return
   // La versión que se bajó la última vez ya está puesta: su instalador sobra. El de esta versión se queda aparte
   // (installer.exe), que es de donde salen los pedazos que no cambian.
-  const cache = WINDOWS && process.env.LOCALAPPDATA ? join(process.env.LOCALAPPDATA, 'sloth-updater') : undefined
+  const cache = WINDOWS && process.env.LOCALAPPDATA ? join(process.env.LOCALAPPDATA, 'tazsloth-updater') : undefined
   try {
     if (cache) rmSync(join(cache, 'pending'), { recursive: true, force: true })
   } catch {

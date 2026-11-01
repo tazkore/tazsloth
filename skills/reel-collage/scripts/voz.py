@@ -50,7 +50,7 @@ async def sintetizar(texto: str, voz: str, rate: str, destino: Path) -> list[dic
 
 
 def pedir(ruta: str, datos: dict | None = None) -> dict:
-    url = os.environ.get("SLOTH_URL", "http://127.0.0.1:4848") + ruta
+    url = os.environ.get("SLOTH_URL", "http://127.0.0.1:4850") + ruta
     pedido = urllib.request.Request(url, data=json.dumps(datos).encode() if datos else None, headers={"content-type": "application/json"})
     try:
         with urllib.request.urlopen(pedido, timeout=120) as r:

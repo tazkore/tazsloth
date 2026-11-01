@@ -18,7 +18,7 @@ Ahí están los repos, los comandos y cómo verificar cada despliegue. Si algo v
 
 - Lo de `web/` se ve al instante en la copia que corre (recarga de Vite).
 - Lo de `server/` o `shared/` se aplica con «Reiniciar backend», que no deja si algo trabaja (agentes, redes, Ideas).
-- El servidor escucha en `$PORT`: la app instalada usa 4848, y la copia donde trabajas puede usar otro.
+- El servidor escucha en `$PORT`: la app instalada usa 4850 (4848 es la Sloth original), y la copia donde trabajas puede usar otro.
 - Comprueba con `npm run typecheck` y `npm test` antes de dar algo por hecho, y con `npm run comprobar-skills` si tocaste
   `skills/`. Un solo test: `node --import tsx --test <archivo>`.
 - La app que se vende es de Electron (`electron/main.ts`, ADR 0004) y sale de `npm run compilar`, para Windows, Mac y

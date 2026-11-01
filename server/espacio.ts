@@ -327,7 +327,8 @@ export function casaDe(skill: string, plantilla: string): string | undefined {
  * instalada y la del repo, que trabaja en `TRABAJO_DEV`), que no salen en las cards de esta.
  */
 function enlacesDeOtrasCopias(): string[] {
-  return [join(LOCAL, 'Programs', 'tazsloth', 'app', 'trabajo'), TRABAJO_DEV]
+  // TazSloth: también la Sloth original instalada y su copia del repo, que comparten sloth-modulos.
+  return [join(LOCAL, 'Programs', 'tazsloth', 'app', 'trabajo'), join(LOCAL, 'Programs', 'sloth', 'app', 'trabajo'), join(LOCAL, 'sloth-dev', 'trabajo'), TRABAJO_DEV]
     .flatMap((raiz) => listar(raiz).flatMap((card) => listar(join(raiz, card)).map((v) => join(raiz, card, v, 'node_modules'))))
     .map(enlace)
     .filter((e): e is string => !!e)

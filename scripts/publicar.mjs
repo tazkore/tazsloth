@@ -18,10 +18,10 @@ const VERSION = JSON.parse(readFileSync(join(REPO, 'package.json'), 'utf8')).ver
 const ARCH = process.arch === 'arm64' ? 'arm64' : 'x64'
 /** Por sistema: el instalador, lo demás que usa al actualizarse, lo que lee electron-updater y su enlace de descarga. */
 const { instalador, otros, ultimo, so } = {
-  win32: { instalador: `Sloth-Setup-${VERSION}.exe`, otros: [], ultimo: 'latest.yml', so: '' },
-  darwin: { instalador: `Sloth-${VERSION}-mac-${ARCH}.dmg`, otros: [`Sloth-${VERSION}-mac-${ARCH}.zip`], ultimo: 'latest-mac.yml', so: '?so=mac' },
+  win32: { instalador: `TazSloth-Setup-${VERSION}.exe`, otros: [], ultimo: 'latest.yml', so: '' },
+  darwin: { instalador: `TazSloth-${VERSION}-mac-${ARCH}.dmg`, otros: [`TazSloth-${VERSION}-mac-${ARCH}.zip`], ultimo: 'latest-mac.yml', so: '?so=mac' },
   // electron-builder llama x86_64 al AppImage de x64.
-  linux: { instalador: `Sloth-${VERSION}-linux-${ARCH === 'x64' ? 'x86_64' : ARCH}.AppImage`, otros: [], ultimo: 'latest-linux.yml', so: '?so=linux' }
+  linux: { instalador: `TazSloth-${VERSION}-linux-${ARCH === 'x64' ? 'x86_64' : ARCH}.AppImage`, otros: [], ultimo: 'latest-linux.yml', so: '?so=linux' }
 }[process.platform]
 const LLAVE = (process.env.PUBLICAR || readFileSync(join(process.env.APPDATA ?? '', 'tazsloth', 'licencias', 'publicar.txt'), 'utf8')).trim()
 

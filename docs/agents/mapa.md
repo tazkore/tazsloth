@@ -3,7 +3,7 @@
 Cada módulo explica lo suyo en su comentario de cabecera, y los campos de una card están en `Card` (`shared/types.ts`).
 Este es el mapa:
 
-- `server/index.ts`: un solo servidor Node (en `$PORT`; 4848 en la app instalada) con la API en `/api/*`, el WebSocket en `/ws` y Vite como
+- `server/index.ts`: un solo servidor Node (en `$PORT`; 4850 en la app instalada; 4848 es la Sloth original) con la API en `/api/*`, el WebSocket en `/ws` y Vite como
   middleware para la interfaz.
 - `server/claude.ts`: Claude con `@anthropic-ai/claude-agent-sdk`, en streaming; la sesión sigue viva entre turnos y
   carga las skills y el CLAUDE.md del usuario. Lo traduce todo a `AgentEvent`, lo único que conoce la interfaz; otro
