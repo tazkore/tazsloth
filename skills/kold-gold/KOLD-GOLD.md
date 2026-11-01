@@ -17,6 +17,11 @@ Todo lo de `SKILL.md`, `GUION.md` y `MUNDO.md` vale, salvo lo que choque con est
 - Datos de comercio exterior: solo DOF, SAT/ANAM, Secretaría de Economía, ASIPONA, COFEPRIS, IATA, con fecha.
 - Sin ofertas, descuentos ni promesas de tiempo garantizado (ni en Buen Fin). Sin «el mejor», «líder», «número uno».
 
+## La regla de oro (consejo del creador de Sloth)
+En redes no funciona «yo hago esto y vendo esto». Funciona explicar, crear una emoción o entretener. Un tema como
+«los cinco tipos de mercancía que más se pierden en el mar» gana a cualquier anuncio. Cada video cuenta lo que le pasa
+a la carga y a quien importa; Kold Gold aparece al final, como la consecuencia lógica.
+
 ## Guion: vender sin vender
 1. Gancho (0–5 s): un dolor real del importador (carga atorada, costos ocultos, mercancía retenida, temperatura fuera de
    rango, nadie contesta), sin saludo.

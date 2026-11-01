@@ -43,5 +43,11 @@
     "esbuild": "^0.28.2",
     "koffi": "^3.3.3",
     "typescript": "^7.0.2"
+  },
+  "allowScripts": {
+    "electron@45.0.0": true,
+    "esbuild@0.28.2": true,
+    "koffi@3.3.3": true,
+    "electron-winstaller@5.4.0": true
   }
 }
