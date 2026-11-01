@@ -43,7 +43,7 @@ export const variablesListas: Promise<void> = process.platform !== 'win32'
  * Fuera de Windows no hay variables del usuario que lean todos los programas: van a este archivo, que scripts/start.mjs
  * pasa al entorno al arrancar (y de ahí a los agentes y a sus scripts).
  */
-const VARIABLES = join(process.env.APPDATA ?? '', 'sloth', 'variables.json')
+const VARIABLES = join(process.env.APPDATA ?? '', 'tazsloth', 'variables.json')
 const variables = (): Record<string, string> => {
   try {
     return JSON.parse(readFileSync(VARIABLES, 'utf8'))

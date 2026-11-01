@@ -7,3 +7,13 @@ for larger organizations.
 
 The 3D emoji in skills/video-el-diff/plantilla/public/emoji are Fluent Emoji by Microsoft
 (https://github.com/microsoft/fluentui-emoji), under the MIT License.
+
+----------------------------------------------------------------------------------------------------------------------
+
+TazSloth
+Copyright 2026 Tazkore
+
+TazSloth is a modified version of Sloth by Vancci (https://github.com/Vancci-sloth/sloth), distributed under the same
+Apache License 2.0 with the Commons Clause License Condition v1.0 (see LICENSE). Tazkore changed the application's
+name, identifiers, default port (4850) and data folders so it can run next to an installed Sloth. TazSloth is not
+affiliated with or endorsed by Vancci, and it is not sold. The list of changes is in docs/tazkore/CAMBIOS.md.

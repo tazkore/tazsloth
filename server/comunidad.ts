@@ -321,7 +321,7 @@ export function comunidad(app: string, o: Opciones) {
 /** La llave del creador: la de `npm run publicar`, en el repo y en su copia instalada. Sin ella (otra computadora), no entra como creador. */
 export function llaveDelCreador(): Credencial | undefined {
   try {
-    const llave = (process.env.PUBLICAR || readFileSync(join(process.env.APPDATA ?? '', 'sloth', 'licencias', 'publicar.txt'), 'utf8')).trim()
+    const llave = (process.env.PUBLICAR || readFileSync(join(process.env.APPDATA ?? '', 'tazsloth', 'licencias', 'publicar.txt'), 'utf8')).trim()
     return llave ? { llave } : undefined
   } catch {
     return

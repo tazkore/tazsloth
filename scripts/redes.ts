@@ -15,7 +15,7 @@ import { leer } from '../server/opciones.ts'
 
 const REPO = join(dirname(fileURLToPath(import.meta.url)), '..')
 const REDES = join(REPO, 'data', 'redes', 'redes.json')
-const PORT = process.env.PORT ?? '4848'
+const PORT = process.env.PORT ?? '4850'
 const [orden = 'estado', ...resto] = process.argv.slice(2)
 /** Sale con el mensaje, sin la pila: lo que falla aquí es de uso o de la red, no del script. */
 function fallar(mensaje: string): never {

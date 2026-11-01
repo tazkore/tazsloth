@@ -20,7 +20,7 @@ import { armarVentana } from './electron.mjs'
 
 const REPO = join(dirname(fileURLToPath(import.meta.url)), '..')
 const DIST = join(REPO, 'dist')
-const SALIDA = join(DIST, 'Sloth')
+const SALIDA = join(DIST, 'TazSloth')
 const APP = join(SALIDA, 'app')
 /** La ventana (main.cjs y preload.cjs), que electron-builder empaqueta como la app de Electron, y ayudante.exe. */
 const VENTANA = join(DIST, 'ventana')
@@ -201,14 +201,14 @@ if (WINDOWS) {
 // nombre que enseña Windows (el Administrador de tareas). En Windows lleva koffi, con el que Sloth.exe le pide anclarla.
 // Linux pide además una página de la app.
 const ventana = {
-  name: 'sloth',
-  productName: 'Sloth',
+  name: 'tazsloth',
+  productName: 'TazSloth',
   version: VERSION,
-  description: 'Sloth',
-  author: 'Sloth',
-  homepage: 'https://sloth.vancci.org',
+  description: 'TazSloth',
+  author: 'Tazkore',
+  homepage: 'https://github.com/tazkore/tazsloth',
   // En Linux, el nombre con que el escritorio junta la ventana con su icono.
-  desktopName: 'sloth.desktop',
+  desktopName: 'tazsloth.desktop',
   main: 'main.cjs',
   dependencies: WINDOWS ? { koffi: instalada('koffi') } : {}
 }
@@ -273,10 +273,10 @@ const hechos = await empaquetar({
   publish: 'never',
   config: {
     // El mismo nombre ante Windows que la 0.2: lo ya anclado y los avisos siguen siendo de Sloth.
-    appId: 'Sloth.App',
+    appId: 'TazSloth.App',
     electronVersion: JSON.parse(readFileSync(join(REPO, 'node_modules', 'electron', 'package.json'), 'utf8')).version,
-    productName: 'Sloth',
-    copyright: 'Sloth',
+    productName: 'TazSloth',
+    copyright: 'Tazkore. Basado en Sloth de Vancci (Apache 2.0 + Commons Clause)',
     directories: { app: VENTANA, output: join(DIST, 'instalador') },
     files: ['**/*', '!ayudante.exe'],
     extraFiles: WINDOWS ? fuera : [],
@@ -291,9 +291,9 @@ const hechos = await empaquetar({
       perMachine: false,
       runAfterFinish: true,
       createDesktopShortcut: true,
-      shortcutName: 'Sloth',
-      uninstallDisplayName: 'Sloth',
-      artifactName: 'Sloth-Setup-${version}.${ext}',
+      shortcutName: 'TazSloth',
+      uninstallDisplayName: 'TazSloth',
+      artifactName: 'TazSloth-Setup-${version}.${ext}',
       installerIcon: ICONO,
       uninstallerIcon: ICONO,
       include: join(REPO, 'scripts', 'instalador.nsh'),
@@ -303,7 +303,7 @@ const hechos = await empaquetar({
     mac: {
       icon: ICONO_PNG,
       category: 'public.app-category.video',
-      artifactName: 'Sloth-${version}-mac-${arch}.${ext}',
+      artifactName: 'TazSloth-${version}-mac-${arch}.${ext}',
       // Sin certificado, firma ad hoc: sin ninguna, macOS dice que Sloth «está dañada». Con ella, se
       // abre una vez desde Configuración → Privacidad y seguridad → «Abrir de todos modos».
       identity: MAC_FIRMADA ? undefined : '-',
@@ -312,14 +312,14 @@ const hechos = await empaquetar({
       entitlements: join(REPO, 'scripts', 'mac.entitlements'),
       entitlementsInherit: join(REPO, 'scripts', 'mac.entitlements'),
       // La voz se graba en la interfaz: sin esto, macOS ni siquiera pregunta por el micrófono.
-      extendInfo: { NSMicrophoneUsageDescription: 'Sloth graba tu voz para los videos.' }
+      extendInfo: { NSMicrophoneUsageDescription: 'TazSloth graba tu voz para los videos.' }
     },
-    dmg: { artifactName: 'Sloth-${version}-mac-${arch}.${ext}' },
+    dmg: { artifactName: 'TazSloth-${version}-mac-${arch}.${ext}' },
     linux: {
       icon: ICONO_PNG,
       category: 'AudioVideo',
       synopsis: 'Cada skill es una card: describes el trabajo y el agente lo hace a la vista.',
-      artifactName: 'Sloth-${version}-linux-${arch}.${ext}',
+      artifactName: 'TazSloth-${version}-linux-${arch}.${ext}',
       syncDesktopName: true
     },
     // La app va en español: de los 55 idiomas de Chromium solo hacen falta el suyo y el inglés, al que recurre.

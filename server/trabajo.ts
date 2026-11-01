@@ -6,7 +6,7 @@ import { VENTA } from '../shared/venta.ts'
 /** Este repo, cuando Sloth corre desde aquí. */
 const REPO = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 /** Donde trabaja la copia del repo: fuera de él. Espacio en disco la mira también desde la instalada. */
-export const TRABAJO_DEV = join(process.env.LOCALAPPDATA || join(homedir(), '.local', 'share'), 'sloth-dev', 'trabajo')
+export const TRABAJO_DEV = join(process.env.LOCALAPPDATA || join(homedir(), '.local', 'share'), 'tazsloth-dev', 'trabajo')
 
 /**
  * La carpeta donde trabajan los hilos de video y de Ideas: `<app>/trabajo` en la app que se vende. Corriendo desde el

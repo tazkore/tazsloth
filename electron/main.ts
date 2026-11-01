@@ -29,11 +29,11 @@ import type { ActualizacionSloth } from '../shared/types.ts'
 
 /** En el repo: la dirección del servidor que ya levantó `npm start`. */
 const SOLO_VENTANA = process.env.SLOTH_VENTANA
-const URL_SLOTH = SOLO_VENTANA ?? `http://localhost:${process.env.PORT ?? '4848'}`
+const URL_SLOTH = SOLO_VENTANA ?? `http://localhost:${process.env.PORT ?? '4850'}`
 const WINDOWS = process.platform === 'win32'
 const MAC = process.platform === 'darwin'
 /** Fuera de Windows, dónde viven Sloth y lo tuyo: la app no se puede escribir. */
-const DATOS = MAC ? join(homedir(), 'Library', 'Application Support', 'Sloth') : join(process.env.XDG_DATA_HOME || join(homedir(), '.local', 'share'), 'sloth')
+const DATOS = MAC ? join(homedir(), 'Library', 'Application Support', 'TazSloth') : join(process.env.XDG_DATA_HOME || join(homedir(), '.local', 'share'), 'sloth')
 /** La carpeta de Sloth.exe. */
 const RAIZ = dirname(process.execPath)
 const APP = SOLO_VENTANA ? (process.env.SLOTH_APP ?? process.cwd()) : WINDOWS ? join(RAIZ, 'app') : DATOS
@@ -87,7 +87,7 @@ let avisarListo = () => {}
 const servidorListo = new Promise<void>((ok) => (avisarListo = ok))
 
 // Su propio nombre ante Windows: la ventana se junta con el acceso anclado y los avisos salen a nombre de Sloth.
-app.setAppUserModelId(SOLO_VENTANA ? 'Sloth.Dev' : 'Sloth.App')
+app.setAppUserModelId(SOLO_VENTANA ? 'TazSloth.Dev' : 'TazSloth.App')
 app.setPath('userData', join(APP, 'data', 'ventana'))
 nativeTheme.themeSource = 'dark'
 
@@ -146,7 +146,7 @@ function abrir() {
   const { maximizada, ...medidas } = lugar()
   const v = new BrowserWindow({
     ...medidas,
-    title: 'Sloth',
+    title: 'TazSloth',
     show: false,
     backgroundColor: FONDO,
     // En Windows 11, la barra de título y el borde del color de Sloth (Electron los vuelve a pintar al enfocarla). En
@@ -167,7 +167,7 @@ function abrir() {
     if (d.reason === 'clean-exit') return
     caidas = [...caidas.filter((t) => Date.now() - t < 60_000), Date.now()]
     if (caidas.length <= 3) v.reload()
-    else if (caidas.length === 4) dialog.showErrorBox('Sloth', 'La ventana se cerró varias veces seguidas. Recárgala con Ctrl+R: los agentes y tus archivos siguen trabajando.')
+    else if (caidas.length === 4) dialog.showErrorBox('TazSloth', 'La ventana se cerró varias veces seguidas. Recárgala con Ctrl+R: los agentes y tus archivos siguen trabajando.')
   })
   v.on('close', (e) => {
     // Solo si el servidor es de esta ventana: si no (el repo, o Sloth ya abierta de otra forma), cerrarla no detiene nada.
@@ -190,10 +190,10 @@ async function avisarAlCerrar(v: BrowserWindow) {
   avisando = true
   const { response, checkboxChecked } = await dialog.showMessageBox(v, {
     type: 'question',
-    title: 'Sloth',
+    title: 'TazSloth',
     message: '¿Cerrar Sloth?',
     detail: 'Se cierra por completo, sin quedarse de fondo: se detiene todo lo que esté haciendo, también los videos a medias.',
-    buttons: ['Cerrar Sloth', 'Cancelar'],
+    buttons: ['Cerrar TazSloth', 'Cancelar'],
     defaultId: 0,
     cancelId: 1,
     // Botones normales: si no, Windows los pinta como enlaces grandes con flecha.
@@ -398,7 +398,7 @@ function arrancar() {
   s.stdout!.on('data', escribir)
   s.stderr!.on('data', escribir)
   s.on('error', (e) => {
-    dialog.showErrorBox('Sloth', `No se pudo abrir Sloth: ${e.message}`)
+    dialog.showErrorBox('TazSloth', `No se pudo abrir TazSloth: ${e.message}`)
     salir()
   })
   s.on('exit', termino)
@@ -428,7 +428,7 @@ function termino(codigo: number | null) {
     if (!ventana) app.quit()
     return
   }
-  dialog.showMessageBoxSync({ type: 'warning', title: 'Sloth', message: 'Sloth se cerró.', detail: `Lo que pasó está en el registro:\n${REGISTRO}` })
+  dialog.showMessageBoxSync({ type: 'warning', title: 'TazSloth', message: 'TazSloth se cerró.', detail: `Lo que pasó está en el registro:\n${REGISTRO}` })
   salir()
 }
 

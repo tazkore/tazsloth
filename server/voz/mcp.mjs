@@ -9,7 +9,7 @@
  */
 import { createInterface } from 'node:readline'
 
-const URL_SLOTH = process.env.SLOTH_URL ?? 'http://127.0.0.1:4848'
+const URL_SLOTH = process.env.SLOTH_URL ?? 'http://127.0.0.1:4850'
 const ESPERA = 40
 
 const HERRAMIENTAS = [

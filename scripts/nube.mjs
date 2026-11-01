@@ -8,7 +8,7 @@ const args = process.argv.slice(2)
 const carpeta = args[0] === '--licencias' ? (args.shift(), 'licencias') : 'nube'
 // La cuenta de Cloudflare no va en el repo: es SLOTH_CLOUDFLARE_CUENTA, en las variables de quien despliega.
 const cuenta = process.env.SLOTH_CLOUDFLARE_CUENTA
-const env = { ...process.env, XDG_CONFIG_HOME: join(process.env.APPDATA ?? '', 'sloth'), ...(cuenta ? { CLOUDFLARE_ACCOUNT_ID: cuenta } : {}) }
+const env = { ...process.env, XDG_CONFIG_HOME: join(process.env.APPDATA ?? '', 'tazsloth'), ...(cuenta ? { CLOUDFLARE_ACCOUNT_ID: cuenta } : {}) }
 // En Windows, npx es un .cmd y necesita la consola: va como un solo comando.
 spawn(['npx --yes wrangler@4', ...args].join(' '), { cwd: join(import.meta.dirname, '..', carpeta), env, stdio: 'inherit', shell: true }).on('exit', (code) =>
   process.exit(code ?? 0)

@@ -50,7 +50,7 @@ import { type Agente, version } from './version.ts'
 import { cargarPreciosCodex } from './precios.ts'
 
 const APP = resolve(dirname(fileURLToPath(import.meta.url)), '..')
-const PORT = Number(process.env.PORT ?? 4848)
+const PORT = Number(process.env.PORT ?? 4850)
 const CARDS = join(APP, 'cards.json')
 /**
  * Los estilos que hizo cada quien con la card «Nuevo estilo» (skill `crear-estilo`): sus cards van aquí, en `data/`,

@@ -1,3 +1,5 @@
+> **TazSloth** es el fork de uso interno de Tazkore basado en Sloth de Vancci. No está afiliado a Vancci ni se vende. Cambios: [docs/tazkore/CAMBIOS.md](docs/tazkore/CAMBIOS.md).
+
 <p align="center">
   <img src="docs/imagenes/portada.png" alt="Sloth: videos verticales que se hacen casi solos" width="100%">
 </p>

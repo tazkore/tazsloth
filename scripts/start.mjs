@@ -7,7 +7,7 @@ import { delimiter, dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 const APP = join(dirname(fileURLToPath(import.meta.url)), '..')
-const PORT = process.env.PORT ?? '4848'
+const PORT = process.env.PORT ?? '4850'
 const URL = `http://localhost:${PORT}`
 let opened = process.argv.includes('--no-open')
 // La app compilada (`scripts/compilar.mjs`) trae el servidor ya armado; el repo lo corre con tsx.
@@ -25,9 +25,9 @@ const camino = [dirname(process.execPath), join(APP, 'node_modules', '.bin')]
 if (process.platform !== 'win32') {
   const mac = process.platform === 'darwin'
   process.env.APPDATA ??= mac ? join(homedir(), 'Library', 'Application Support') : process.env.XDG_CONFIG_HOME || join(homedir(), '.config')
-  camino.push(join(process.env.APPDATA, 'sloth', 'piezas', 'bin'), ...(mac ? ['/opt/homebrew/bin', '/usr/local/bin'] : []))
+  camino.push(join(process.env.APPDATA, 'tazsloth', 'piezas', 'bin'), ...(mac ? ['/opt/homebrew/bin', '/usr/local/bin'] : []))
   try {
-    for (const [k, v] of Object.entries(JSON.parse(readFileSync(join(process.env.APPDATA, 'sloth', 'variables.json'), 'utf8')))) process.env[k] ??= v
+    for (const [k, v] of Object.entries(JSON.parse(readFileSync(join(process.env.APPDATA, 'tazsloth', 'variables.json'), 'utf8')))) process.env[k] ??= v
   } catch {
     // Aún no se guardó ninguna.
   }

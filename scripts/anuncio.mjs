@@ -19,7 +19,7 @@ if (!titulo || !texto) {
   console.error('Falta el título (primer renglón) o el texto (debajo).')
   process.exit(1)
 }
-const LLAVE = (process.env.PUBLICAR || readFileSync(join(process.env.APPDATA ?? '', 'sloth', 'licencias', 'publicar.txt'), 'utf8')).trim()
+const LLAVE = (process.env.PUBLICAR || readFileSync(join(process.env.APPDATA ?? '', 'tazsloth', 'licencias', 'publicar.txt'), 'utf8')).trim()
 
 async function comunidad(ruta, cuerpo) {
   const r = await fetch(`${COBRO}/comunidad${ruta}`, {

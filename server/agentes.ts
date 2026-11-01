@@ -23,7 +23,7 @@ import { correr } from './version.ts'
  */
 
 const APP = resolve(dirname(fileURLToPath(import.meta.url)), '..')
-const PIEZAS = join(process.env.APPDATA ?? '', 'sloth', 'piezas', 'agentes')
+const PIEZAS = join(process.env.APPDATA ?? '', 'tazsloth', 'piezas', 'agentes')
 const WINDOWS = process.platform === 'win32'
 const plataforma = `${process.platform}-${process.arch}`
 

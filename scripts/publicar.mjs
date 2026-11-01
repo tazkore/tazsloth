@@ -23,7 +23,7 @@ const { instalador, otros, ultimo, so } = {
   // electron-builder llama x86_64 al AppImage de x64.
   linux: { instalador: `Sloth-${VERSION}-linux-${ARCH === 'x64' ? 'x86_64' : ARCH}.AppImage`, otros: [], ultimo: 'latest-linux.yml', so: '?so=linux' }
 }[process.platform]
-const LLAVE = (process.env.PUBLICAR || readFileSync(join(process.env.APPDATA ?? '', 'sloth', 'licencias', 'publicar.txt'), 'utf8')).trim()
+const LLAVE = (process.env.PUBLICAR || readFileSync(join(process.env.APPDATA ?? '', 'tazsloth', 'licencias', 'publicar.txt'), 'utf8')).trim()
 
 /** Una petición al cobro; si falla, se corta con su error. */
 async function cobro(ruta, metodo, cuerpo) {

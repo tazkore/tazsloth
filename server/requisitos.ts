@@ -75,7 +75,7 @@ const EXE_PY = WINDOWS ? 'python.exe' : join('bin', 'python3')
 export const MODELOS = join(process.env.APPDATA ?? '', 'youtube', 'modelos')
 export const BANDERAS = ['-E', '-s', '-B', '-X', 'utf8']
 /** Fuera de Windows: lo que Sloth baja para las skills (Python, FFmpeg). `bin` va primero en el PATH (scripts/start.mjs). */
-const BAJADAS = join(process.env.APPDATA ?? '', 'sloth', 'piezas')
+const BAJADAS = join(process.env.APPDATA ?? '', 'tazsloth', 'piezas')
 const BAJADAS_BIN = join(BAJADAS, 'bin')
 
 /**

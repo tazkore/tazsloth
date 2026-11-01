@@ -1,10 +1,10 @@
 {
-  "name": "sloth-2",
+  "name": "tazsloth",
   "version": "0.3.0",
   "private": true,
   "license": "SEE LICENSE IN LICENSE",
   "type": "module",
-  "description": "Sloth 2.0: cada skill es una card; el agente trabaja a la vista, como en T3 Code",
+  "description": "TazSloth (fork de Tazkore basado en Sloth de Vancci): cada skill es una card; el agente trabaja a la vista, como en T3 Code",
   "scripts": {
     "start": "node scripts/start.mjs",
     "test": "node --import tsx --test server/*.test.ts shared/*.test.ts web/src/*.test.ts electron/*.test.ts licencias/src/*.test.ts",
