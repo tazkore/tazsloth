@@ -2,6 +2,18 @@
   "poses": {
     "normal": {
       "cerrada": "perro/normal.webp"
+    },
+    "explica": {
+      "cerrada": "perro/explica.webp",
+      "abierta": "perro/explica-abierta.webp"
+    },
+    "habla": {
+      "cerrada": "perro/habla.webp",
+      "abierta": "perro/habla-abierta.webp"
+    },
+    "saluda": {
+      "cerrada": "perro/saluda.webp",
+      "abierta": "perro/saluda-abierta.webp"
     }
   },
   "anclas": {}
