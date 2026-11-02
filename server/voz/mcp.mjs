@@ -1,6 +1,7 @@
 /**
  * El MCP `voz`: las herramientas con que un agente (Claude, Codex u OpenCode) pide la voz de un video a Sloth, que la
- * genera en Google AI Studio con la cuenta del usuario (`index.ts`). Solo habla con la API del servidor (`SLOTH_URL`):
+ * genera en Google AI Studio con la cuenta del usuario (`index.ts`). Solo habla con la API del servidor (`SLOTH_URL`, con
+ * el token `VID_TOKEN` en la cabecera `x-vid-token`):
  * la sesión de Google no pasa por aquí. Es JavaScript sin paquetes, para que el Node de Sloth lo corra igual en el repo
  * y en la app compilada (`scripts/compilar.mjs` lo copia tal cual). Habla MCP por stdio, un JSON por renglón.
  *
@@ -10,6 +11,7 @@
 import { createInterface } from 'node:readline'
 
 const URL_SLOTH = process.env.SLOTH_URL ?? 'http://127.0.0.1:4850'
+const TOKEN = { 'x-vid-token': process.env.VID_TOKEN ?? '' }
 const ESPERA = 40
 
 const HERRAMIENTAS = [
@@ -45,7 +47,7 @@ const HERRAMIENTAS = [
 ]
 
 async function pedir(ruta, datos) {
-  const r = await fetch(`${URL_SLOTH}${ruta}`, datos ? { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(datos) } : {})
+  const r = await fetch(`${URL_SLOTH}${ruta}`, datos ? { method: 'POST', headers: { ...TOKEN, 'content-type': 'application/json' }, body: JSON.stringify(datos) } : { headers: TOKEN })
   const json = await r.json().catch(() => ({}))
   if (!r.ok) throw new Error(json.error ?? `Sloth respondió ${r.status}`)
   return json

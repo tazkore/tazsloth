@@ -174,10 +174,12 @@ export const ARQUITECTURA = (() => {
 const SIN_TORCH = process.platform === 'darwin' && ARQUITECTURA === 'x64'
 const PYTHON_STANDALONE = `https://github.com/astral-sh/python-build-standalone/releases/download/20261013/cpython-3.12.15%2B20261013-${SISTEMA[`${process.platform}-${ARQUITECTURA}`] ?? SISTEMA['win32-x64']}-install_only.tar.gz`
 const TORCH = ['torch==2.8.0', 'torchaudio==2.8.0', 'torchvision==0.23.0']
+/** La versión fijada de yt-dlp (`asegurarYtDlp`): la estable que había instalada al fijarla. */
+export const YT_DLP = '2026.10.26'
 // `hf_xet` baja los modelos de Hugging Face más rápido; `deno` resuelve los retos de JavaScript de YouTube en yt-dlp.
-const PIP_SLOTH = ['whisperx==3.8.6', 'transformers==4.57.6', 'hf_xet', 'yt-dlp[default]', 'deno', 'scikit-learn']
+const PIP_SLOTH = ['whisperx==3.8.6', 'transformers==4.57.6', 'hf_xet', `yt-dlp[default]==${YT_DLP}`, 'deno', 'scikit-learn']
 const PARAKEET = 'onnx-asr[cpu]==0.12.0'
-const PIP_SIN_TORCH = [PARAKEET, 'huggingface_hub', 'hf_xet', 'yt-dlp[default]', 'deno']
+const PIP_SIN_TORCH = [PARAKEET, 'huggingface_hub', 'hf_xet', `yt-dlp[default]==${YT_DLP}`, 'deno']
 /** Baja lo que falte de los modelos del motor (`sys.argv[2]`): el suyo, el alineador de la voz y el de vectores (huellas.py), que pide torch. */
 const BAJAR_MODELOS = [
   'import sys,pathlib,modelos_transcripcion as m',
@@ -228,26 +230,37 @@ export async function instalarPythonSloth(app: string, { raiz = PYTHONES, modelo
 }
 
 /**
- * yt-dlp se pone al día una vez al día, cuando no trabaja nadie (`libre`): YouTube cambia seguido, y con el que dejó la
- * instalación, que nunca se tocaba, la descarga acaba pidiendo «Sign in to confirm you're not a bot». Si falla, sigue
- * el que había, y se vuelve a intentar la siguiente vez.
+ * yt-dlp va en una versión fijada (`YT_DLP`), no se pone al día solo: así no cambia sin que lo sepamos (v!d Fase 1). Se
+ * instala solo si falta o si la puesta no es esa, cuando no trabaja nadie (`libre`). Si falla, sigue la que había y se
+ * vuelve a intentar la siguiente vez. Para subirla, cambia `YT_DLP` (YouTube cambia seguido: con una muy vieja, la
+ * descarga acaba pidiendo «Sign in to confirm you're not a bot»).
  */
-export async function actualizarYtDlp(app: string, libre: () => boolean) {
+export async function asegurarYtDlp(app: string, libre: () => boolean) {
   const python = rutaPythonSloth()
-  const marca = join(app, 'data', 'yt-dlp.txt')
-  const hoy = new Date().toISOString().slice(0, 10)
-  if (!python || instalando || ytDlp || !libre() || (existsSync(marca) && readFileSync(marca, 'utf8') === hoy)) return
+  if (!python || ytDlpBien === python || instalando || ytDlp || !libre()) return
   ytDlp = true
   try {
-    await ejecutar(python, ['-E', '-s', '-X', 'utf8', '-m', 'pip', 'install', '--disable-pip-version-check', '--no-warn-script-location', '--upgrade', 'yt-dlp[default]'], app)
-    writeFileSync(marca, hoy)
+    if ((await versionYtDlp(python)) !== YT_DLP)
+      await ejecutar(python, ['-E', '-s', '-X', 'utf8', '-m', 'pip', 'install', '--disable-pip-version-check', '--no-warn-script-location', `yt-dlp[default]==${YT_DLP}`], app)
+    if ((await versionYtDlp(python)) === YT_DLP) ytDlpBien = python
   } catch (e) {
-    console.error(`No se pudo poner al día yt-dlp: ${e instanceof Error ? e.message : e}`)
+    console.error(`No se pudo poner yt-dlp ${YT_DLP}: ${e instanceof Error ? e.message : e}`)
   } finally {
     ytDlp = false
   }
 }
 let ytDlp = false
+/** El Python donde ya se comprobó que está `YT_DLP`: no se vuelve a mirar. */
+let ytDlpBien: string | undefined
+
+/** La versión de yt-dlp puesta en ese Python, o `undefined` si no está. */
+function versionYtDlp(python: string): Promise<string | undefined> {
+  return new Promise((ok) =>
+    execFile(python, ['-E', '-s', '-X', 'utf8', '-c', 'import importlib.metadata as m; print(m.version("yt-dlp"))'], { windowsHide: true, timeout: 60_000 }, (error, salida) =>
+      ok(error ? undefined : String(salida).trim() || undefined)
+    )
+  )
+}
 
 /**
  * Lo que va haciendo la instalación en curso, en su fila en vez de «Descargando…»: el Python de Sloth baja gigas durante
@@ -536,7 +549,7 @@ function piezas(app: string, skill?: string): Pieza[] {
 let instalando: Pieza | null = null
 let cola: Pieza[] = []
 /** Si se está instalando algo: reiniciar el servidor mataría a winget o pip a la mitad. */
-export const instalandoAlgo = () => (instalando ? `Se está instalando ${instalando.nombre}. Espera a que termine.` : ytDlp ? 'Se está poniendo al día yt-dlp. Espera a que termine.' : null)
+export const instalandoAlgo = () => (instalando ? `Se está instalando ${instalando.nombre}. Espera a que termine.` : ytDlp ? `Se está instalando yt-dlp ${YT_DLP}. Espera a que termine.` : null)
 const fallos: Record<string, string> = {}
 /**
  * Por skill, la última vez que no había nada que bajar. Mirarlo son cinco procesos (ffmpeg, python…), y se miraba en

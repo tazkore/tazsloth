@@ -1,6 +1,6 @@
 import { memo, type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { CANAL_CARD, IDEAS_CARD } from '../../shared/ideas' // ideas
-import type { AvanceCorto, AvisoComunidad, Card, Model, Previa, Serie, ServerPush, SessionMeta, VideoHecho } from '../../shared/types'
+import type { AvanceCorto, Card, Model, Previa, Serie, ServerPush, SessionMeta, VideoHecho } from '../../shared/types'
 import { NOMBRE_AGENTE, proveedorDe } from '../../shared/providers'
 import { AvisoVideos } from './AvisoVideos'
 import { VENTA } from '../../shared/venta'
@@ -10,13 +10,12 @@ import { CuentaClaude, Opciones, Requisitos, useSinClaude } from './Opciones'
 import { api } from './api'
 import { eventos, useFallo, useResumen } from './eventos'
 import { useDesplazando } from './desplazando'
-import { avisarAnuncio, useAvisos } from './avisos'
+import { useAvisos } from './avisos'
 import { TituloDeFila, useBarraPlegada, vistaDeLote, vistaDeVideo, type Plegado, type Vista } from './Barra'
 import { Composer, Icon, Picker, type Choice, type Draft } from './Composer'
-import { LINK, pedirMejora, threadIcons, threadRef } from './etiquetas'
+import { LINK, threadIcons, threadRef } from './etiquetas'
 import { Confirm } from './Confirm'
 import { TusCambios } from './TusCambios'
-import { ActualizarSloth } from './Actualizar' // versiones nuevas
 import { TarjetasEnlaces } from './Enlaces' // tarjeta de los enlaces
 import { esDeEstudio, Estudio } from './Estudio' // panel de etapas
 import { BotonNavegador, PanelNavegador, useNavegadorAbierto } from './Navegador' // navegador de cada hilo
@@ -26,8 +25,6 @@ import { CON_CHATGPT, conOpenCode, conPrimero, elegirModelos, lineaSubagentes, M
 import { AvisoEquipo } from './Equipo' // tu equipo
 import { MisVideos, Rejilla, VideoDe } from './MisVideos'
 import { Modelos3D } from './Modelos3D' // modelos 3D
-import { abrirPublicacion, Comunidad } from './Comunidad' // comunidad
-import { PedirMejora } from './PedirMejora' // comunidad
 import { Icono } from './Iconos'
 import { Bienvenida } from './Bienvenida'
 import { MarcaAgente } from './Logos'
@@ -51,7 +48,6 @@ type View =
   | { kind: 'ideas'; canalId?: string }
   | { kind: 'videos'; estilo?: string }
   | { kind: 'modelos3d' } // modelos 3D
-  | { kind: 'comunidad' } // comunidad
 
 /** Lo que se escribió en un hilo nuevo sin mandarlo. Vive en localStorage hasta que se manda o se borra. */
 type Saved = Draft & { cardId: string; at: number }
@@ -70,7 +66,6 @@ function readHash(): View {
   if (kind === 'ideas') return { kind: 'ideas', canalId: id || undefined }
   if (kind === 'mis-videos') return { kind: 'videos', estilo: id || undefined }
   if (kind === 'modelos-3d') return { kind: 'modelos3d' } // modelos 3D
-  if (kind === 'comunidad' || kind === 'mejoras') return { kind: 'comunidad' } // comunidad (antes, Mejoras)
   return { kind: 'new', cardId: kind === 'new' ? id : undefined }
 }
 
@@ -88,8 +83,6 @@ function go(view: View) {
               ? `/mis-videos${view.estilo ? `/${view.estilo}` : ''}`
               : view.kind === 'modelos3d' // modelos 3D
                 ? '/modelos-3d'
-                : view.kind === 'comunidad' // comunidad
-                ? '/comunidad'
                 : view.cardId
                 ? `/new/${view.cardId}`
                 : '/'
@@ -192,7 +185,6 @@ export function App() {
         if (push.type === 'models') setModels(push.models)
         // La sección Ideas escucha sus avisos (cada paso de la investigación, lo que escribe Claude) donde esté.
         if (push.type === 'ideas') dispatchEvent(new CustomEvent('sloth-ideas', { detail: push })) // ideas
-        if (push.type === 'comunidad') dispatchEvent(new CustomEvent('sloth-comunidad')) // comunidad
         if (push.type === 'redes') {
           dispatchEvent(new CustomEvent('sloth-redes', { detail: push.aviso }))
           if (push.acabo) avisarTanda(push.acabo)
@@ -339,29 +331,6 @@ export function App() {
   // se filtra: no se ve qué se busca.
   const [busca, setBusca] = useState('')
   const campoBusca = useRef<HTMLInputElement>(null)
-  // comunidad: tus avisos sin leer, junto a «Comunidad». Se piden cada 2 minutos mientras se ve Sloth, cada 10 con la
-  // ventana oculta (un anuncio avisa aunque no la estés mirando), y al leerlos. Si subieron, se mira si hay un anuncio.
-  const [avisosComunidad, setAvisosComunidad] = useState(0)
-  useEffect(() => {
-    let sabidos = 0
-    let pedida = 0
-    const pedir = async () => {
-      if (document.visibilityState !== 'visible' && Date.now() - pedida < 600_000) return
-      pedida = Date.now()
-      try {
-        const { sinLeer } = await api<{ sinLeer: number }>('/api/comunidad/avisos?cuenta')
-        setAvisosComunidad(sinLeer)
-        if (sinLeer > sabidos) avisarAnuncio((await api<{ avisos: AvisoComunidad[] }>('/api/comunidad/avisos')).avisos, abrirPublicacion)
-        sabidos = sinLeer
-      } catch {
-        // Sin conexión o sin cuenta: se vuelve a pedir.
-      }
-    }
-    void pedir()
-    const t = setInterval(pedir, 120_000)
-    addEventListener('sloth-comunidad-avisos', pedir)
-    return () => (clearInterval(t), removeEventListener('sloth-comunidad-avisos', pedir))
-  }, [])
   const buscar = () => (plegar(false), setTimeout(() => campoBusca.current?.focus()))
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -489,18 +458,6 @@ export function App() {
           </span>{' '}
           Modelos 3D
         </button>
-        {/* comunidad */}
-        <button className={`new-chat${view.kind === 'comunidad' ? ' active' : ''}`} onClick={() => go({ kind: 'comunidad' })} title={plegada ? 'Comunidad' : undefined}>
-          <span className="new-chat-icon">
-            <Icono de="personas" />
-          </span>{' '}
-          Comunidad
-          {avisosComunidad > 0 && (
-            <span className="nav-cuenta" title={`${avisosComunidad} ${avisosComunidad === 1 ? 'aviso' : 'avisos'} sin leer`}>
-              {avisosComunidad > 99 ? '99+' : avisosComunidad}
-            </span>
-          )}
-        </button>
         <label className="buscar" title={plegada ? 'Buscar (Ctrl K)' : undefined} onClick={() => plegada && buscar()}>
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
             <circle cx="11" cy="11" r="7" />
@@ -620,9 +577,6 @@ export function App() {
           />
         )}
         {view.kind === 'modelos3d' && <Modelos3D />} {/* modelos 3D */}
-        {view.kind === 'comunidad' && <Comunidad />}
-        {/* comunidad: «Pedir una mejora», que abre el símbolo del agente de cualquier hilo y la publica en Mejoras. */}
-        <PedirMejora sessions={sessions} />
         {view.kind === 'videos' && (
           <ConNavegadorRedes>
             <MisVideos cards={cards} sessions={sessions} estilo={view.estilo} onEstilo={(estilo) => go({ kind: 'videos', estilo })} />
@@ -1155,10 +1109,10 @@ const SessionView = memo(function SessionView({ id, session, card, models }: { i
       )}
       {totals.read > 0 && <span className="muted small">{compact(totals.read)} tokens leídos</span>}
       {totals.out > 0 && <span className="muted small">{compact(totals.out)} tokens escritos</span>}
-      {/* El símbolo del agente del hilo: pide una mejora sobre él. Solo el símbolo: el encabezado de un video va justo. */}
-      <button className="pedir-mejora solo" title={`Pedir una mejora: ¿algo no salió como esperabas? ${NOMBRE_AGENTE[proveedorDe(session.model)]} te ayuda a decirlo`} aria-label="Pedir una mejora" onClick={() => pedirMejora({ hilo: session.id })}>
+      {/* El símbolo del agente del hilo. Solo el símbolo: el encabezado de un video va justo. */}
+      <span className="pedir-mejora solo" title={NOMBRE_AGENTE[proveedorDe(session.model)]} aria-label={NOMBRE_AGENTE[proveedorDe(session.model)]}>
         <MarcaAgente de={proveedorDe(session.model)} />
-      </button>
+      </span>
       {extra}
       <BotonNavegador hilo={session.id} trabajando={trabaja} />
     </header>
@@ -1465,10 +1419,7 @@ function Pie({ running, connected, enOpciones, fallo, plegada }: { running: bool
       </button>
       {/* Reiniciar aplica los cambios del código: en la app que se vende solo llegan con una versión nueva. */}
       {VENTA ? (
-        <>
-          <ActualizarSloth />
-          {!connected && <span className="muted small pie-nota">Reconectando…</span>}
-        </>
+        <>{!connected && <span className="muted small pie-nota">Reconectando…</span>}</>
       ) : (
         <button
           className={connected ? '' : 'reconectando'}

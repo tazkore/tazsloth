@@ -8,7 +8,7 @@ y `npm run compilar -- --sin-instalador`. Este último incluye `npm run typechec
 comprueba sus paquetes, revisa que lo que se vende no lleve nada del creador ni React en modo desarrollo y empaqueta
 Electron. También prueba el caso de secretos de Apple vacíos: Mac usa firma ad hoc.
 
-No cambia la versión, no arranca la app ni sube archivos al cobro. Comprueba compilación y empaquetado; los instaladores
+No cambia la versión, no arranca la app ni sube archivos a ningún servidor. Comprueba compilación y empaquetado; los instaladores
 y la firma con certificado de Apple se hacen en `venta`. Para repetirlo en esta computadora, con FFmpeg en el PATH
 (las pruebas de YouTube generan videos y extraen fotogramas):
 
@@ -27,47 +27,11 @@ Cada sistema se comprueba en el suyo. Antes de publicar, comprueba que los tres 
 corresponden al commit de `main` que vas a subir y terminaron bien. Este workflow informa; no configura protección de
 ramas ni bloquea por sí solo un push a `venta`.
 
-## App instalada: este repo, rama venta
+## App instalada
 
-1. Actualiza `novedad.txt`: un renglón corto con lo que trae la versión, que se ve al pasar el cursor sobre «Actualizar».
-2. Comprueba el diff completo entre `origin/venta` y `main`: se publicará todo lo que haya entrado a `main`. Guarda la
-   lista de sus commits (`git log --no-merges --format="%s%n%b" origin/venta..main`): de ahí sale el anuncio del paso 5,
-   y después del push ya no se puede sacar así.
-3. Tras verificar la cuenta de GitHub indicada en `AGENTS.md`, `git push origin main:venta` inicia
-   `.github/workflows/venta.yml`. Genera una versión común, compila los tres instaladores con `npm run compilar` y los
-   sube al cobro con `npm run publicar`. No hace falta compilar localmente para publicar.
-   Quien apoya recibe cada versión 7 días antes (`ANTICIPO` en `licencias/`): los demás siguen con la anterior en la app,
-   en `/version` y en `/descargar`. Un arreglo urgente sale para todos de inmediato con `[para todos]` en el mensaje del
-   último commit que llega a `venta`, o con la opción `para_todos` al correr el workflow a mano. Ya publicada, el
-   creador la da a todos antes de sus 7 días (cuando el chat de un live cumple su meta) con «Liberar para todos», arriba
-   de la Comunidad en su Sloth: no compila nada, y las apps abiertas la ven en unos 5 minutos (`/ultima`).
-4. Comprueba los tres jobs y la versión que ofrece el cobro: `/version`, `/version?so=mac` y `/version?so=linux` en
-   `https://api.sloth.vancci.org` (sin apoyo, durante sus 7 días, dicen la anterior). Pedido sin llave, `/version` es
-   lo que se le da a quien no apoya: si trae `nueva`, sigue con la anterior; si no, ya tiene esa. Qué arreglo le llegó
-   a un cliente se mira ahí y en `git log origin/venta`, no en las fechas de los commits. Verifica también los metadatos
-   de `/actualizaciones/latest.yml`, `latest-mac.yml` y `latest-linux.yml`, y los enlaces de descarga de cada sistema.
-   Para esperar el flujo, `gh run watch <id> --exit-status` de fondo.
-5. Cuando los tres salieron bien, cuéntalo en Anuncios de la comunidad, sin preguntar: escribe el anuncio como lo
-   escribe Vancci ([anuncios.md](anuncios.md)) y publícalo con `node scripts/anuncio.mjs <archivo>`.
-
-La llave `PUBLICAR` del workflow autoriza la subida. Los secretos de Apple y el comportamiento sin firma están en
-[ADR 0006](../adr/0006-mac-y-linux.md). La comprobación de empaquetado no demuestra que la app abra y funcione en una
-máquina real: una prueba de arranque debe usar datos y carpeta de usuario aparte, porque Sloth enlaza las skills.
-
-## Cobro y comunidad: licencias/
-
-El Worker `sloth-licencias` sirve el apoyo (las suscripciones), las cuentas gratis, la comunidad, los instaladores y las
-actualizaciones.
-Su configuración está en `licencias/wrangler.jsonc`. Desde la raíz de este repo:
-
-```powershell
-npm run licencias -- d1 migrations apply sloth-licencias --remote
-npm run licencias -- deploy
-```
-
-Aplica las migraciones cuando el cambio incluya alguna, antes de desplegar código que necesite esas columnas.
-Comprueba la ruta afectada en `https://api.sloth.vancci.org`. Este despliegue es independiente de
-`main` y `venta`; subir la app no actualiza el Worker. Los nombres de sus secretos están en la cabecera de su configuración.
+v!d (Fase 1) no tiene pagos, comunidad ni actualizaciones automáticas: se quitaron `licencias/`, `npm run publicar`,
+`scripts/anuncio.mjs` y electron-updater. El instalador sale de `npm run compilar` y una versión nueva se instala encima
+de la anterior. La distribución propia se definirá en otra fase.
 
 ## Publicaciones de Instagram: nube/
 
@@ -79,16 +43,5 @@ npm run nube -- deploy
 
 Comprueba el despliegue de `sloth-redes` en Cloudflare y sus registros si cambiaste el cron. «Reiniciar backend»
 solo afecta al servidor local. `scripts/nube.mjs` usa una sesión de Cloudflare propia de Sloth; si falta,
-`npm run nube -- login` o `npm run licencias -- login` la abre. La cuenta de Cloudflare no va en el repo: es la variable
+`npm run nube -- login` la abre. La cuenta de Cloudflare no va en el repo: es la variable
 `SLOTH_CLOUDFLARE_CUENTA` (su id) de quien despliega.
-
-## Página de venta: otro repo
-
-`sloth.vancci.org` vive en **`Vancci-sloth/vancci-web`**, en `web/public/sloth/index.html`. Un checkout puede estar
-atrasado o tener cambios sin guardar: consulta
-`git status`, actualiza las referencias con `git fetch origin` y parte de `origin/main` en un worktree aparte si hace
-falta. El proyecto de Astro está dentro de `web/`: ahí se corre `npm ci` y `npm run build` antes de subir los cambios
-al `main` de ese repo. Vercel despliega ese push.
-
-Comprueba el despliegue de Vercel y la página publicada en `https://sloth.vancci.org`, incluidos los enlaces de descarga
-y pago que hayas cambiado. Cambiar este repo o desplegar `licencias/` no modifica esa página.

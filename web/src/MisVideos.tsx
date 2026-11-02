@@ -2,7 +2,6 @@ import { type ReactNode, useEffect, useRef, useState } from 'react'
 import { type Card, NAVEGADOR_REDES, type SessionMeta, type VideoHecho, type VideosDeTodos } from '../../shared/types'
 import { api } from './api'
 import { Icon } from './Composer'
-import { compartirVideo } from './Comunidad'
 import { Confirm } from './Confirm'
 import { Icono } from './Iconos'
 import { Ritmos } from './Ritmos'
@@ -212,10 +211,6 @@ export function VideoDe({ video, onVer, insignia, estilo }: { video: VideoHecho;
     <div className="video-con-subida">
       <button className="video-borrar" title="Borrar este video" onClick={() => setBorrar(true)}>
         ✕
-      </button>
-      {/* comunidad: lo publica en «Lo que hice», con su portada. */}
-      <button className="video-compartir" title="Compartir en la comunidad" onClick={() => compartirVideo(video)}>
-        <Icono de="compartir" className="video-compartir-ico" />
       </button>
       {borrar && (
         <Confirm

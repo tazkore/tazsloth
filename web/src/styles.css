@@ -151,11 +151,6 @@ input, textarea, select { font: inherit; color: inherit; }
 .video-borrar { position: absolute; top: 7px; left: 7px; z-index: 1; width: 24px; height: 24px; display: grid; place-items: center; border-radius: 6px; background: rgba(11, 13, 18, 0.8); color: var(--text); font-size: 12px; opacity: 0; transition: opacity 0.15s; }
 .video-con-subida:hover .video-borrar, .video-borrar:focus-visible { opacity: 1; }
 .video-borrar:hover { background: var(--panel); color: var(--bad); }
-/* comunidad: compartir el video, junto al ✕. */
-.video-compartir { position: absolute; top: 7px; left: 35px; z-index: 1; width: 24px; height: 24px; display: grid; place-items: center; border-radius: 6px; background: rgba(11, 13, 18, 0.8); color: var(--text); opacity: 0; transition: opacity 0.15s; }
-.video-con-subida:hover .video-compartir, .video-compartir:focus-visible { opacity: 1; }
-.video-compartir:hover { background: var(--panel); color: var(--amber); }
-.video-compartir-ico { width: 13px; height: 13px; }
 
 /* El compositor */
 .composer { background: var(--panel-2); border: 1px solid var(--line); border-radius: 16px; padding: 12px 12px 10px 16px; transition: border-color 0.15s; }

@@ -2,7 +2,7 @@ import { Worker } from 'node:worker_threads'
 
 /**
  * A un archivo y no a una tubería: un programa que el servidor lance mientras tanto hereda la tubería y la deja abierta, y
- * la respuesta se quedaba esperando hasta caducar. Sin ella, el id de la computadora salía otro (`server/licencia.ts`).
+ * la respuesta se quedaba esperando hasta caducar.
  */
 const CODIGO = `const { parentPort, workerData, threadId } = require('node:worker_threads')
 const fs = require('node:fs')

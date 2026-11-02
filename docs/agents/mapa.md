@@ -82,10 +82,6 @@ Este es el mapa:
   «Proponer» abre `ideas-youtube` o `ideas-vertical` (con
   `mcp.ts`); «Hacer con…», un borrador de un estilo con la línea `Idea: <canal>/<idea>`.
 - `server/radar/`: buscador propio de noticias tech, cada 5 minutos (`POST /api/radar/buscar`).
-- La comunidad (`web/src/Comunidad.tsx`, `server/comunidad.ts`): un feed como el de Skool que vive en el Worker del cobro
-  (`licencias/src/comunidad.ts`); cada quien entra con su cuenta gratis (o la clave de su apoyo) y tú, como creador, con la llave de `publicar.txt`.
-  Publicar una mejora (la ven todos): `POST /api/mejoras {texto}`. Un anuncio a nombre del creador, en su tono:
-  `docs/agents/anuncios.md`.
 - `server/modelos3d.ts` y `web/src/Modelos3D.tsx`: «Modelos 3D» enseña la biblioteca `skills/modelos-3d` que usan los
   agentes (la de `SKILLS`), que llenan los videos (solo se mira). Empieza vacía; la moneda de la plantilla
   va en `modelos-3d/plantilla`, sin enseñarse.
@@ -109,6 +105,8 @@ Este es el mapa:
 - `server/cuenta.ts`, `server/version.ts` y `server/opciones.ts`: la cuenta de Claude, la versión de Claude y de Codex
   (la que trae Sloth: se ponen al día al subirlas en package.json y publicar) y las credenciales de YouTube e Instagram (en las variables de entorno del usuario).
   `server/acceso.ts`: si Claude y Codex pagan con la suscripción o con una llave de API (Opciones → Agentes), guardada en
-  `data/agentes.json`.
+  `data/agentes.json`, cifrado con AES-256-GCM (`server/secretos.ts`, llave maestra con DPAPI en Windows).
+- `server/token.ts`: el token del servidor local (`data/servidor-token`), que exigen `/api` y `/ws`; la ventana lo
+  recibe en una cookie HttpOnly y los procesos locales en `VID_TOKEN` (junto a `SLOTH_URL`).
 - `web/src`: React. `api.ts` habla con el servidor; `eventos.ts` guarda los eventos fuera de `App`, `items.ts` los junta
   en bloques y `Timeline.tsx` los dibuja; `Composer.tsx` es el campo de texto.

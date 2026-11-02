@@ -5,18 +5,9 @@
 </p>
 
 <p align="center">
-  <a href="https://sloth.vancci.org"><img alt="Versión" src="https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fapi.sloth.vancci.org%2Fversion&query=%24.version&label=versi%C3%B3n&color=e8a33d&labelColor=171512"></a>
   <img alt="Windows, Mac y Linux" src="https://img.shields.io/badge/Windows%20%C2%B7%20Mac%20%C2%B7%20Linux-171512?logo=electron&logoColor=ede6d6">
   <img alt="Con Claude" src="https://img.shields.io/badge/con-Claude-e8a33d?labelColor=171512">
   <a href="LICENSE"><img alt="Licencia" src="https://img.shields.io/badge/licencia-Apache%202.0%20%2B%20Commons%20Clause-ede6d6?labelColor=171512"></a>
-</p>
-
-<p align="center">
-  <a href="https://api.sloth.vancci.org/descargar"><b>Descargar</b></a> ·
-  <a href="https://sloth.vancci.org">Página</a> ·
-  <a href="https://sloth.vancci.org/#roadmap">Roadmap</a> ·
-  <a href="https://sloth.vancci.org/#apoyar">Apoyar</a> ·
-  <a href="CONTRIBUTING.md">Aportar</a>
 </p>
 
 ---
@@ -44,8 +35,6 @@ Es gratis, sin tarjeta y sin límite de videos. Trabaja con tu propia cuenta de 
   </tr>
 </table>
 
-<p align="center"><a href="https://sloth.vancci.org">Míralos completos y con sonido en sloth.vancci.org</a></p>
-
 ## Cómo funciona
 
 Cada estilo de video es una **card**. Escribes qué quieres y el agente avanza por cinco fases, que ves en el estudio:
@@ -64,25 +53,20 @@ Cada estilo de video es una **card**. Escribes qué quieres y el agente avanza p
 
 ## Instalar
 
-Descarga la última versión para tu sistema y ábrela:
-
-| Sistema | Descarga | Nota |
-| --- | --- | --- |
-| **Windows** 10 u 11 | [Sloth para Windows](https://api.sloth.vancci.org/descargar) | Si dice «Windows protegió tu PC», da clic en *Más información* y luego en *Ejecutar de todas formas*. |
-| **Mac** con Intel (en M1 o más nueva, con Rosetta) | [Sloth para Mac](https://api.sloth.vancci.org/descargar?so=mac) | Aún sin la firma de Apple: la primera vez, ábrela desde *Configuración del Sistema → Privacidad y seguridad*. |
-| **Linux** | [Sloth para Linux](https://api.sloth.vancci.org/descargar?so=linux) | Es un AppImage: dale permiso de ejecutar y ábrelo. |
+v!d no tiene descargas públicas ni se actualiza sola: el instalador sale de `npm run compilar` (ver
+[`docs/agents/publicacion.md`](docs/agents/publicacion.md)) y una versión nueva se instala encima de la anterior.
 
 Necesitas tu propia cuenta de **Claude Pro o Max** (con Max alcanza para varios videos). Opcional: tu cuenta de
-ChatGPT, para que Sloth haga las imágenes. FFmpeg, Python y lo que pide cada estilo los instala la propia app. Las
-versiones nuevas se instalan desde la misma app.
+ChatGPT, para que haga las imágenes. FFmpeg, Python y lo que pide cada estilo los instala la propia app.
 
 ## Correrla desde el código
 
 Necesitas Node 24.
 
 ```bash
-git clone https://github.com/Vancci-sloth/sloth.git
-cd sloth
+git clone https://github.com/tazkore/tazsloth.git
+cd tazsloth
+git checkout tazkore
 npm ci
 npm start
 ```
@@ -97,12 +81,11 @@ Antes de dar algo por hecho: `npm run typecheck`, `npm test` y, si tocaste `skil
 
 | Pieza | Con qué |
 | --- | --- |
-| La ventana | [Electron](https://www.electronjs.org), con instalador y actualizaciones que bajan solo lo que cambió |
+| La ventana | [Electron](https://www.electronjs.org), con instalador (sin actualizaciones automáticas) |
 | La interfaz | React y Vite (`web/`) |
-| El servidor local | Node (`server/`): sesiones, estudio, galerías, comunidad y requisitos |
+| El servidor local | Node (`server/`): sesiones, estudio, galerías y requisitos; solo en `localhost`, con token |
 | Los agentes | [Claude Agent SDK](https://docs.anthropic.com/en/docs/claude-code/sdk), con tu cuenta de Claude |
 | Los videos | [Remotion](https://www.remotion.dev) en cada estilo, y Python para transcribir y descargar |
-| El cobro y la comunidad | Un Worker de Cloudflare con D1 y R2 (`licencias/`) |
 
 ```
 electron/   la ventana de escritorio
@@ -110,44 +93,25 @@ server/     el servidor local que corre los agentes
 web/        la interfaz
 shared/     los tipos que comparten servidor e interfaz
 skills/     los estilos de video (El Diff, explicativo, reel de comedia, documental) y sus herramientas
-licencias/  el cobro del apoyo, la comunidad y las descargas (Cloudflare Worker)
 nube/       la nube que publica en Instagram (Cloudflare Worker)
 python/     los procesos de Python de Sloth
-scripts/    compilar, publicar y desplegar
+scripts/    compilar y desplegar
 docs/       las decisiones (adr/) y las guías para agentes (agents/)
 ```
 
 Las reglas del proyecto y el mapa del código están en [`AGENTS.md`](AGENTS.md) y
 [`docs/agents/mapa.md`](docs/agents/mapa.md).
 
-## Roadmap
-
-Las metas se cuentan con las personas que apoyan hoy, y quien apoya recibe cada versión 7 días antes que todos.
-
-| Personas que apoyan | Qué sale |
-| --- | --- |
-| 25 | Sloth firmada por Apple: en Mac se abre sin avisos y se actualiza sola |
-| 50 | Publicar en YouTube desde Sloth, con su API oficial |
-| 100 | Publicar en Instagram y Facebook, con la API oficial de Meta |
-| 150 | Publicar en TikTok, con su API oficial |
-| 250 | La tienda de estilos: sube los tuyos y usa los de la comunidad |
-
-El orden lo puede cambiar la comunidad: se vota dentro de Sloth, y el voto de un Fundador vale doble.
-[Míralo en vivo en la página](https://sloth.vancci.org/#roadmap).
-
-## Apoya a Sloth
-
-Sloth es gratis y lo seguirá siendo. Si te sirve, puedes [apoyarla](https://sloth.vancci.org/#apoyar) desde
-$15 USD al mes: con ese apoyo salen las metas del roadmap. Las primeras 25 personas que apoyan son **Fundadores**
-para siempre, con insignia en la comunidad, su nombre en los créditos de la página y voto doble.
-
 ## Aportar
 
-Los PRs son bienvenidos. Lee [`CONTRIBUTING.md`](CONTRIBUTING.md) antes de empezar: la interfaz va en español, la
-paleta es la de Sloth y cada cambio se comprueba en Windows, Mac y Linux. Para reportar un problema de seguridad, no
+Es un fork de uso interno. Lee [`CONTRIBUTING.md`](CONTRIBUTING.md) antes de empezar: la interfaz va en español y cada
+cambio se comprueba con `npm run typecheck` y `npm test`. Para reportar un problema de seguridad, no
 abras un issue: sigue [`SECURITY.md`](SECURITY.md).
 
 ## Créditos
+
+v!d by Kold.Gold (TazSloth) está basado en [Sloth](https://github.com/Vancci-sloth/sloth), de
+[Vancci](https://vancci.org), y conserva su licencia y su [`NOTICE`](NOTICE).
 
 El estilo **Documental** parte de EDITOR V1, de [NextPhase AI](https://www.skool.com/nextphase-5790/about), que
 venía para HyperFrames; en Sloth se dibuja con Remotion.
@@ -163,4 +127,4 @@ Remotion, que arma los videos, tiene su [propia licencia](https://www.remotion.d
 equipos pequeños; las empresas más grandes pagan la suya. Sloth no está afiliada, patrocinada ni respaldada por
 Anthropic ni por OpenAI.
 
-<p align="center"><sub>Hecho por <a href="https://vancci.org">Vancci</a> en México</sub></p>
+<p align="center"><sub>Sloth original hecho por Vancci en México · v!d by Kold.Gold</sub></p>

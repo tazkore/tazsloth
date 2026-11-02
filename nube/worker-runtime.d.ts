@@ -1,5 +1,5 @@
-// Los tipos del runtime de Cloudflare, los mismos para licencias/ y nube/ (workerd@1.20261023.1 2026-10-01). Para rehacerlos:
-// `npm run licencias -- types worker-runtime.d.ts --include-env=false`; el Env de cada Worker, `--include-runtime=false`.
+// Los tipos del runtime de Cloudflare para nube/ (workerd@1.20261023.1 2026-10-01). Para rehacerlos:
+// `npm run nube -- types worker-runtime.d.ts --include-env=false`; el Env del Worker, `--include-runtime=false`.
 /*! *****************************************************************************
 Copyright (c) Cloudflare. All rights reserved.
 Copyright (c) Microsoft Corporation. All rights reserved.

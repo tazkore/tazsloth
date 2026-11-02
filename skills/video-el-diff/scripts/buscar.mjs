@@ -56,7 +56,8 @@ const fecha = (ms) => (ms ? new Date(ms).toISOString() : null)
 async function radar() {
   // El puerto del servidor de Sloth, que el agente hereda (`server/index.ts`).
   const puerto = process.env.PORT ?? 4850
-  const d = await post(`http://127.0.0.1:${puerto}/api/radar/buscar`, { consultas, n: N, horas: HORAS ? Number(HORAS) : undefined, textos: true })
+  // Con el token del servidor local (VID_TOKEN, que también hereda).
+  const d = await post(`http://127.0.0.1:${puerto}/api/radar/buscar`, { consultas, n: N, horas: HORAS ? Number(HORAS) : undefined, textos: true }, { 'x-vid-token': process.env.VID_TOKEN ?? '' })
   return d.resultados.map(({ docs }) => docs.map((h) => ({
     url: h.url, titulo: h.titulo, fecha: fecha(h.fecha), texto: h.texto, extra: [h.fuente, h.extra].filter(Boolean).join(' · ')
   })))

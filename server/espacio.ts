@@ -390,7 +390,7 @@ export function cachesViejas(nm: string): string[] {
 
 /**
  * Los adjuntos (`data/attachments/<hora>-<nombre>`) que ya no nombra nadie: ni un hilo (`data/sessions`) ni lo demás de
- * `data/*.json` (las redes, la comunidad, YouTube). Se reconocen por su hora, que va delante de su nombre.
+ * `data/*.json` (las redes, YouTube). Se reconocen por su hora, que va delante de su nombre.
  */
 export async function adjuntosSueltos(app: string, antesDe: number): Promise<string[]> {
   const dir = join(app, 'data', 'attachments')

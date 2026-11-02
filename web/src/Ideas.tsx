@@ -343,7 +343,7 @@ function CanalForm({
       </div>
       <label className="campo">
         <span>Nombre</span>
-        <input value={c.nombre ?? ''} onChange={campo('nombre')} placeholder="vancci · IA" autoFocus />
+        <input value={c.nombre ?? ''} onChange={campo('nombre')} placeholder="kold.gold · IA" autoFocus />
       </label>
       <label className="campo">
         <span>{vertical ? 'Tu TikTok' : 'Tu canal en YouTube'}</span>

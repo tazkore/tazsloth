@@ -2,9 +2,8 @@
 
 ## Reportar un problema
 
-Si encuentras una vulnerabilidad, **no abras un issue público**: escríbenos a
-[soporte@vancci.org](mailto:soporte@vancci.org) con los pasos para reproducirla. Te respondemos en un máximo de
-3 días hábiles y te avisamos cuando esté arreglada.
+Si encuentras una vulnerabilidad en v!d by Kold.Gold, **no abras un issue público**: escríbenos a
+[tazkore@gmail.com](mailto:tazkore@gmail.com) con los pasos para reproducirla.
 
 ## Lo que debes saber antes de usar Sloth
 
@@ -21,6 +20,9 @@ programas, con tu usuario.
 
 ## Lo que sí cuida Sloth
 
-- El servidor escucha solo en tu computadora (`localhost`).
-- La clave de apoyo llega firmada (Ed25519) por el cobro, y editar el archivo no la alarga.
-- Los datos de tu tarjeta los ve solo PayPal (o Mercado Pago, si tu apoyo empezó ahí).
+- El servidor escucha solo en tu computadora (`localhost`), valida `Host`/`Origin` (`server/origen.ts`) y exige un
+  token (`data/servidor-token`) en `/api` y `/ws`: la ventana lo recibe en una cookie HttpOnly y los procesos locales
+  (MCP, scripts de skills) en la variable `VID_TOKEN`.
+- Las llaves de API de los agentes se guardan cifradas (AES-256-GCM) en `data/agentes.json`; la llave maestra está
+  protegida con DPAPI en Windows (`data/llave-maestra.dpapi`) o en un archivo con permisos 600 en Mac y Linux.
+- No hay pagos, comunidad ni actualizaciones automáticas: la app no habla con servidores del proyecto original.

@@ -568,7 +568,7 @@ export const SIN_CUENTA = 'Conecta tu cuenta de OpenCode en Opciones: es gratis.
 
 /**
  * Una respuesta de un solo turno, sin herramientas ni sesión que quede: lo que en Claude es un `query` con `tools: []`
- * («Pedir una mejora», el redactor de YouTube). Sin `model`, el primer modelo gratis del catálogo.
+ * (el redactor de YouTube). Sin `model`, el primer modelo gratis del catálogo.
  */
 export async function redactarOpenCode(model: string | undefined, cwd: string, prompt: string, imagenes: string[], instruccion: string): Promise<string> {
   const s = await conexion()

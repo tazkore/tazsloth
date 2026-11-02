@@ -981,136 +981,6 @@ export interface CuentaInvestigacion {
   instagram?: string | null
 }
 
-/** De dónde sale una mejora pedida desde un hilo (el símbolo de su agente): el hilo y lo que pasó (lo que elegiste, o el error). */
-export interface OrigenMejora {
-  hilo: string
-  titulo: string
-  cita?: string
-}
-
-/** Lo que el agente del hilo (o Claude, sin hilo) propone al ayudarte a decir algo (`POST /api/comunidad/redactar`). */
-export interface AyudaMejora {
-  /** Lo que entendió que pasó o que quieres, en llano. */
-  entendi: string
-  /** El texto propuesto. */
-  mejora: string
-  /** Lo que le falta saber para decirlo bien (0 a 2). */
-  preguntas: string[]
-}
-
-/** Las secciones de la comunidad (`licencias/src/comunidad.ts`). En Anuncios solo publica el creador. */
-export type CategoriaComunidad = 'general' | 'hice' | 'ayuda' | 'mejoras' | 'anuncios'
-
-/** Lo que los demás ven de un miembro de la comunidad. */
-export interface Autor {
-  id: string
-  nombre: string
-  /** La URL de su foto. */
-  foto?: string
-  /** El creador de Sloth. */
-  creador?: boolean
-  /** Fundador (de las primeras personas que apoyaron, para siempre) o Apoya (mientras apoya). */
-  insignia?: 'fundador' | 'apoya'
-  /** Solo en tu perfil: si sales en los créditos de sloth.vancci.org (los Fundadores que lo piden). */
-  creditos?: boolean
-}
-
-/** Una imagen o un video de una publicación. `llave` es su nombre en la comunidad y `url`, de donde se carga. */
-export interface AdjuntoComunidad {
-  tipo: 'imagen' | 'video'
-  llave: string
-  url: string
-  /** La portada de un video: su llave y su URL. */
-  poster?: string
-  posterUrl?: string
-  vertical?: boolean
-}
-
-/** Una publicación de la comunidad. Las fechas, en ISO. */
-export interface PublicacionComunidad {
-  id: string
-  autor: Autor
-  categoria: CategoriaComunidad
-  titulo: string
-  texto: string
-  adjuntos: AdjuntoComunidad[]
-  fijada: boolean
-  /** Solo en Mejoras: cómo va, según el creador. */
-  estado?: 'haciendo' | 'hecha'
-  creada: string
-  editada?: string
-  /** Lo último que pasó en ella: se publicó o se comentó. Ordena el feed. */
-  actividad: string
-  likes: number
-  /** Si te gusta a ti. */
-  megusta: boolean
-  comentarios: number
-  ultimoComentario?: string
-  /** Los últimos que comentaron (hasta 5), el más reciente primero, para enseñar sus caras. */
-  comentaron: Autor[]
-  /** Cuántos la reportaron. Solo lo ve el creador; con 3 o más, los demás ya no la ven hasta que la revise. */
-  reportes?: number
-}
-
-export interface ComentarioComunidad {
-  id: string
-  autor: Autor
-  texto: string
-  creada: string
-  /** El comentario al que responde, siempre uno de primer nivel. */
-  responde?: string
-  /** Sus imágenes, si las lleva. */
-  adjuntos?: AdjuntoComunidad[]
-  likes: number
-  megusta: boolean
-  /** Como en `PublicacionComunidad`. */
-  reportes?: number
-}
-
-/** Lo que le pasó a lo tuyo en la comunidad: te comentaron, te respondieron, te dieron me gusta… */
-export interface AvisoComunidad {
-  id: string
-  tipo: 'comento' | 'respondio' | 'gusta' | 'gustaComentario' | 'estado' | 'reporte' | 'anuncio'
-  de: Autor
-  publicacion: string
-  /** El título de la publicación, o el principio de su texto. */
-  sobre: string
-  comentario?: string
-  /** El estado nuevo de una mejora, o el motivo de un reporte. */
-  texto?: string
-  creado: string
-  leido: boolean
-}
-
-/** `GET /api/comunidad`: quién eres, los números de la comunidad y una página del feed. */
-/** La votación de qué sigue en el roadmap: cada meta con sus votos (el de un Fundador vale dos) y la que votaste. */
-export interface RoadmapComunidad {
-  metas: { id: string; titulo: string; votos: number }[]
-  mio?: string
-}
-
-export interface FeedComunidad {
-  /** Con lo que llevas hecho, para «Comienza aquí». */
-  yo: Autor & { publicaciones: number; comentarios: number }
-  /** Las licencias activas. */
-  miembros: number
-  /** Las que abrieron Sloth en las últimas 24 horas. */
-  activos: number
-  /** Tus avisos sin leer. */
-  avisos: number
-  roadmap: RoadmapComunidad
-  publicaciones: PublicacionComunidad[]
-  /** Hay otra página. */
-  mas: boolean
-}
-
-/** `/api/comunidad/liberar`, solo del creador: la última versión de un sistema y, mientras es solo de quien apoya, desde cuándo será de todos. */
-export interface VersionLiberable {
-  so: 'windows' | 'mac' | 'linux'
-  version: string
-  todos?: string
-}
-
 /** Lo que el servidor empuja por el WebSocket. */
 export type ServerPush =
   | { type: 'events'; sessionId: string; from: number; events: AgentEvent[] }
@@ -1128,8 +998,6 @@ export type ServerPush =
   | { type: 'ideas'; canalId: string; trabajo?: TrabajoYT }
   /** Redes: cambió algo de lo programado (va cada vez que se guarda), con lo que pide atención; con `acabo`, al terminar lo que mandaste. */
   | { type: 'redes'; aviso: AvisoRedes; acabo?: TandaRedes }
-  /** Comunidad: se publicó algo desde esta computadora fuera de la sección (desde un hilo, o el agente). */
-  | { type: 'comunidad' }
 
 /**
  * Una fuente del radar (`server/radar/fuentes.ts`), como se guarda en `data/radar/fuentes.json`. `pagina` es una página
@@ -1160,52 +1028,8 @@ export interface FuenteProbada {
   detalle: string
 }
 
-/**
- * La clave de la app que se vende (`server/licencia.ts`), en `GET /api/licencia`: una cuenta gratis o un apoyo. Sin
- * `clave`, nunca creó cuenta ni apoyó en esta computadora; con `enlace`, espera el pago.
- */
-export interface Licencia {
-  activa: boolean
-  clave?: string
-  email?: string
-  /** `mensual` o `anual`: un apoyo; `gratis`: uno de los lugares gratis de por vida (de cuando Sloth se vendía); `cuenta`: una cuenta gratis. */
-  plan?: 'mensual' | 'anual' | 'gratis' | 'cuenta'
-  /** Lo que se cobra cada mes o cada año, en la moneda con que empezó el apoyo. */
-  monto?: number
-  /**
-   * Con los nombres de Mercado Pago, también los de PayPal: `pending` (sin pagar), `authorized`, `paused` o `cancelled`;
-   * `gratis`; o `pagado`, un año pagado de una vez que no se renueva solo.
-   */
-  estado?: string
-  /** Hasta cuándo está pagada (ISO): el próximo cobro o, cancelada o pagada de una vez, cuando se cierra. */
-  pagadaHasta?: string
-  /** El folio de su cancelación, si la canceló. */
-  folio?: string
-  /** De las primeras personas que apoyaron: fundadora para siempre, aunque cancele. */
-  fundador?: boolean
-  error?: string
-}
-
-/** La versión de esta app y, si la hay, la nueva y cómo va su descarga (electron/main.ts). */
-export interface ActualizacionSloth {
-  actual: string
-  nueva?: string
-  /** Lo que trae la nueva, en un renglón: se ve al pasar el cursor sobre «Actualizar». */
-  novedad?: string
-  /** De 0 a 1 mientras baja; 1, ya bajó y Sloth se cierra para ponerla. */
-  avance?: number
-  /** Bajando, se fue el internet: sigue sola cuando vuelva. */
-  sinRed?: boolean
-  error?: string
-  /** En Mac sin firma de Apple: «Actualizar» abre su descarga en el navegador, y se instala encima. */
-  aMano?: boolean
-}
-
 /** Lo que la ventana de Sloth (electron/preload.ts) le da a la interfaz como `window.sloth`. En un navegador no está. */
 export interface PuenteSloth {
-  actualizacion(): Promise<ActualizacionSloth>
-  /** Baja la versión nueva y la pone: Sloth se cierra y se vuelve a abrir. */
-  actualizar(): Promise<ActualizacionSloth>
   /** La ventana al frente (al pulsar un aviso). */
   traer(): void
   /** Si Sloth está anclada a la barra de tareas; `null` donde no se puede ofrecer (fuera de la app instalada en Windows). */

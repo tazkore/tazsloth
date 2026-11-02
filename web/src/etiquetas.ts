@@ -60,6 +60,3 @@ export function invocacion(text: string): { nombre: string; tipo: string; inicio
   return { nombre, tipo: nombre === '/compact' ? 'Comando' : 'Skill', inicio: match[0].length - nombre.length }
 }
 
-/** El símbolo del agente de un hilo abre «Pedir una mejora» (`PedirMejora.tsx`) con el hilo y lo que pasó en él. */
-export const MEJORA_EVENT = 'sloth:pedir-mejora'
-export const pedirMejora = (detalle: { hilo: string; cita?: string }) => dispatchEvent(new CustomEvent(MEJORA_EVENT, { detail: detalle }))

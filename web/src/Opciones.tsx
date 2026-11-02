@@ -9,7 +9,6 @@ import { Picker } from './Composer'
 import { EspacioDisco } from './Espacio' // espacio en disco
 import { TuEquipo } from './Equipo' // tu equipo
 import { Icono } from './Iconos'
-import { SuscripcionOpciones } from './Licencia' // apoyo
 import { Logo } from './Logos'
 import { BotonNavegador } from './Navegador'
 import { RadarOpciones } from './RadarOpciones' // radar
@@ -69,11 +68,6 @@ function Ajustes({ onDone, iniciando, onIniciando }: { onDone(): void; iniciando
         </div>
         <p className="grupo-nota">Los verticales salen en TikTok e Instagram; los largos, en YouTube. vid.kold.gold tiene que estar abierto mientras sube a TikTok y a YouTube; Instagram publica aunque la computadora esté apagada.</p>
       </section>
-      {VENTA && (
-        <Grupo titulo="Apoyo" nota="vid.kold.gold es gratis. El apoyo es opcional y se cobra con PayPal; cancelado, lo ya pagado sigue valiendo hasta su fecha.">
-          <SuscripcionOpciones />
-        </Grupo>
-      )}
       <Grupo titulo="Agentes" nota="Cada agente se descarga la primera vez que lo eliges. Claude y ChatGPT necesitan un plan de pago o una llave de API; OpenCode, solo tu cuenta, que es gratis. Los demás, la cuenta o la llave de cada uno.">
         <Agentes />
         <CuentaCodex />
@@ -757,7 +751,7 @@ export function CuentaAgente({ p, aviso = false, onFalta }: { p: OtroAgente; avi
           )
         )}
       </div>
-      {o.beta && <p className="fila-extra muted small">Está en beta: puedes probarlo, pero puede tener errores. Si te topas con uno, repórtalo en la Comunidad, en Ayuda.</p>}
+      {o.beta && <p className="fila-extra muted small">Está en beta: puedes probarlo, pero puede tener errores. Si te topas con uno, avísale a quien administra vid.kold.gold.</p>}
       {pegando && (
         <form className="fila-extra" onSubmit={(e) => (e.preventDefault(), llave.trim() && void guardarLlave(llave.trim()))}>
           <div className="opcion-fila">

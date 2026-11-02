@@ -5,13 +5,13 @@ Una app local donde cada skill es una card: describes el trabajo y el agente lo 
 ## Dónde buscar
 
 Antes de explorar un área, lee su entrada en `docs/agents/mapa.md`: servidor y proveedores, sesiones, estudio de video,
-galerías, redes, navegador, Ideas, radar, comunidad, requisitos y React. Cada módulo amplía lo suyo en su cabecera.
+galerías, redes, navegador, Ideas, radar, requisitos y React. Cada módulo amplía lo suyo en su cabecera.
 Los campos de una card están en `Card` (`shared/types.ts`).
 
 Para mirar o mover la cola de TikTok e Instagram, o decidir qué se publica, lee `docs/agents/redes.md`. Para ver cómo va
 o fue un hilo (turnos, costo, errores, lo que sigue de fondo, disco libre): `npm run hilo -- <id>`.
 
-Al comprobar una compilación o publicar la app, el cobro, la nube o la página de venta, lee `docs/agents/publicacion.md`.
+Al comprobar una compilación, compilar la app o desplegar la nube, lee `docs/agents/publicacion.md`.
 Ahí están los repos, los comandos y cómo verificar cada despliegue. Si algo va lento o calienta: `docs/agents/rendimiento.md`.
 
 ## Al editar la app
@@ -23,9 +23,8 @@ Ahí están los repos, los comandos y cómo verificar cada despliegue. Si algo v
   `skills/`. Un solo test: `node --import tsx --test <archivo>`.
 - La app que se vende es de Electron (`electron/main.ts`, ADR 0004) y sale de `npm run compilar`, para Windows, Mac y
   Linux (ADR 0006: lo de un sistema lleva su par en los otros); lo que solo sirve aquí
-  se esconde con `VENTA` (`shared/venta.ts`). Es gratis; el apoyo mensual es opcional (`server/licencia.ts`) y lo cobra
-  `licencias/`, un Worker con PayPal. Las instrucciones de publicación están en
-  `docs/agents/publicacion.md`.
+  se esconde con `VENTA` (`shared/venta.ts`). No tiene pagos, comunidad ni actualizaciones automáticas (v!d Fase 1). La
+  compilación está en `docs/agents/publicacion.md`.
 - Escribe los JSON con `guardar()` de `server/disco.ts` (temporal y reemplazo), no con `writeFileSync`.
 - El Markdown se dibuja con `web/src/markdown.ts`, que no deja pasar HTML: no uses `marked` directo.
 
@@ -63,8 +62,7 @@ Ahí están los repos, los comandos y cómo verificar cada despliegue. Si algo v
 
 ### Issue tracker
 
-GitHub (`Vancci-sloth/sloth`): usar siempre la cuenta **Vancci-sloth** para `gh`, commits y push; comprobar la cuenta antes de operar.
-Para el autor de los commits, usar el correo `noreply` de esa cuenta.
+GitHub (`tazkore/tazsloth`, rama `tazkore`): los commits van firmados con `tazkore@gmail.com`; comprobar la cuenta antes de operar.
 Issues, sub-issues y bloqueos nativos: `docs/agents/issue-tracker.md`.
 
 ### Triage labels

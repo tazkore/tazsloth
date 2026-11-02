@@ -8,7 +8,7 @@ import { build } from 'esbuild'
 
 const REPO = join(dirname(fileURLToPath(import.meta.url)), '..')
 
-/** Deja en `salida` main.cjs y preload.cjs. `macFirmada`: la de Mac va firmada por Apple y se actualiza sola. */
+/** Deja en `salida` main.cjs y preload.cjs. `macFirmada`: la de Mac va firmada por Apple. */
 export async function armarVentana(salida, { macFirmada = false } = {}) {
   const comun = {
     bundle: true,

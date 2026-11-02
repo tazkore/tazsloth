@@ -1,31 +1,28 @@
 /**
  * La app de escritorio de Sloth, con Electron. En la que se vende (`npm run compilar`) es Sloth.exe: levanta el servidor
  * con su propio Node (`node\node.exe app\scripts\start.mjs`) y lo enseña en su ventana; al cerrarla se cierra todo, sin
- * quedarse de fondo. También pone las versiones nuevas: electron-updater pregunta al cobro de Sloth y baja
- * solo lo que cambió. En el repo, `npm start` levanta el servidor y abre esta misma ventana con `SLOTH_VENTANA`, su
+ * quedarse de fondo. vid.kold.gold no se actualiza sola (Fase 1): una versión nueva se instala encima. En el repo, `npm start` levanta el servidor y abre esta misma ventana con `SLOTH_VENTANA`, su
  * dirección: entonces solo se pone la ventana.
  *
  * En Windows todo va junto a Sloth.exe, como hasta la 0.2: `app\` (el servidor, la interfaz, y tus videos y tus hilos en
  * `app\trabajo` y `app\data`) y `node\`. Al actualizar, el instalador cambia lo demás y deja eso (scripts/instalador.nsh).
  * En Mac y Linux la app no se puede escribir (un .app firmado, un AppImage): el servidor viaja en resources/sloth y pasa a
  * `DATOS` al estrenar cada versión, junto a tus videos y tus hilos (`prepararApp`); Node se queda en resources/node.
- * Lo de fuera (enlaces, el pago, autorizar cuentas) se abre en el navegador de cada quien; lo que abre el agente, en el de
+ * Lo de fuera (enlaces, autorizar cuentas) se abre en el navegador de cada quien; lo que abre el agente, en el de
  * cada hilo, dentro de esta ventana (navegador.ts). Lo compila scripts/electron.mjs.
  */
 import { spawn, spawnSync, type ChildProcess } from 'node:child_process'
 import { createHash } from 'node:crypto'
-import { cpSync, createWriteStream, existsSync, linkSync, mkdirSync, readdirSync, readFileSync, rmSync, statSync, writeFileSync, type WriteStream } from 'node:fs'
+import { cpSync, createWriteStream, existsSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync, type WriteStream } from 'node:fs'
 import { cp } from 'node:fs/promises'
 import { homedir } from 'node:os'
 import { dirname, join } from 'node:path'
-import { app, BrowserWindow, dialog, ipcMain, Menu, nativeTheme, net, screen, session, shell, type WebContents } from 'electron'
-import { autoUpdater, CancellationToken } from 'electron-updater'
+import { app, BrowserWindow, dialog, ipcMain, Menu, nativeTheme, screen, session, shell, type WebContents } from 'electron'
 import { guardar } from '../server/disco.ts'
 import { anclada, anclar } from './barra.ts'
 import { archivos, huella, huellas, nombreCopia, quitarViejos, respaldar } from '../server/originales.ts'
 import { MODELOS_VIEJOS } from './modelos-viejos.ts'
 import { iniciarNavegador, ventanaDelNavegador } from './navegador.ts'
-import type { ActualizacionSloth } from '../shared/types.ts'
 
 /** En el repo: la dirección del servidor que ya levantó `npm start`. */
 const SOLO_VENTANA = process.env.SLOTH_VENTANA
@@ -37,14 +34,6 @@ const DATOS = MAC ? join(homedir(), 'Library', 'Application Support', 'TazSloth'
 /** La carpeta de Sloth.exe. */
 const RAIZ = dirname(process.execPath)
 const APP = SOLO_VENTANA ? (process.env.SLOTH_APP ?? process.cwd()) : WINDOWS ? join(RAIZ, 'app') : DATOS
-/** El cobro de Sloth (`licencias/`): de ahí bajan el instalador y las actualizaciones. */
-const COBRO = 'https://api.sloth.vancci.org'
-/**
- * En Mac, electron-updater solo pone la versión nueva en una app firmada por Apple (scripts/compilar.mjs). Sin firma,
- * «Actualizar» abre en el navegador la descarga de la nueva, que se instala encima.
- */
-declare const __MAC_FIRMADA__: boolean
-const A_MANO = MAC && !__MAC_FIRMADA__
 const REGISTRO = join(APP, 'data', 'sloth.log')
 /** Dónde se dejó la ventana. */
 const LUGAR = join(APP, 'data', 'ventana.json')
@@ -52,40 +41,12 @@ const LUGAR = join(APP, 'data', 'ventana.json')
 const SIN_AVISO = join(APP, 'data', 'sin-aviso-al-cerrar.json')
 /** --bg de web/src/styles.css: el fondo mientras carga y el de la barra de título. */
 const FONDO = '#0b0d12'
-/** Cada cuánto se pregunta si hay versión nueva. */
-const CADA = 6 * 3600_000
-/**
- * Entre pregunta y pregunta, cada cuánto se mira solo cuál es la última (`/ultima` del cobro, en caché): si cambió, salió
- * una o se liberó para todos en un live, y se pregunta ya.
- */
-const VISTAZO = 5 * 60_000
-/**
- * Si la descarga pasa este tiempo sin avanzar, está muerta: al irse el internet, la de Electron no siempre falla, se
- * queda esperando para siempre. Se corta y empieza otra.
- */
-const ATORADA = 30_000
-/** Tras un fallo, cuánto se espera para volver a intentar; sin internet, se espera a que vuelva. */
-const REINTENTO = 5000
-/** Fallos seguidos con internet y sin avanzar nada antes de decirlo y dejar el botón otra vez. */
-const INTENTOS = 5
-
 let ventana: BrowserWindow | undefined
 let servidor: ChildProcess | undefined
 let registro: WriteStream | undefined
 /** El servidor ya dijo «Sloth en …»: la ventana puede cargar la interfaz. */
 let listo = !!SOLO_VENTANA
 let cerrando = false
-let actualizacion: ActualizacionSloth = { actual: app.getVersion(), ...(A_MANO && { aMano: true }) }
-/** La descarga en curso: cancelarla la da por muerta. */
-let bajada: CancellationToken | undefined
-let avanzo = 0
-let fallos = 0
-/** La primera pregunta por la versión nueva: la interfaz la espera, o no la vería hasta su siguiente vuelta. */
-let primera: Promise<unknown> = Promise.resolve()
-/** Se cumple cuando el servidor ya escucha (`marcarListo`): antes no da la clave con que se pregunta por lo nuevo. */
-let avisarListo = () => {}
-const servidorListo = new Promise<void>((ok) => (avisarListo = ok))
-
 // Su propio nombre ante Windows: la ventana se junta con el acceso anclado y los avisos salen a nombre de Sloth.
 app.setAppUserModelId(SOLO_VENTANA ? 'TazSloth.Dev' : 'TazSloth.App')
 app.setPath('userData', join(APP, 'data', 'ventana'))
@@ -103,19 +64,6 @@ else {
     detener()
   })
   ipcMain.on('traer', () => ventana && traer(ventana))
-  ipcMain.handle('actualizacion', async () => {
-    await primera
-    return actualizacion
-  })
-  ipcMain.handle('actualizar', () => {
-    if (A_MANO) fuera(`${COBRO}/descargar?so=mac`)
-    else if (actualizacion.nueva && actualizacion.avance === undefined) {
-      actualizacion = { ...actualizacion, avance: 0, error: undefined }
-      fallos = 0
-      bajar()
-    }
-    return actualizacion
-  })
   ipcMain.handle('anclada', () => anclada())
   ipcMain.handle('anclar', () => anclar())
   void app.whenReady().then(iniciar)
@@ -137,7 +85,6 @@ async function iniciar() {
     anotar(`No se pudo poner esta versión de Sloth: ${e instanceof Error ? e.message : e}`)
   }
   arrancar()
-  actualizaciones()
 }
 
 /** La ventana, o al frente si ya está. Se enseña en cuanto se pide y carga la interfaz cuando el servidor contesta. */
@@ -179,7 +126,7 @@ function abrir() {
   v.on('closed', () => (ventana = undefined))
   if (maximizada) v.maximize()
   v.show()
-  if (listo) void v.loadURL(URL_SLOTH)
+  if (listo) void conToken().then(() => v.loadURL(URL_SLOTH))
 }
 
 let avisando = false
@@ -412,8 +359,21 @@ function escribir(d: Buffer) {
 
 function marcarListo() {
   listo = true
-  avisarListo()
-  void ventana?.loadURL(URL_SLOTH)
+  void conToken().then(() => ventana?.loadURL(URL_SLOTH))
+}
+
+/**
+ * El token del servidor local (server/token.ts): la página lo recibe en su cookie al cargarse, y aquí se pone antes, de
+ * `VID_TOKEN` o de `data/servidor-token`, por si la ventana se recarga sin pasar por esa navegación.
+ */
+async function conToken() {
+  try {
+    const archivo = join(APP, 'data', 'servidor-token')
+    const token = process.env.VID_TOKEN || (existsSync(archivo) ? readFileSync(archivo, 'utf8').trim() : '')
+    if (token) await session.defaultSession.cookies.set({ url: URL_SLOTH, name: 'vid_token', value: token, httpOnly: true, sameSite: 'strict', path: '/' })
+  } catch {
+    // Sin ella, la página la recibe del servidor al cargarse.
+  }
 }
 
 /**
@@ -453,126 +413,7 @@ function salir() {
   app.quit()
 }
 
-/**
- * Baja la versión nueva. Si se cae (sin internet, o atorada y cortada), vuelve a empezar sola en cuanto hay internet: no
- * hace falta pulsar otra vez «Actualizar». Solo tras varios fallos seguidos con internet lo dice y deja el botón.
- */
-function bajar() {
-  const t = (bajada = new CancellationToken())
-  avanzo = Date.now()
-  autoUpdater.downloadUpdate(t).catch((e: Error) => {
-    if (bajada !== t) return
-    const enLinea = net.isOnline()
-    if (enLinea && !t.cancelled && ++fallos >= INTENTOS) {
-      bajada = undefined
-      actualizacion = { ...actualizacion, avance: undefined, sinRed: undefined, error: `No se pudo bajar la versión nueva: ${e.message}. Intenta otra vez.` }
-      return
-    }
-    actualizacion = { ...actualizacion, avance: 0, sinRed: !enLinea || undefined }
-    const otra = () => (net.isOnline() ? bajar() : setTimeout(otra, REINTENTO))
-    setTimeout(otra, REINTENTO)
-  })
-}
-
-/**
- * El instalador de la versión puesta (installer.exe, que deja ahí el instalador) es de donde salen los pedazos que no
- * cambian. Hay limpiadores de Windows (el Sensor de almacenamiento, los antivirus) que lo borran, y sin él se baja el
- * instalador entero: cientos de MB en vez de unos pocos. Se guarda un enlace duro en app\data, que no ocupa más disco,
- * y desde ahí se repone. En Mac y Linux los pedazos salen de la app misma, que nadie limpia.
- */
-function guardarInstalador(cache: string) {
-  const puesto = join(cache, 'installer.exe')
-  const datos = join(APP, 'data')
-  const copia = `instalador-${app.getVersion()}.exe`
-  const mismo = (a: string, b: string) => statSync(a, { bigint: true }).ino === statSync(b, { bigint: true }).ino
-  try {
-    if (existsSync(puesto)) {
-      if (!existsSync(join(datos, copia)) || !mismo(puesto, join(datos, copia))) {
-        rmSync(join(datos, copia), { force: true })
-        linkSync(puesto, join(datos, copia))
-      }
-    } else if (existsSync(join(datos, copia))) {
-      linkSync(join(datos, copia), puesto)
-      anotar('El instalador de esta versión no estaba: se repuso')
-    }
-    for (const f of readdirSync(datos)) if (/^instalador-.+\.exe$/.test(f) && f !== copia) rmSync(join(datos, f), { force: true })
-  } catch (e) {
-    anotar(`No se pudo guardar el instalador de esta versión: ${e instanceof Error ? e.message : e}`)
-  }
-}
-
 function anotar(texto: unknown) {
   registro?.write(`[sloth] ${texto}\n`)
 }
 
-/**
- * Las versiones nuevas, del cobro de Sloth (`/actualizaciones`, lo que sube `npm run publicar`). Al abrir y cada 6 horas
- * pregunta, y antes si el vistazo de cada 5 minutos ve que cambió la última (la que el creador libera en un live llega
- * así); «Actualizar» (web/src/Actualizar.tsx) la baja: solo los pedazos del instalador que cambiaron desde esta
- * versión. Luego cierra Sloth, el instalador la pone y la vuelve a abrir.
- */
-function actualizaciones() {
-  // TazSloth: el feed de `COBRO` es el de Vancci y bajaría la Sloth original. Apagado hasta tener uno propio (fase 3);
-  // TAZSLOTH_ACTUALIZAR=1 lo vuelve a encender.
-  if (!process.env.TAZSLOTH_ACTUALIZAR) return
-  // La versión que se bajó la última vez ya está puesta: su instalador sobra. El de esta versión se queda aparte
-  // (installer.exe), que es de donde salen los pedazos que no cambian.
-  const cache = WINDOWS && process.env.LOCALAPPDATA ? join(process.env.LOCALAPPDATA, 'tazsloth-updater') : undefined
-  try {
-    if (cache) rmSync(join(cache, 'pending'), { recursive: true, force: true })
-  } catch {
-    // Aún lo usa el instalador, que acaba de abrir esta versión: se quita la próxima vez.
-  }
-  if (cache) guardarInstalador(cache)
-  autoUpdater.autoDownload = false
-  autoUpdater.autoInstallOnAppQuit = false
-  autoUpdater.logger = { info: anotar, warn: anotar, error: anotar }
-  autoUpdater.on('update-available', (i) => {
-    // Lo que trae, en un renglón (novedad.txt al compilarla).
-    const notas = typeof i.releaseNotes === 'string' ? i.releaseNotes : i.releaseNotes?.[0]?.note
-    actualizacion = { ...actualizacion, nueva: i.version, novedad: notas?.split('\n')[0].trim() || undefined }
-  })
-  autoUpdater.on('download-progress', (p) => {
-    avanzo = Date.now()
-    fallos = 0
-    actualizacion = { ...actualizacion, avance: Math.min(0.99, p.percent / 100), sinRed: undefined }
-  })
-  autoUpdater.on('update-downloaded', () => {
-    bajada = undefined
-    actualizacion = { ...actualizacion, avance: 1 }
-    cerrando = true
-    detener()
-    autoUpdater.quitAndInstall(false, true)
-  })
-  // Sin internet al preguntar: se vuelve a preguntar en la próxima vuelta. Al bajar, los fallos los ve bajar().
-  autoUpdater.on('error', (e) => bajada && anotar(`La descarga falló: ${e.message}`))
-  setInterval(() => {
-    if (!bajada || bajada.cancelled || Date.now() - avanzo < ATORADA) return
-    anotar('La descarga no avanza: se empieza otra')
-    bajada.cancel()
-  }, REINTENTO)
-  const revisar = async () => {
-    // Quien apoya recibe lo nuevo antes: el cobro lo reconoce por su clave y esta computadora, que da el servidor. Al
-    // abrir Sloth, se espera a que arranque: sin la clave, la versión de quien apoya le llegaba 6 horas después. Si no
-    // arranca en 2 minutos, se pregunta igual: una versión nueva puede ser el arreglo.
-    await Promise.race([servidorListo, new Promise((ok) => setTimeout(ok, 120_000))])
-    const c = (await fetch(`${URL_SLOTH}/api/licencia/credencial`).then((r) => r.json()).catch(() => ({}))) as { clave?: string; equipo?: string }
-    autoUpdater.requestHeaders = c.clave && c.equipo ? { 'x-sloth-clave': c.clave, 'x-sloth-equipo': c.equipo } : null
-    await autoUpdater.checkForUpdates().catch(() => {})
-  }
-  primera = revisar()
-  setInterval(revisar, CADA)
-  // La primera vez solo se anota cómo está: la pregunta de al abrir ya la ve.
-  const so = MAC ? 'mac' : WINDOWS ? 'windows' : 'linux'
-  let vista: string | undefined
-  const vistazo = async () => {
-    const ahora = await fetch(`${COBRO}/ultima?so=${so}`)
-      .then((r) => (r.ok ? r.text() : undefined))
-      .catch(() => undefined)
-    if (!ahora) return
-    if (vista !== undefined && ahora !== vista && !bajada) void revisar()
-    vista = ahora
-  }
-  void vistazo()
-  setInterval(vistazo, VISTAZO)
-}

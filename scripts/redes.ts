@@ -16,6 +16,8 @@ import { leer } from '../server/opciones.ts'
 const REPO = join(dirname(fileURLToPath(import.meta.url)), '..')
 const REDES = join(REPO, 'data', 'redes', 'redes.json')
 const PORT = process.env.PORT ?? '4850'
+/** El token del servidor local (`server/token.ts`): de `VID_TOKEN` o de `data/servidor-token`. */
+const TOKEN = process.env.VID_TOKEN ?? (existsSync(join(REPO, 'data', 'servidor-token')) ? readFileSync(join(REPO, 'data', 'servidor-token'), 'utf8').trim() : '')
 const [orden = 'estado', ...resto] = process.argv.slice(2)
 /** Sale con el mensaje, sin la pila: lo que falla aquí es de uso o de la red, no del script. */
 function fallar(mensaje: string): never {
@@ -52,7 +54,7 @@ if (orden === 'estado') {
 } else if (['quitar', 'reintentar', 'deshacer'].includes(orden)) {
   const [red, ref] = resto
   if (!red || !ref) fallar(`Uso: npm run redes -- ${orden} <tiktok|instagram> <ref>`)
-  const res = await fetch(`http://127.0.0.1:${PORT}/api/redes/${orden}`, { method: 'POST', body: JSON.stringify({ red, ref, ruta: '' }) }).catch(() => fallar(`Sloth no responde en el puerto ${PORT} (el de este servidor está en $PORT).`))
+  const res = await fetch(`http://127.0.0.1:${PORT}/api/redes/${orden}`, { method: 'POST', headers: { 'x-vid-token': TOKEN }, body: JSON.stringify({ red, ref, ruta: '' }) }).catch(() => fallar(`Sloth no responde en el puerto ${PORT} (el de este servidor está en $PORT).`))
   console.log(res.status, await res.text())
   if (!res.ok) process.exitCode = 1
 } else {

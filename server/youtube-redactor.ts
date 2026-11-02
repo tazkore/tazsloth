@@ -35,7 +35,7 @@ export async function redactarYoutube(model: string, cwd: string, prompt: string
 }
 
 type Conectar = (notificar: (method: string, value: unknown) => void, salir: (error?: Error) => void, config: Record<string, unknown>) => Pick<CodexRpc, 'ready' | 'request' | 'close'>
-/** `instruccion`: la de otro uso, como la ayuda de «Pedir una mejora» (server/comunidad.ts). */
+/** `instruccion`: la de otro uso, si la hay. */
 export async function redactarCodexYoutube(model: string, cwd: string, prompt: string, imagenes: string[], esquema?: Record<string, unknown>, conectar: Conectar = (notificar, salir, config) => new CodexRpc(notificar, salir, config), effort?: string, instruccion = INSTRUCCION) {
   let threadId = ''
   let texto = ''

@@ -1,9 +1,8 @@
 // Compila Sloth para venderla. `npm run compilar` arma en dist/Sloth la app que se instala en otra computadora y la
 // mete en su instalador, en dist/instalador: Sloth-Setup-<versión>.exe en Windows, Sloth-<versión>-mac-x64.dmg (y su
 // .zip, con el que se actualiza) en Mac y Sloth-<versión>-linux-x86_64.AppImage en Linux. Cada sistema se compila en el
-// suyo: lleva su Node y los paquetes de ese sistema (en GitHub, .github/workflows/venta.yml). Es una app de Electron
-// (electron/main.ts) y la empaqueta electron-builder; junto al instalador deja lo que usan las actualizaciones, sus mapas
-// de bloques (.blockmap) y latest.yml (latest-mac.yml, latest-linux.yml), y `npm run publicar` lo sube. Con
+// suyo: lleva su Node y los paquetes de ese sistema. Es una app de Electron (electron/main.ts) y la empaqueta
+// electron-builder. No se actualiza sola: no hay feed de actualizaciones (v!d Fase 1). Con
 // `--sin-instalador` la deja lista para abrir, sin instalar, en dist/instalador. Lleva su propio Node, la interfaz y el
 // servidor ya armados, y solo las skills de sus
 // cards. No lleva lo que solo sirve aquí: tus datos (`data/`, `trabajo/`, y tus huellas, tus poses y tus modelos 3D en
@@ -31,14 +30,10 @@ const WINDOWS = process.platform === 'win32'
 const MAC = process.platform === 'darwin'
 // GitHub pasa vacío un secreto que no existe, y electron-builder tomaría ese vacío por un certificado.
 for (const v of ['CSC_LINK', 'CSC_KEY_PASSWORD', 'APPLE_ID', 'APPLE_APP_SPECIFIC_PASSWORD', 'APPLE_TEAM_ID']) if (!process.env[v]) delete process.env[v]
-/** Con el certificado de Apple (CSC_LINK, ver docs/adr/0006), la de Mac va firmada y notarizada, y se actualiza sola. */
+/** Con el certificado de Apple (CSC_LINK, ver docs/adr/0006), la de Mac va firmada y notarizada. */
 const MAC_FIRMADA = MAC && !!process.env.CSC_LINK
-/** El cobro de Sloth (`licencias/`): de ahí bajan el instalador y las actualizaciones. */
-const COBRO = 'https://api.sloth.vancci.org'
 const VERSION = JSON.parse(readFileSync(join(REPO, 'package.json'), 'utf8')).version
 const SIN_INSTALADOR = process.argv.includes('--sin-instalador')
-/** Lo que trae esta versión, en un renglón (`novedad.txt`): va en latest.yml y la app lo enseña sobre «Actualizar». */
-const NOVEDAD = readFileSync(join(REPO, 'novedad.txt'), 'utf8').split(/\r?\n/)[0].trim()
 
 /** Además de las de cada card: la base común de los estilos y la biblioteca de modelos 3D. */
 const SKILLS_BASE = ['video-base', 'modelos-3d']
@@ -325,9 +320,6 @@ const hechos = await empaquetar({
     // La app va en español: de los 55 idiomas de Chromium solo hacen falta el suyo y el inglés, al que recurre.
     electronLanguages: ['es', 'es-419', 'en-US'],
     afterPack: linuxSinAislamiento,
-    // Las actualizaciones (electron-updater): el cobro sirve un pedazo por petición, no varios.
-    publish: [{ provider: 'generic', url: `${COBRO}/actualizaciones`, useMultipleRangeRequest: false }],
-    releaseInfo: { releaseNotes: NOVEDAD },
     // Los de Linux, en linuxSinAislamiento.
     electronFuses: WINDOWS || MAC ? FUSIBLES : undefined,
     npmRebuild: false

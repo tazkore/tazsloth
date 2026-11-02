@@ -6,8 +6,6 @@ import { contextBridge, ipcRenderer, type IpcRendererEvent } from 'electron'
 import type { EstadoNavegador, PuenteSloth } from '../shared/types.ts'
 
 const puente: PuenteSloth = {
-  actualizacion: () => ipcRenderer.invoke('actualizacion'),
-  actualizar: () => ipcRenderer.invoke('actualizar'),
   traer: () => ipcRenderer.send('traer'),
   anclada: () => ipcRenderer.invoke('anclada'),
   anclar: () => ipcRenderer.invoke('anclar'),

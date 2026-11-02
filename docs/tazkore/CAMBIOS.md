@@ -45,3 +45,23 @@ iconos, y el sistema de licencias (solo se activa al compilar con `VENTA`).
 - Paleta Kold Gold: fondo carbón azulado `#0b0d12`, paneles `#12151c`/`#1b1f29`, texto plata `#e6e9ef`, secundario `#8f97a8`, acento cobre-oro `#d69a5c` (hover `#efb57a`). Las variables conservan sus nombres (`--amber`…) para no chocar con Sloth al traer cambios.
 - Metal: `--metal` (cobre) y `--metal-plata` en el botón de enviar, botones principales y el wordmark.
 - Icono nuevo: sello de acero y cobre con globo y play (`assets/icon.svg|png|ico`, vista en `docs/tazkore/icono-preview.png`).
+
+## Fase 1 — limpieza y seguridad (v!d) (2 nov 2026)
+
+Se quita todo lo que hablaba con los servidores del creador original y se endurece el servidor local.
+
+| Qué | Antes | Ahora | Archivos |
+| --- | --- | --- | --- |
+| Licencia / apoyo | `server/licencia.ts` validaba una clave contra el cobro (MachineGuid, Ed25519) | Quitado | `server/licencia.ts` (+test), `web/src/Licencia.tsx/.css`, `web/src/main.tsx`, grupo «Apoyo» de `web/src/Opciones.tsx`, tipos en `shared/types.ts` |
+| Comunidad, anuncios, «Liberar» | Proxy `/api/comunidad/*`, `/api/mejoras`, redactar | Quitado (y su navegación, avisos y botón de compartir video) | `server/comunidad.ts`, `web/src/Comunidad.tsx/.css`, `Escribir.tsx/.css`, `Liberar.tsx`, `avisos.ts` (+test), `App.tsx`, `MisVideos.tsx` |
+| «Pedir mejora» | Botones en hilos, citas y errores | Quitado (llegará Feedback en otra fase) | `web/src/PedirMejora.tsx/.css`, `etiquetas.ts`, `Timeline.tsx`, `App.tsx` |
+| Actualizador | electron-updater con feed del cobro (apagado salvo `TAZSLOTH_ACTUALIZAR=1`) | Sin auto-update; dependencia quitada | `electron/main.ts`, `electron/preload.ts`, `web/src/Actualizar.tsx`, `scripts/compilar.mjs` (sin `publish`), `package.json` |
+| Cobro y scripts de venta | `licencias/` (Worker PayPal + comunidad), `publicar`, `anuncio`, `version-venta`, `paypal`, workflow `venta.yml` | Quitados | `licencias/`, `scripts/*.mjs`, `.github/workflows/venta.yml`, `package.json` (scripts `licencias`, `paypal`, `publicar`; typecheck y tests de `licencias/`) |
+| Nube de Instagram | `nube.sloth.vancci.org` | `nube.vid.kold.gold` (sin desplegar); tipos del runtime en `nube/worker-runtime.d.ts` | `nube/wrangler.jsonc`, `nube/worker-configuration.d.ts`, `nube/tsconfig.json` |
+| Token del servidor local | Solo `origen.ts` (Host/Origin) | Además, token de 32 bytes en `data/servidor-token`, exigido en `/api` y `/ws` (cabecera `x-vid-token` o cookie HttpOnly SameSite=Strict `vid_token`). Exentas: vuelta de YouTube OAuth y vista en vivo motor/vivo (GET de marco) | `server/token.ts` (+test), `server/index.ts`, `web/src/api.ts` (recarga si falta), `electron/main.ts` (pone la cookie) |
+| Clientes locales | Sin credencial | `VID_TOKEN` junto a `SLOTH_URL` | `server/voz/index.ts`, `server/voz/mcp.mjs` (+test), `skills/reel-collage/scripts/voz.py`, `skills/video-el-diff/scripts/buscar.mjs`, `scripts/redes.ts`, `scripts/start.mjs` |
+| Llaves de API | Texto plano en `data/agentes.json`; en Mac/Linux, `variables.json` plano leído por `start.mjs` | AES-256-GCM; llave maestra con DPAPI (`data/llave-maestra.dpapi`) en Windows o `data/llave-maestra` (600) en Mac/Linux; migración automática del plano | `server/secretos.ts` (+test), `server/acceso.ts`, `server/opciones.ts`, `scripts/start.mjs` |
+| yt-dlp | `pip install --upgrade` diario | Versión fijada `YT_DLP = '2026.10.26'`; se instala solo si falta o no coincide | `server/requisitos.ts`, `server/index.ts` |
+| Documentos | Instrucciones de cobro, anuncios, cuenta Vancci-sloth | Actualizados; `docs/agents/anuncios.md` quitado | `AGENTS.md`, `SECURITY.md`, `README.md`, `CONTRIBUTING.md`, `docs/agents/mapa.md`, `docs/agents/publicacion.md` |
+
+Se conserva `__VENTA__` (`shared/venta.ts`): ya no implica red, solo marca la app compilada (interfaz estática, skills enlazadas).

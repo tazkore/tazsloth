@@ -24,8 +24,7 @@ imágenes):
 
 - Confirmas que es tuyo o que tienes derecho a aportarlo.
 - Aceptas que se publique con la licencia de este repo.
-- Le das a Vancci un permiso mundial, gratuito, perpetuo, irrevocable y no exclusivo para usarlo, modificarlo,
-  sublicenciarlo y distribuirlo, también en la versión oficial de Sloth y en sus servicios de paga (por ejemplo, lo
-  que en el roadmap dice «para quien apoya»).
+- Le das a Tazkore un permiso mundial, gratuito, perpetuo, irrevocable y no exclusivo para usarlo, modificarlo,
+  sublicenciarlo y distribuirlo en v!d by Kold.Gold.
 
 Sigues siendo dueño de tu aporte y puedes usarlo como quieras.

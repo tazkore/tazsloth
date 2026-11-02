@@ -23,22 +23,20 @@ import { conectandoCodex, conectarCodex, cuentaCodex, limitesCodex } from './cue
 import { conectando, conectarClaude, cuentaClaude, limitesClaude } from './cuenta.ts'
 import { cancelarOpenCode, conectandoOpenCode, conectarOpenCode, cuentaOpenCode, limitesOpenCode, quitarCuentaOpenCode, usarCuentaOpenCode } from './cuenta-opencode.ts'
 import { enlacesApi } from './enlaces.ts' // tarjeta de los enlaces
-import { cerrarVigilantesOciosos, etapasApi, folderOf, mismaCwd, queFalta, videosApi, videosDe } from './etapas.ts' // panel de etapas
+import { cerrarVigilantesOciosos, etapasApi, folderOf, mismaCwd, queFalta, videosApi } from './etapas.ts' // panel de etapas
 import { cerrarMotoresOciosos } from './motor.ts'
 import { modelos3d } from './modelos3d.ts' // modelos 3D
 import { miniaturas } from './miniaturas.ts' // panel de etapas
-import { guardarMeta, guardarYoutube, opciones } from './opciones.ts'
+import { cargarVariables, guardarMeta, guardarYoutube, opciones } from './opciones.ts'
 import { previas } from './previas.ts' // previas de las cards
 import { radar } from './radar/index.ts' // radar
-import { comunidad, llaveDelCreador } from './comunidad.ts' // comunidad
 import { redes } from './redes/index.ts' // redes
 import { voz } from './voz/index.ts' // voz de AI Studio
 import { youtube } from './youtube.ts'
 import { peticionDeConfianza } from './origen.ts'
-import { actualizarYtDlp, instalandoAlgo, instalar, pythonSlothEntero, requisitos } from './requisitos.ts'
+import { asegurarYtDlp, instalandoAlgo, instalar, pythonSlothEntero, requisitos } from './requisitos.ts'
 import { espacio } from './espacio.ts' // espacio en disco
 import { equipo } from './equipo.ts' // tu equipo
-import { licencia } from './licencia.ts' // suscripción
 import { Sessions } from './sessions.ts'
 import { mantenerVoz } from './voz-viva.ts'
 import { avisoDeVideos } from '../shared/limites.ts'
@@ -48,6 +46,7 @@ import { cambiosDeCard, carpetaSkill, configClaudeDev, duplicateCard, enlazarSki
 import { estaticos } from './estaticos.ts'
 import { type Agente, version } from './version.ts'
 import { cargarPreciosCodex } from './precios.ts'
+import { cookieDelToken, exentaDeToken, pideLaPagina, tokenDelServidor, tokenValido } from './token.ts'
 
 const APP = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 const PORT = Number(process.env.PORT ?? 4850)
@@ -67,6 +66,12 @@ process.env.SLOTH_PROCESOS ??= join(APP, 'python', 'procesos')
 process.env.SLOTH_SKILLS ??= SKILLS
 // Y aquí, este servidor: el MCP de la voz (`server/voz/mcp.mjs`) y los scripts que piden algo a Sloth.
 process.env.SLOTH_URL = `http://127.0.0.1:${PORT}`
+// Y con qué token (`server/token.ts`): sin él, el servidor no atiende `/api` ni `/ws`. Lo heredan los agentes, sus MCP y
+// los scripts de las skills.
+const TOKEN = tokenDelServidor(join(APP, 'data', 'servidor-token'))
+process.env.VID_TOKEN = TOKEN
+// Fuera de Windows, las llaves de Opciones guardadas (cifradas) pasan al entorno.
+cargarVariables()
 if (VENTA) {
   // La app que se vende trae sus skills: las enlaza en ~/.claude/skills, donde las busca Claude, y Codex las lee de esas
   // mismas carpetas, no de copias suyas.
@@ -77,8 +82,6 @@ if (VENTA) {
   // Sloth instalada en esta computadora. A Codex se le pasa siempre la ruta de la skill.
   process.env.CLAUDE_CONFIG_DIR ??= configClaudeDev(APP)
 }
-// Y su clave: la cuenta gratis de la comunidad o el apoyo, que quita el recordatorio. Sloth abre sin ella.
-const suscripcion = VENTA ? licencia(APP) : undefined // suscripción
 
 const clients = new Set<WebSocket>()
 const suscripciones = new Map<WebSocket, string | null>()
@@ -168,15 +171,6 @@ const idear = VENTA ? undefined : ideas(APP, sessions, broadcast, subirLargos?.l
 const biblioteca3d = modelos3d(carpetaSkill('modelos-3d') ?? join(APP, 'skills', 'modelos-3d')) // modelos 3D
 // El buscador propio de noticias de tecnología: lee sus fuentes en segundo plano y las skills buscan ahí.
 const noticias = radar(APP) // radar
-// La comunidad: lo que la gente hace con Sloth y cómo. Entra cada cliente con su licencia, y el creador con su llave,
-// también desde su copia instalada (publica en Anuncios); un cliente no la tiene.
-const comunidadApi = comunidad(APP, {
-  credencial: () => llaveDelCreador() ?? suscripcion?.credencial(),
-  sessions,
-  video: (ruta) => cards().flatMap((c) => (c.etapas?.length ? videosDe(c, sessions) : [])).find((v) => v.ruta === ruta),
-  cuadro,
-  avisar: broadcast
-}) // comunidad
 // En qué fase va cada video y cuántas etapas lleva, para la barra lateral.
 avance = avances(sessions, cards, broadcast)
 // Opciones → Espacio en disco: lo que dejan los videos y ya no hace falta. Lo seguro lo borra solo, cada 6 horas.
@@ -566,7 +560,6 @@ async function api(req: IncomingMessage, res: ServerResponse, url: URL): Promise
   if (idear && (await idear.api(req, res, url))) return true // ideas
   if (await biblioteca3d.api(req, res, url)) return true // modelos 3D
   if (await noticias.api(req, res, url)) return true // radar
-  if (await comunidadApi.api(req, res, url)) return true // comunidad
   if (await enlacesApi(req, res, url)) return true // tarjeta de los enlaces
 
   const m = /^\/api\/sessions\/([\w-]+)(?:\/(\w+))?$/.exec(path)
@@ -728,12 +721,15 @@ server.on('request', async (req, res) => {
   const url = new URL(req.url ?? '/', `http://${req.headers.host}`)
   try {
     if (url.pathname.startsWith('/api/')) {
-      if (suscripcion && (await suscripcion.api(req, res, url))) return // suscripción
+      // `token: true`: la ventana se abrió antes de que hubiera token (o con otro); al recargarse recibe la cookie.
+      if (!tokenValido(req, TOKEN) && !exentaDeToken(req)) return send(res, 401, { error: 'Falta el token del servidor: recarga la ventana.', token: true })
       if (await api(req, res, url)) return
     }
   } catch (error) {
     return send(res, 500, { error: error instanceof Error ? error.message : String(error) })
   }
+  // La página de la app lleva el token en su cookie (HttpOnly): con ella habla con `/api` y `/ws`.
+  if (pideLaPagina(req)) res.setHeader('Set-Cookie', cookieDelToken(TOKEN))
   interfaz(req, res)
 })
 
@@ -741,7 +737,7 @@ const wss = new WebSocketServer({ noServer: true })
 server.on('upgrade', (req, socket, head) => {
   if (req.url !== '/ws') return
   // El WebSocket lleva todo lo que pasa en los hilos: ninguna otra página lo puede abrir.
-  if (!deConfianza(req)) return void socket.destroy()
+  if (!deConfianza(req) || !tokenValido(req, TOKEN)) return void socket.destroy()
   wss.handleUpgrade(req, socket, head, (ws) => {
     clients.add(ws)
     ws.on('message', (data) => {
@@ -765,8 +761,9 @@ server.listen(PORT, '127.0.0.1', () => {
     cargandoModelos = false
     pedirModelos()
   }, TRAS_ABRIR)
-  // yt-dlp al día, una vez al día: se mira cada hora por si a esa hora trabajaba algo.
-  const ytDlp = () => void actualizarYtDlp(APP, () => !ocupado())
+  // yt-dlp en su versión fijada (`YT_DLP`): solo se instala si falta o no coincide; se mira cada hora por si a esa hora
+  // trabajaba algo, y una vez comprobada ya no se vuelve a mirar.
+  const ytDlp = () => void asegurarYtDlp(APP, () => !ocupado())
   setTimeout(ytDlp, 30_000)
   setInterval(ytDlp, 3_600_000).unref()
 })

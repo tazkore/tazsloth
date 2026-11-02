@@ -1,4 +1,4 @@
-/** El error de `api`, con el estado HTTP: 401 en la comunidad es que falta la cuenta gratis (`Licencia.tsx`). */
+/** El error de `api`, con el estado HTTP. */
 export class ErrorApi extends Error {
   constructor(mensaje: string, readonly status: number) {
     super(mensaje)
@@ -22,6 +22,20 @@ export async function api<T = any>(path: string, body?: unknown): Promise<T> {
     if (await preguntar(data.error)) return api<T>(path, { ...(body as object), masDeDos: true })
     throw new ErrorApi('', res.status)
   }
+  // Sin el token del servidor (la ventana se abrió antes de que lo hubiera, o el servidor lo cambió): al recargar, la
+  // página lo recibe en su cookie (server/token.ts). Una vez por minuto, para no recargar sin parar.
+  if (res.status === 401 && data.token) recargarPorToken()
   if (!res.ok) throw new ErrorApi(data.error ?? res.statusText, res.status)
   return data
+}
+
+function recargarPorToken() {
+  try {
+    const antes = Number(sessionStorage.getItem('vid:recarga-token') ?? 0)
+    if (Date.now() - antes < 60_000) return
+    sessionStorage.setItem('vid:recarga-token', String(Date.now()))
+  } catch {
+    return
+  }
+  location.reload()
 }

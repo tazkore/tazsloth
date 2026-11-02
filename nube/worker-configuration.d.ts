@@ -3,7 +3,7 @@
 // Runtime types generated with workerd@1.20261006.1 2026-10-01
 interface __BaseEnv_Env {
 	VIDEOS: R2Bucket;
-	ORIGEN: "https://nube.sloth.vancci.org";
+	ORIGEN: "https://nube.vid.kold.gold";
 	SECRETO: string;
 }
 declare namespace Cloudflare {

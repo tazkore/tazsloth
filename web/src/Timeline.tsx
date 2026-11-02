@@ -1,12 +1,11 @@
 import { Fragment, memo, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
-import { NOMBRE_AGENTE, proveedorDe } from '../../shared/providers'
+import { proveedorDe } from '../../shared/providers'
 import type { AgentEvent } from '../../shared/types'
 import { api } from './api'
 import { Arranque } from './Arranque'
 import { useEventos } from './eventos'
 import { Icon } from './Composer'
-import { LINK, LINK_ICON, linkParts, pedirMejora, QUOTE, QUOTE_EVENT, QUOTE_ICON, quoteText, THREAD, THREAD_ICON, threadIconOf } from './etiquetas'
-import { MarcaAgente } from './Logos'
+import { LINK, LINK_ICON, linkParts, QUOTE, QUOTE_EVENT, QUOTE_ICON, quoteText, THREAD, THREAD_ICON, threadIconOf } from './etiquetas'
 import { imageUrl, Thumbs } from './Images'
 import { buildTimeline, compact, delHilo, duration, errorLlano, REINTENTAR, toolSummary, type Item, type Subagente } from './items'
 import { bloquesDeMarkdown } from './markdown'
@@ -293,20 +292,6 @@ export function Timeline({ running, background, sessionId, proveedor = 'claude',
               </svg>
               Citar
             </button>
-            {sessionId && (
-              <button
-                className="cite-btn"
-                title={`Pide una mejora a Sloth sobre esto; ${NOMBRE_AGENTE[proveedorDe(proveedor === 'claude' ? '' : `${proveedor}:`)]} te ayuda a decirla`}
-                onClick={() => {
-                  getSelection()?.removeAllRanges()
-                  setCita(null)
-                  pedirMejora({ hilo: sessionId, cita: cita.text })
-                }}
-              >
-                <MarcaAgente de={proveedor} />
-                Pedir mejora
-              </button>
-            )}
           </div>
         )}
       </div>
@@ -551,12 +536,6 @@ function Fallo({ item, datos, proveedor, sessionId, onResponder }: { item: Extra
       <div className={`turn-end ${e.tuyo ? '' : 'bad'}`} title={item.error}>
         {e.titulo}
         {datos}
-        {sessionId && (
-          <button className="pedir-mejora" title={`Pide una mejora para que esto no vuelva a pasar; ${NOMBRE_AGENTE[agente]} te ayuda a decirla`} onClick={() => pedirMejora({ hilo: sessionId, cita: [e.titulo, item.error].filter((t, i): t is string => !!t && (i === 0 || !e.titulo.toLowerCase().includes(t.toLowerCase()))).join('\n') })}>
-            <MarcaAgente de={agente} />
-            Pedir mejora
-          </button>
-        )}
       </div>
       {onResponder && (
         <div className="turn-ayuda">

@@ -18,7 +18,7 @@ const corto = (s, n = 160) => String(s ?? '').replace(/\s+/g, ' ').slice(0, n)
 const meta = (i) => JSON.parse(readFileSync(join(SESIONES, `${i}.json`), 'utf8'))
 
 if (!existsSync(SESIONES)) {
-  console.error(`No hay hilos en ${SESIONES}: corre esto en la copia de Sloth donde trabajan (la de C:/dev/vancci-sloth).`)
+  console.error(`No hay hilos en ${SESIONES}: corre esto en la copia de Sloth donde trabajan (la de C:/tazkore-sloth).`)
   process.exit(1)
 }
 

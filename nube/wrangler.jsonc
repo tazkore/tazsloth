@@ -11,6 +11,6 @@
   "triggers": { "crons": ["* * * * *"] },
   "r2_buckets": [{ "binding": "VIDEOS", "bucket_name": "sloth-redes" }],
   // Su dirección propia; la de workers.dev sigue atendiendo a las versiones que ya la tienen guardada.
-  "routes": [{ "pattern": "nube.sloth.vancci.org", "custom_domain": true }],
-  "vars": { "ORIGEN": "https://nube.sloth.vancci.org" }
+  "routes": [{ "pattern": "nube.vid.kold.gold", "custom_domain": true }],
+  "vars": { "ORIGEN": "https://nube.vid.kold.gold" }
 }
