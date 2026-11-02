@@ -35,6 +35,8 @@ import { NombreDelHilo, Renombrar } from './Renombrar'
 import { Segmento } from './Segmento'
 import { SelectorVoz, useVoz } from './Voz' // voz de AI Studio
 import { lineaVoz } from '../../shared/voz'
+import { lineaAvatar } from '../../shared/avatar' // motor de avatar
+import { SelectorAvatar, useAvatar } from './Avatar' // motor de avatar
 import { Timeline } from './Timeline'
 import { compact, duration } from './items'
 import './Barra.css'
@@ -771,7 +773,11 @@ function NewSession(props: {
   // de Google conectada, la mandas tú.
   const voz = useVoz()
   const [voces, setVoces] = useStored<Record<string, string>>('voz', {})
-  const vozElegida = voz.estado?.cuenta ? (voces[card.id] ?? '') : ''
+  const vozElegida = voz.estado?.cuenta || voz.estado?.elevenlabs ? (voces[card.id] ?? '') : ''
+  // El motor de avatar (`Avatar.tsx`): sprites si no eliges otro.
+  const avatar = useAvatar()
+  const [avatares, setAvatares] = useStored<Record<string, string>>('avatar', {})
+  const avatarElegido = avatares[card.id] ?? ''
   // Un archivo o un enlace soltado en cualquier parte del inicio va al mensaje.
   const soltar = useSoltar()
 
@@ -823,6 +829,7 @@ function NewSession(props: {
               />
             )}
             {conFormato && <SelectorVoz card={card} voz={voz} valor={vozElegida} onCambio={(v) => setVoces({ ...voces, [card.id]: v })} />}
+            {conFormato && card.voz !== false && <SelectorAvatar avatar={avatar} valor={avatarElegido} onCambio={(m) => setAvatares({ ...avatares, [card.id]: m })} />}
             {card.lote && enlaces.length > 1 && (
               <Segmento
                 label="Lote"
@@ -852,6 +859,7 @@ function NewSession(props: {
             laSerie && `Serie: ${laSerie.nombre} (${laSerie.archivo}; cómo se usa, en video-base/SERIES.md)${text ? '' : '. Elige tú el tema.'}`,
             conFormato && !formatoEscrito && `Formato: ${formato}`,
             conFormato && lineaVoz(card, vozElegida),
+            conFormato && card.voz !== false && lineaAvatar(avatarElegido),
             // El modelo de cada subagente: lo medido, o lo que elegiste en «Avanzado». La skill lo lee aquí.
             lineaSubagentes(tareas)
           ]

@@ -34,6 +34,8 @@ import { previas } from './previas.ts' // previas de las cards
 import { radar } from './radar/index.ts' // radar
 import { redes } from './redes/index.ts' // redes
 import { voz } from './voz/index.ts' // voz de AI Studio
+import { avatar } from './avatar/index.ts' // motor de avatar
+import { DATOS } from './secretos.ts'
 import { youtube } from './youtube.ts'
 import { peticionDeConfianza } from './origen.ts'
 import { asegurarYtDlp, instalandoAlgo, instalar, pythonVidEntero, requisitos } from './requisitos.ts'
@@ -185,6 +187,8 @@ const disco = espacio({ app: APP, sessions, cards, ocupado, python: () => python
 const maquina = equipo({ app: APP, ocupado }) // tu equipo
 // La voz de los videos, que los agentes piden a v!d y v!d genera en AI Studio con la cuenta de Google del usuario.
 const narrar = voz(APP) // voz de AI Studio
+// El motor de avatar (ComfyUI, nube gratis, HeyGen, Codex) y la voz de ElevenLabs: llaves cifradas en data/avatar.
+const animar = avatar({ datos: DATOS, codexListo: async () => (await cuentaCodex().catch(() => null))?.conectada ?? false })
 
 // Si el agente (o tú) edita cards.json, las cards se actualizan solas.
 watch(CARDS, () => broadcast({ type: 'cards', cards: cards() }))
@@ -202,6 +206,7 @@ function ocupado(): string | null {
   if (subirLargos?.ocupado()) return subirLargos.ocupado()
   if (idear?.ocupado()) return idear.ocupado() // ideas: una investigación en curso
   if (narrar.ocupado()) return narrar.ocupado() // voz de AI Studio: una a medias
+  if (animar.ocupado()) return animar.ocupado() // avatar: una instalación o un video a medias
   return maquina.ocupado() ?? instalandoAlgo() ?? bajandoAgente() ?? conectando() ?? conectandoCodex() ?? conectandoOpenCode() ?? conectandoOtro()
 }
 
@@ -331,6 +336,7 @@ async function api(req: IncomingMessage, res: ServerResponse, url: URL): Promise
   if (await disco.api(req, res, path)) return true // espacio en disco
   if (await maquina.api(req, res, path)) return true // tu equipo
   if (await narrar.api(req, res, path)) return true // voz de AI Studio
+  if (await animar.api(req, res, path)) return true // motor de avatar
 
   if (path === '/api/opciones' && method === 'GET') {
     send(res, 200, opciones())

@@ -70,6 +70,15 @@ Este es el mapa:
   Google de cada quien (Opciones → Voz). La genera el servidor en la página `voz` del navegador integrado, con su propio
   perfil; los agentes la piden con el MCP `voz` (`mcp.mjs`), y el menú «Voz» del compositor manda la línea `Voz:` que
   siguen las skills (`skills/video-base/VOZ.md`). ADR 0011.
+- `server/avatar/` y `web/src/Avatar.tsx` (v!d Fase 5): el motor de avatar y la voz de ElevenLabs. Los agentes lo piden con
+  el MCP `avatar` (`mcp.mjs`: `motores`, `generar_avatar`, `estado_avatar`, `avatares_heygen`), que `mcpVoz()` entrega junto al
+  de la voz. Motores: `sprites` (el de siempre), `comfyui-local` (`comfy.ts` cliente de la API de ComfyUI, `flujos.ts` los
+  cuatro flujos con sus nodos, pesos y VRAM, `comfy-instalar.ts` instalación y arranque), `nube-gratis` y HeyGen con
+  Chrome (`nube.ts`), `heygen` (`heygen.ts`, API v3) y `codex` (orquesta; no genera). `elevenlabs.ts` es el segundo proveedor de
+  `generar_voz`. Llaves cifradas en `data/avatar/llaves.json` (`llaves.ts`); preferencias en `config.ts`. La línea
+  `Avatar:` del primer mensaje (`shared/avatar.ts`) la documenta `skills/video-base/AVATAR.md`; las skills oficiales de
+  HeyGen están en `skills/heygen-*`. Nada que baje gigas o gaste créditos corre solo: lo pide un botón de Opciones →
+  Avatares y voz o el agente.
 - El navegador de cada hilo (`electron/navegador.ts`, el globo de `web/src/Navegador.tsx`): el Playwright MCP del agente
   (`server/navegador-agente.ts`, lanzado a demanda por `server/navegador-mcp.mjs`) entra en él por CDP. Sin ventana, un Chrome con `data/navegador`; en lotes, uno limpio.
   Sus capturas y los logs de consola quedan en `data/navegador-capturas/`. Copia lo mejor del de T3 Code (`C:\dev\t3code`):

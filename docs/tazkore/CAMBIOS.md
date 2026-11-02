@@ -97,3 +97,29 @@ Se quedan a propósito: el Python compartido con la Sloth original (`%APPDATA%\y
 módulos compartidos `%LOCALAPPDATA%\sloth-modulos`, las carpetas de la Sloth original que mira Espacio en disco, el
 referrer de Grok, el nombre del repo en GitHub (`tazkore/tazsloth`), la carpeta del repo (`C:\tazkore-sloth`), NOTICE,
 LICENSE, los créditos y los ADR.
+
+## Fase 5 — avatares y voz (2-nov-2026)
+
+Se construyó el sistema; **no se descargó ningún modelo ni se gastó ningún crédito** al hacerlo. Todo lo pesado queda
+detrás de un botón de Opciones → «Avatares y voz».
+
+| Qué | Antes | Ahora | Archivos |
+| --- | --- | --- | --- |
+| Motor de avatar | Solo sprites (boca abierta y cerrada) | Cinco motores: `sprites` (por omisión, sin cambios), `comfyui-local`, `nube-gratis`, `heygen`, `codex` (orquesta, no genera) | `server/avatar/*`, `shared/avatar.ts`, `server/index.ts` |
+| MCP `avatar` | — | `motores`, `generar_avatar`, `estado_avatar`, `avatares_heygen`; viaja con el MCP `voz` (`mcpVoz()`), así que lo llevan Claude, Codex y OpenCode | `server/avatar/mcp.mjs`, `server/voz/index.ts`, `scripts/compilar.mjs` |
+| ComfyUI | — | Cliente de su API, detección en `127.0.0.1:8188`, «Instalar ComfyUI portátil» (NVIDIA, ~2 GB) y «Arrancar» como proceso hijo sin ventana | `server/avatar/comfy.ts`, `comfy-instalar.ts` |
+| Flujos | — | LatentSync 1.5 (trae su JSON), MuseTalk, InfiniteTalk y FantasyTalking (se importa el flujo API exportado del ejemplo oficial); botón «Instalar modelo» con nodos, pesos con tamaño exacto y reanudación | `server/avatar/flujos.ts`, `flujos/latentsync.json` |
+| Nube gratis | — | Cuaderno de Colab para LatentSync 1.5, enlace al Space de Hugging Face e «Importar resultado» | `server/avatar/nube.ts` |
+| HeyGen | — | API v3 (avatares, voces, video con audio propio o guion, estado, descarga) y «Hacer en HeyGen con Chrome» (paquete + prompt al portapapeles) | `server/avatar/heygen.ts`, `nube.ts` |
+| Voz | Solo Google AI Studio | Segundo proveedor, ElevenLabs (clones incluidos, WAV 24 kHz como AI Studio); `generar_voz` acepta `proveedor`; preferencia global en Opciones | `server/avatar/elevenlabs.ts`, `server/voz/*`, `shared/voz.ts` |
+| Llaves | — | ElevenLabs y HeyGen cifradas (AES-256-GCM + DPAPI) en `data/avatar/llaves.json`; la de HeyGen también pasa a `HEYGEN_API_KEY` de los agentes, que es lo que leen sus skills | `server/avatar/llaves.ts` |
+| Interfaz | — | Opciones → «Avatares y voz»; menú «Avatar» y voces de ElevenLabs en el compositor; línea `Avatar: <motor>` en el primer mensaje | `web/src/Avatar.tsx`, `Avatar.css`, `Voz.tsx`, `App.tsx`, `Opciones.tsx` |
+| Skills | — | `video-base/AVATAR.md` (cómo usar la línea y el fallback a sprites), `VOZ.md` con ElevenLabs, y las skills oficiales de HeyGen (MIT) en `skills/heygen-*` | `skills/video-base/*`, `skills/heygen-*` |
+
+**Qué falta que Alan haga** (nada corre solo):
+1. Pegar la llave de **ElevenLabs** (y, si quiere, la de **HeyGen**) en Opciones → Avatares y voz, y pulsar «Probar». Elegir ElevenLabs como proveedor y su voz por omisión (p. ej. «Tazkore IA»).
+2. Pulsar **«Instalar ComfyUI portátil»** (descarga ~2 GB; pide 7-Zip o el `tar` de Windows para extraer) y **«Arrancar ComfyUI»**.
+3. Pulsar **«Instalar modelo»** del flujo que quiera: LatentSync 1.5 (~5.2 GB más ~0.7 GB que baja el nodo al primer uso; cabe en 8 GB), MuseTalk (~6.8 GB al primer uso; cabe), InfiniteTalk o FantasyTalking (~33 GB, justos en 8 GB y muy lentos). Para estos dos y MuseTalk: abrir el flujo de ejemplo que el botón deja en ComfyUI, elegir sus modelos, exportarlo con «Save (API Format)» y pulsar «Importar flujo».
+4. Probar un video corto con cada motor antes de fiarse: **los flujos y los enlaces de pesos se verificaron con peticiones HEAD y leyendo el código de los nodos, pero no se corrieron contra un ComfyUI real**.
+5. Si quiere HeyGen con Chrome: tener la extensión de Claude en Chrome y su sesión de HeyGen abierta.
+

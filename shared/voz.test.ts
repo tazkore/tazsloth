@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
-import { lineaVoz, segundosWav, textoParaVoz, vocesDelPanel } from './voz.ts'
+import { lineaVoz, segundosWav, textoParaVoz, valorEleven, vocesDelPanel, vozEleven } from './voz.ts'
 
 // El principio del panel de voces de AI Studio, como lo dio su `innerText` el 29 de octubre de 2026.
 const PANEL = `Speaker settings
@@ -87,4 +87,15 @@ test('un WAV entero dice cuánto dura; uno a medio bajar, no', () => {
 test('del guion se narra lo de debajo de los encabezados, sin ellos ni comentarios', () => {
   const md = '# El título\n\n## Gancho\n\nHola,\nesto se dice.\n\n<!-- nota para mí -->\n\n## Cierre\n\nY esto también.\n'
   assert.equal(textoParaVoz(md), 'Hola, esto se dice.\n\nY esto también.')
+})
+
+test('lineaVoz: una voz de ElevenLabs lleva el proveedor y su id; las de AI Studio no cambian', () => {
+  const v = valorEleven({ id: 'abc123', nombre: 'Tazkore IA' })
+  assert.equal(v, 'eleven:abc123|Tazkore IA')
+  assert.deepEqual(vozEleven(v), { id: 'abc123', nombre: 'Tazkore IA' })
+  assert.equal(vozEleven('Fola'), null)
+  const linea = lineaVoz({}, v)
+  assert.match(linea, /^Voz: genérala tú con ElevenLabs, voz Tazkore IA \(id abc123; pasa proveedor "elevenlabs"/)
+  assert.match(lineaVoz({}, 'Fola'), /^Voz: genérala tú en AI Studio con la voz Fola/)
+  assert.equal(lineaVoz({ voz: false }, v), '')
 })

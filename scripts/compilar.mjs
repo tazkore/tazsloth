@@ -121,6 +121,10 @@ if (faltan.size) throw new Error(`El servidor importa paquetes que no van en la 
 cpSync(join(REPO, 'server', 'motor-pagina.jsx'), join(APP, 'server', 'motor-pagina.jsx'))
 // El MCP de la voz lo lanza cada agente con el Node de v!d: va tal cual, sin paquetes.
 cpSync(join(REPO, 'server', 'voz', 'mcp.mjs'), join(APP, 'server', 'voz', 'mcp.mjs'))
+// El del avatar (server/avatar/), igual, y los flujos de ComfyUI que trae la app (flujos.ts los busca junto al servidor).
+mkdirSync(join(APP, 'server', 'avatar'), { recursive: true })
+cpSync(join(REPO, 'server', 'avatar', 'mcp.mjs'), join(APP, 'server', 'avatar', 'mcp.mjs'))
+cpSync(join(REPO, 'server', 'avatar', 'flujos'), join(APP, 'server', 'flujos'), { recursive: true })
 // El que lanza Playwright MCP a demanda, igual.
 cpSync(join(REPO, 'server', 'navegador-mcp.mjs'), join(APP, 'server', 'navegador-mcp.mjs'))
 // El puente con el SDK de Cursor: server/cursor.ts lo copia junto al SDK que se baja y lo corre con el Node de v!d.

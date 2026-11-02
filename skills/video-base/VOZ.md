@@ -1,9 +1,14 @@
 # La voz: la línea `Voz:`
 
 El usuario elige en el compositor de v!d si manda él la voz o si la generas tú con una voz de Google AI Studio
-(Gemini 3.8 Flash TTS, en su cuenta de Google). Lo elegido llega en el primer mensaje:
+(Gemini 3.8 Flash TTS, en su cuenta de Google) o de ElevenLabs (con su llave, incluidos sus clones). Lo elegido llega
+en el primer mensaje:
 
 - `Voz: genérala tú en AI Studio con la voz <Nombre> …`: la generas tú, como se dice abajo. **No se la pidas.**
+- `Voz: genérala tú con ElevenLabs, voz <Nombre> (id <id>; pasa proveedor "elevenlabs" a generar_voz …)`: igual, con
+  `proveedor: "elevenlabs"` y, en `voz`, el id de la línea. Sale el mismo WAV (24 kHz, mono) y en la misma `salida`
+  (`fuentes/voz/ai-studio.wav`; el nombre se queda aunque la voz sea de ElevenLabs, para que tu skill no cambie), así
+  que lo demás —transcribir, alinear, las bocas— va igual.
 - `Voz: la manda el usuario; no la generes …`: pídesela como diga tu skill, aunque la marca o la skill traigan una
   voz de AI Studio.
 - Sin la línea: lo que diga tu skill.
@@ -33,7 +38,12 @@ pídela otra vez una sola vez; si se repite, díselo al usuario.
 - **La cuota del día u otro error de AI Studio:** dile el error tal cual y pídele su voz.
 - **Una voz que AI Studio no tiene:** `voces` dice las que hay. Usa la más parecida y díselo.
 
-Si el usuario eligió AI Studio, no la generes de otra forma (edge-tts u otra): o sale de AI Studio o la manda él.
+Si el usuario eligió AI Studio o ElevenLabs, no la generes de otra forma (edge-tts u otra): o sale del proveedor que
+eligió o la manda él. Sin proveedor en la línea, `generar_voz` usa el de Opciones → Avatares y voz.
+
+ElevenLabs cobra por carácter de su plan: pide la voz una sola vez por guion y, si corriges el guion, solo la vuelves a
+pedir cuando de verdad cambió (si el texto y la voz son los mismos, sale al momento sin gastar). Sus errores
+(`Se acabó la cuota…`, `no aceptó esa llave`) se los dices al usuario tal cual.
 
 ## En un estilo nuevo
 

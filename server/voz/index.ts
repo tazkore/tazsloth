@@ -14,6 +14,10 @@ import { segundosWav, textoParaVoz, vocesDelPanel } from '../../shared/voz.ts'
 import { guardar } from '../disco.ts'
 import { cuerpo } from '../http.ts'
 import { integrado } from '../navegador-agente.ts'
+import { mcpAvatar } from '../avatar/index.ts'
+import { leerConfig } from '../avatar/config.ts'
+import { generar as generarEleven, listarVoces as vocesEleven, buscarVoz } from '../avatar/elevenlabs.ts'
+import { leerLlave } from '../avatar/llaves.ts'
 
 /**
  * La voz de los videos, generada en Google AI Studio («Generate speech», Gemini 3.8 Flash TTS) con la cuenta de Google
@@ -50,7 +54,7 @@ const EDGE =
 /** Lo más que espera una petición a que acabe su voz: el MCP repite, y Codex corta una herramienta a los 60 s. */
 const ESPERA_MAXIMA = 50_000
 
-type Trabajo = TrabajoVoz & { texto: string; salida: string; huella: string }
+type Trabajo = TrabajoVoz & { texto: string; salida: string; huella: string; proveedor?: 'gemini' | 'elevenlabs' }
 type Cookie = { name: string; value: string; domain: string; path: string; expires: number; httpOnly: boolean; secure: boolean; sameSite?: string; partitionKey?: unknown }
 
 /** Lo que el servidor monta: su API, si está generando y la configuración del MCP para los agentes. */
@@ -412,8 +416,37 @@ export function voz(app: string) {
     return t
   }
 
-  const publico = ({ texto: _t, salida: _s, huella: _h, ...t }: Trabajo): TrabajoVoz => t
-  const estado = (): EstadoVoz => ({ cuenta, conectando, voces, enFila: fila.length + (trabajando ? 1 : 0), ...(error ? { error } : {}) })
+  /**
+   * La voz con ElevenLabs (`server/avatar/elevenlabs.ts`): sin la página de AI Studio ni la fila de Edge, directo a la API
+   * con la llave del usuario. Deja el mismo WAV (24 kHz, mono) que AI Studio. `explicito`: el agente pidió ElevenLabs; si
+   * fue la preferencia global y la voz que trae es de AI Studio (Fola, Kore…), se usa la voz de ElevenLabs por omisión.
+   */
+  function pedirEleven(texto: string, nombre: string, salida: string, explicito: boolean): Trabajo {
+    const llave = leerLlave('elevenlabs')
+    const config = leerConfig()
+    const huella = createHash('sha1').update(`eleven\n${nombre.toLowerCase()}\n${config.modeloElevenlabs ?? ''}\n${texto}`).digest('hex')
+    const t: Trabajo = { id: randomBytes(6).toString('hex'), estado: 'generando', voz: nombre, palabras: texto.split(/\s+/).length, texto, salida, huella, proveedor: 'elevenlabs' }
+    trabajos.set(t.id, t)
+    for (const id of [...trabajos.keys()].slice(0, -100)) trabajos.delete(id)
+    const igual = existsSync(salida) && existsSync(`${salida}.huella`) && readFileSync(`${salida}.huella`, 'utf8') === huella
+    const segundos = igual ? segundosWav(readFileSync(salida)) : null
+    if (segundos) return Object.assign(t, { estado: 'lista', archivo: salida, segundos: Math.round(segundos * 10) / 10 })
+    void (async () => {
+      try {
+        let voz = nombre
+        if (!explicito && config.vozElevenlabs && !buscarVoz(await vocesEleven(llave), nombre)) voz = config.vozElevenlabs
+        const r = await generarEleven({ llave, voz, texto, salida, modelo: config.modeloElevenlabs })
+        guardar(`${salida}.huella`, huella)
+        Object.assign(t, { estado: 'lista', archivo: r.archivo, segundos: r.segundos, voz: r.voz })
+      } catch (e) {
+        Object.assign(t, { estado: 'error', error: mensaje(e) })
+      }
+    })()
+    return t
+  }
+
+  const publico = ({ texto: _t, salida: _s, huella: _h, proveedor: _p, ...t }: Trabajo): TrabajoVoz => t
+  const estado = (): EstadoVoz => ({ cuenta, conectando, voces, enFila: fila.length + (trabajando ? 1 : 0), proveedor: leerConfig().vozProveedor, elevenlabs: !!leerLlave('elevenlabs'), ...(error ? { error } : {}) })
 
   // ── La API ─────────────────────────────────────────────────────────────────────────────────────────────────────
 
@@ -443,7 +476,7 @@ export function voz(app: string) {
       }
     }
     if (path === '/api/voz/generar' && metodo === 'POST') {
-      const d = await cuerpo<{ texto?: string; archivo?: string; voz?: string; salida?: string }>(req)
+      const d = await cuerpo<{ texto?: string; archivo?: string; voz?: string; salida?: string; proveedor?: string }>(req)
       let texto = d.texto?.trim()
       // Un guion en Markdown se narra como lo copia «Copiar»: sin títulos ni encabezados.
       if (!texto && d.archivo) {
@@ -453,6 +486,12 @@ export function voz(app: string) {
       }
       if (!texto || !d.voz?.trim() || !d.salida || !isAbsolute(d.salida) || !/\.wav$/i.test(d.salida))
         return enviar(400, { error: 'Pide el texto (o el archivo con él), la voz y la ruta absoluta del .wav donde va.' }), true
+      // El proveedor: el que pide el agente (la línea `Voz:` se lo dice) o, si no, la preferencia de Opciones.
+      const proveedor = d.proveedor === 'elevenlabs' || d.proveedor === 'gemini' ? d.proveedor : leerConfig().vozProveedor
+      if (proveedor === 'elevenlabs') {
+        if (!leerLlave('elevenlabs')) return enviar(409, { error: 'No hay llave de ElevenLabs: que el usuario la pegue en Opciones → Avatares y voz. Mientras, pídele la voz o usa AI Studio.' }), true
+        return enviar(200, publico(pedirEleven(texto, d.voz.trim(), resolve(d.salida), d.proveedor === 'elevenlabs'))), true
+      }
       if (!cuenta) return enviar(409, { error: 'No hay cuenta de Google conectada para AI Studio: que el usuario la conecte en Opciones → Voz (o en el selector Voz del compositor). Mientras, pídele la voz.' }), true
       return enviar(200, publico(pedir(texto, d.voz.trim(), resolve(d.salida)))), true
     }
@@ -480,7 +519,8 @@ export function mcpVoz(): Record<string, McpStdioServerConfig> {
   // Compilada (`scripts/compilar.mjs`), el servidor va en un solo archivo, server/index.mjs, y el MCP a su lado.
   const script = VENTA ? join(aqui, 'voz', 'mcp.mjs') : join(aqui, 'mcp.mjs')
   if (!existsSync(script) || !process.env.VID_URL) return {}
-  return { voz: { type: 'stdio', command: process.execPath, args: [script], env: { VID_URL: process.env.VID_URL, VID_TOKEN: process.env.VID_TOKEN ?? '' } } }
+  // Junto a la voz va el MCP `avatar` (`server/avatar/`): quien lleva uno lleva el otro, en Claude, Codex y OpenCode.
+  return { voz: { type: 'stdio', command: process.execPath, args: [script], env: { VID_URL: process.env.VID_URL, VID_TOKEN: process.env.VID_TOKEN ?? '' } }, ...mcpAvatar() }
 }
 
 /** Los avisos que la página enseña, para decir por qué no generó. */
