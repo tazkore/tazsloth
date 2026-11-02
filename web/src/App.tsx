@@ -25,6 +25,7 @@ import { CON_CHATGPT, conOpenCode, conPrimero, elegirModelos, lineaSubagentes, M
 import { AvisoEquipo } from './Equipo' // tu equipo
 import { MisVideos, Rejilla, VideoDe } from './MisVideos'
 import { Modelos3D } from './Modelos3D' // modelos 3D
+import { SocialMedia } from './SocialMedia' // Social Media
 import { Icono } from './Iconos'
 import { Bienvenida } from './Bienvenida'
 import { MarcaAgente } from './Logos'
@@ -50,6 +51,7 @@ type View =
   | { kind: 'ideas'; canalId?: string }
   | { kind: 'videos'; estilo?: string }
   | { kind: 'modelos3d' } // modelos 3D
+  | { kind: 'social' } // Social Media
 
 /** Lo que se escribió en un hilo nuevo sin mandarlo. Vive en localStorage hasta que se manda o se borra. */
 type Saved = Draft & { cardId: string; at: number }
@@ -68,6 +70,7 @@ function readHash(): View {
   if (kind === 'ideas') return { kind: 'ideas', canalId: id || undefined }
   if (kind === 'mis-videos') return { kind: 'videos', estilo: id || undefined }
   if (kind === 'modelos-3d') return { kind: 'modelos3d' } // modelos 3D
+  if (kind === 'social-media') return { kind: 'social' } // Social Media
   return { kind: 'new', cardId: kind === 'new' ? id : undefined }
 }
 
@@ -85,6 +88,8 @@ function go(view: View) {
               ? `/mis-videos${view.estilo ? `/${view.estilo}` : ''}`
               : view.kind === 'modelos3d' // modelos 3D
                 ? '/modelos-3d'
+                : view.kind === 'social' // Social Media
+                ? '/social-media'
                 : view.cardId
                 ? `/new/${view.cardId}`
                 : '/'
@@ -461,6 +466,13 @@ export function App() {
           </span>{' '}
           Mis videos
         </button>
+        {/* Social Media */}
+        <button className={`new-chat${view.kind === 'social' ? ' active' : ''}`} onClick={() => go({ kind: 'social' })} title={plegada ? 'Social Media' : undefined}>
+          <span className="new-chat-icon">
+            <Icono de="compartir" />
+          </span>{' '}
+          Social Media
+        </button>
         {/* modelos 3D */}
         <button className={`new-chat${view.kind === 'modelos3d' ? ' active' : ''}`} onClick={() => go({ kind: 'modelos3d' })} title={plegada ? 'Modelos 3D' : undefined}>
           <span className="new-chat-icon">
@@ -600,6 +612,7 @@ export function App() {
           />
         )}
         {view.kind === 'modelos3d' && <Modelos3D />} {/* modelos 3D */}
+        {view.kind === 'social' && <SocialMedia />} {/* Social Media */}
         {view.kind === 'videos' && (
           <ConNavegadorRedes>
             <MisVideos cards={cards} sessions={sessions} proyectos={proyectos} estilo={view.estilo} onEstilo={(estilo) => go({ kind: 'videos', estilo })} />

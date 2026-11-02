@@ -16,6 +16,7 @@ import { Segmento } from './Segmento'
 import { ConNavegadorRedes, RedesOpciones } from './Redes' // redes
 import { YoutubeOpciones } from './Youtube'
 import { VozOpciones } from './Voz' // voz de AI Studio
+import { AgenciaOpciones } from './AgenciaOpciones' // agencia
 import { VENTA } from '../../shared/venta'
 import './Opciones.css'
 
@@ -68,6 +69,7 @@ function Ajustes({ onDone, iniciando, onIniciando }: { onDone(): void; iniciando
         </div>
         <p className="grupo-nota">Los verticales salen en TikTok e Instagram; los largos, en YouTube. v!d tiene que estar abierto mientras sube a TikTok y a YouTube; Instagram publica aunque la computadora esté apagada.</p>
       </section>
+      <AgenciaOpciones /> {/* agencia */}
       <Grupo titulo="Agentes" nota="Cada agente se descarga la primera vez que lo eliges. Claude y ChatGPT necesitan un plan de pago o una llave de API; OpenCode, solo tu cuenta, que es gratis. Los demás, la cuenta o la llave de cada uno.">
         <Agentes />
         <CuentaCodex />

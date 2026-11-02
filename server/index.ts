@@ -16,7 +16,7 @@ import { IMAGE_TYPES, nombreAdjunto } from './agent.ts'
 import { avances } from './avances.ts'
 import { claudeModels, tituloCorto } from './claude.ts'
 import { codexModels } from './codex.ts'
-import { alBajarAgente, asegurarAgente, bajandoAgente, estadoAgentes, rutaAgente } from './agentes.ts'
+import { alBajarAgente, asegurarAgente, bajandoAgente, estadoAgentes, programaClaude, rutaAgente } from './agentes.ts'
 import { opencodeModels } from './opencode.ts'
 import { conectandoOtro, OTROS, sinLimites } from './proveedores.ts'
 import { PROVEEDORES, type Proveedor, proveedorDe } from '../shared/providers.ts'
@@ -41,6 +41,7 @@ import { espacio } from './espacio.ts' // espacio en disco
 import { equipo } from './equipo.ts' // tu equipo
 import { Sessions } from './sessions.ts'
 import { Proyectos } from './proyectos.ts' // proyectos
+import { agencia } from './agencia/index.ts' // agencia y Social Media
 import { mantenerVoz } from './voz-viva.ts'
 import { avisoDeVideos } from '../shared/limites.ts'
 import { eventosEnVivo } from './eventos-en-vivo.ts'
@@ -124,6 +125,8 @@ const conEtapas = (id: string) => !!cards().find((c) => c.id === sessions.meta(i
 // Proyectos y series (v!d Fase 3): su memoria entra al principio del primer turno de cada hilo del proyecto.
 const proyectos = new Proyectos(join(APP, 'data', 'proyectos'), join(SKILLS, 'kold-gold', 'marca.json'))
 sessions.contexto = (meta) => proyectos.contexto(meta.proyecto, meta.serie)
+// Agencia y Social Media (v!d Fase 4): la llave de vid-api por proyecto; exporta VID_AGENCIA_LLAVE y VID_API_URL.
+const social = agencia({ dir: join(APP, 'data', 'agencia'), skills: SKILLS, proyectos, programaClaude })
 sessions.esVideo = (meta) => !!cards().find((c) => c.id === meta.cardId)?.etapas?.some((e) => e.fase)
 // Mientras un video trabaja, Whisper se queda cargado: el primero que empieza lo carga, antes de que sus agentes llenen la memoria.
 setInterval(() => {
@@ -334,6 +337,7 @@ async function api(req: IncomingMessage, res: ServerResponse, url: URL): Promise
 
   if (await disco.api(req, res, path)) return true // espacio en disco
   if (await proyectos.api(req, res, path)) return true // proyectos
+  if (await social.api(req, res, url)) return true // agencia y Social Media
   if (await maquina.api(req, res, path)) return true // tu equipo
   if (await narrar.api(req, res, path)) return true // voz de AI Studio
 

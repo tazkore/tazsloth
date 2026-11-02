@@ -35,8 +35,8 @@ const MAC_FIRMADA = MAC && !!process.env.CSC_LINK
 const VERSION = JSON.parse(readFileSync(join(REPO, 'package.json'), 'utf8')).version
 const SIN_INSTALADOR = process.argv.includes('--sin-instalador')
 
-/** Además de las de cada card: la base común de los estilos y la biblioteca de modelos 3D. */
-const SKILLS_BASE = ['video-base', 'modelos-3d']
+/** Además de las de cada card: la base común de los estilos, la biblioteca de modelos 3D y las de redes (`social-*`, Social Media). */
+const SKILLS_BASE = ['video-base', 'modelos-3d', ...readdirSync(join(REPO, 'skills')).filter((s) => s.startsWith('social-'))]
 /**
  * Los paquetes que el servidor carga o lanza. Lo demás ya va dentro de server/index.mjs o de la interfaz. De los agentes
  * van solo su SDK y su lanzador: su programa (cientos de MB cada uno) se baja al elegirlo (`server/agentes.ts`).

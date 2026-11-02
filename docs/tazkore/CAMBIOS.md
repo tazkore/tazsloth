@@ -116,3 +116,40 @@ que el agente lee al empezar.
 | Editor de memoria | Modal con textarea monoespaciada, Guardar y Ctrl+S | `web/src/Proyectos.tsx` (`EditorMemoria`) |
 | Mis videos | Filtro por proyecto y serie, además del estilo | `web/src/MisVideos.tsx` |
 | Tests | CRUD, siembra, archivar sin borrar, líneas de control, inyección de memoria por proveedor | `server/proyectos.test.ts` |
+
+## Fase 4 — agencia, Social Media y skills de Instagram (v!d) (2 nov 2026)
+
+Publicar por la agencia: vid-api de Kold.Gold (Edge Function `vid-api` en Supabase) sobre el Social Planner de GHL
+(marca blanca app.kold.gold), con la llave de cada agencia por proyecto, una vista nueva «Social Media» y nueve skills
+de redes adaptadas de Instagram Skills (Sergey Bulaev, MIT).
+
+| Qué | Archivos |
+| --- | --- |
+| Opciones → Agencia: «Llave de agencia v!d» y URL de vid-api por proyecto, más una por defecto; cifradas con AES-256-GCM + DPAPI (`data/agencia/llaves.json`); «Probar conexión» (op `estado`) con agencia, subcuenta y redes con su logo | `web/src/AgenciaOpciones.tsx`, `server/agencia/llaves.ts`, `web/src/Opciones.tsx` (una línea), `web/src/Logos.tsx` (Facebook, LinkedIn, Google) |
+| Cliente de vid-api: timeout, reintentos (429 con `Retry-After` siempre; 5xx y red solo en operaciones repetibles, nunca en crear/editar/subir), subida multipart en flujo con avance, errores en español sin la llave | `server/agencia/vid-api.ts` |
+| Rutas `/api/agencia/*` (el navegador nunca ve la llave): config, llave, activo, probar/estado, archivo, subir + trabajos (avance), publicar, posts, posts/editar, posts/borrar, plan, skill, entorno (solo procesos locales con `x-vid-token`) | `server/agencia/index.ts`, `server/index.ts` (tres líneas) |
+| `VID_AGENCIA_LLAVE` y `VID_API_URL` para los agentes: la llave del proyecto activo (que la ventana sincroniza al servidor), en el entorno que heredan al arrancar; nunca en el primer mensaje ni en logs | `server/agencia/llaves.ts` (`exportar`), `web/src/SocialSkill.tsx` |
+| Barra lateral → «Social Media»: proyecto y serie, canal «Por agencia (GHL)» (por omisión) o «Directo (como antes)» (lleva a Mis videos, que sigue subiendo a TikTok, Instagram y YouTube como antes); nueva publicación (videos de Mis videos o archivo, cuentas por red, tipo post/reel/story/carrusel, texto, borrador/programar/ahora, privacidad de TikTok, título de YouTube), subida a GHL con barra y diálogo de confirmación obligatorio antes de programar o publicar | `web/src/SocialMedia.tsx`, `web/src/SocialMedia.css`, `web/src/App.tsx` (entrada y vista) |
+| Calendario semanal/mensual (`listar_posts` + borradores locales del plan) con Editar, Reprogramar (con confirmación) y Borrar | `web/src/SocialMedia.tsx` |
+| Reglas de vid-api en el cliente y en el servidor antes de mandar (cuentas, reel = 1 video, story = 1 medio, carrusel 2-10 sin mezclar, TikTok solo video de GHL, YouTube video + título ≤ 100, programar ≥ +60 s) | `shared/agencia.ts` (`validarPost`) |
+| Skills de redes (van también en la app instalada: `SKILLS_BASE` de `scripts/compilar.mjs`; se enlazan en ~/.claude/skills y ~/.codex/skills como las demás): `social-caption-writer`, `social-carousel-planner`, `social-hook-extractor`, `social-hashtag-strategist`, `social-humanizer`, `social-content-planner`, `social-repurposer`, `social-profile-optimizer`, `social-audience-insights`, con la base `social-base` (referencias, `lib/`, `publicar.mjs` que siempre crea en `draft`, LICENSE MIT y NOTICE con crédito) | `skills/social-*` |
+| Botones de skills: «Escribir caption», «Hashtags», «Humanizar y auditar», «Carrusel» en la publicación; «Plan de la semana» (llena el calendario con borradores locales) y «Optimizar perfil» en el calendario; «Extraer gancho» y «Reaprovechar» en cada idea. Corren con `query()` (como el texto de redes), con la memoria del proyecto, y el resultado se edita | `server/agencia/skills.ts`, `web/src/SocialSkill.tsx`, `web/src/Ideas.tsx` (una línea + import) |
+| Pruebas con fetch simulado (estado, subir, crear borrador, 429 con Retry-After, errores), cifrado de la llave por proyecto, rutas (confirmación, entorno) y validación | `server/agencia.test.ts`, `shared/agencia.test.ts` |
+
+### Cómo poner la llave
+
+1. Emitirla en kold.gold: ficha de la agencia → tarjeta «v!d — Llave API» (solo superadmin). Para Kold Gold (consumidor
+   interno) por SQL: `select vid_llave_emitir(null, 'qfvg0kx2g8DCdPLmIwjx');`. La llave en claro (`kg_live_…`) se ve una
+   sola vez; emitir otra rota la anterior.
+2. Pegarla en v!d → Opciones → Agencia, en el proyecto (o en «Llave por defecto») → Guardar → Probar conexión.
+3. Social Media ya publica por la agencia; los agentes la reciben como `VID_AGENCIA_LLAVE` (la del proyecto activo).
+
+### Skills de Instagram (MIT)
+
+Origen: https://github.com/sergebulaev/instagram-skills (commit `550d3cf`, 27-oct-2026). Se conservan `LICENSE` y un
+`NOTICE.md` en `skills/social-base`. Adaptaciones: nombres `ig-*` → `social-*`; publicación con vid-api (no Publora),
+desde las skills solo en borrador; leen `MemoriaProyecto:`/`MemoriaSerie:`; ajustes para TikTok, YouTube, Facebook y
+LinkedIn (`social-base/references/redes.md`); Pixfaro desactivado (se quitaron `publora_client.py`,
+`pixfaro_client.py` y `backend_selector.py`); Apify solo con `APIFY_TOKEN`, con aviso de que cobra por uso.
+
+Sin probar contra vid-api real (no hay llave todavía): todo con fetch simulado. Nada se publicó.

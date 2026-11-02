@@ -48,6 +48,7 @@ import { Icon, type Choice } from './Composer'
 import { Confirm } from './Confirm'
 import { Logo } from './Logos'
 import { Segmento } from './Segmento'
+import { AccionesIdeaSocial } from './SocialSkill' // Social Media
 import './Ideas.css'
 
 /**
@@ -2175,6 +2176,8 @@ function IdeaVista(props: {
         </div>
       )}
       {error && <p className="bad small">{error}</p>}
+      {/* Social Media: las skills de redes sobre la idea */}
+      {!descartada && <AccionesIdeaSocial texto={[`Idea: ${idea.titulo}`, `Tema: ${idea.tema}`, ...idea.titulos.map((x) => `Título o gancho: ${x.texto}`), `Por qué: ${idea.porque}`, texto ? `Esquema:\n${texto}` : ''].filter(Boolean).join('\n')} />}
       <div className="idea-acciones">
         {descartada ? (
           <button className="ghost small" onClick={() => elegir(null).then(props.onCambio)}>
