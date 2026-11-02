@@ -42,7 +42,7 @@ están en la cabecera de `scripts/redes.ts`: `nube` (lo que espera en el Worker 
   `23 oct 2026`).
 - Con la ventana de v!d abierta, TikTok va en la página `redes` del navegador integrado, con su perfil
   (`persist:redes`), sin otra ventana: «Conectar» en Opciones → Redes la enseña ahí para iniciar sesión. Sin la ventana,
-  va en un Edge con el perfil `data/redes/perfil` y el puerto CDP 9334. Las dos sesiones son aparte: la de una no vale
+  va en un Edge con el perfil `data/redes/perfil` y el puerto CDP en un puerto libre al azar (127.0.0.1, `server/edge-seguro.ts`). Las dos sesiones son aparte: la de una no vale
   en la otra. `POST /api/redes/tiktok/conectar` abre la página de iniciar sesión en el que toque. En la app, Google
   rechaza su inicio de sesión («el navegador no es seguro»): si la página va a `accounts.google.com`, v!d la devuelve
   al login, abre Edge con ese perfil para ese paso y, al ver la cuenta ahí, pasa las cookies de la red a la app y cierra

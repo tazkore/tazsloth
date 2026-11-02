@@ -1,5 +1,5 @@
-import { spawn } from 'node:child_process'
 import { existsSync, mkdirSync } from 'node:fs'
+import { lanzarEdge, nuevoEdge } from '../edge-seguro.ts'
 import { join } from 'node:path'
 import type { Browser, BrowserContext, Page } from 'playwright-core'
 import { conectarCDP } from '../playwright.ts'
@@ -14,7 +14,7 @@ import { Detenido } from './youtube.ts'
  * a la vez, cada una en su pestaña, y la que pide algo a una persona (un captcha, verificar la cuenta) se queda al frente.
  */
 
-const PUERTO = 9335
+const edgeInv = nuevoEdge()
 const EDGE = ['C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe', 'C:\\Program Files\\Microsoft\\Edge\\Application\\msedge.exe']
 const PASAPORTE = 'https://www.tiktok.com/passport/web/account/info/?aid=1988'
 /** Lo que pide la página de Instagram al abrir «Editar perfil»: trae el usuario, sin abrir pestaña. */
@@ -40,7 +40,7 @@ export async function bajar(page: Page, signal: AbortSignal) {
 }
 
 const responde = () =>
-  fetch(`http://127.0.0.1:${PUERTO}/json/version`).then(
+  fetch(`http://127.0.0.1:${edgeInv.valor}/json/version`).then(
     (r) => r.ok,
     () => false
   )
@@ -50,7 +50,7 @@ let conectando: Promise<Browser> | null = null
 let lanzando: Promise<void> | null = null
 
 async function conectar(): Promise<BrowserContext> {
-  if (!conectado?.isConnected()) conectado = await (conectando ??= conectarCDP(`http://127.0.0.1:${PUERTO}`).finally(() => (conectando = null)))
+  if (!conectado?.isConnected()) conectado = await (conectando ??= conectarCDP(`http://127.0.0.1:${edgeInv.valor}`).finally(() => (conectando = null)))
   return conectado.contexts()[0]
 }
 
@@ -75,7 +75,7 @@ async function lanzar(app: string) {
   const perfil = join(app, 'data', 'investigacion', 'perfil')
   mkdirSync(perfil, { recursive: true })
   // Sin sincronizar: es un perfil de trabajo, y no tiene por qué traerse tus ajustes ni tus pestañas de otros equipos.
-  spawn(edge, [`--remote-debugging-port=${PUERTO}`, `--user-data-dir=${perfil}`, '--no-first-run', '--no-default-browser-check', '--mute-audio', '--disable-sync', 'about:blank'], { detached: true, stdio: 'ignore' }).unref()
+  await lanzarEdge(edgeInv, edge, [`--user-data-dir=${perfil}`, '--no-first-run', '--no-default-browser-check', '--mute-audio', '--disable-sync', 'about:blank'])
   for (let i = 0; i < 40 && !(await responde()); i++) await new Promise((r) => setTimeout(r, 500))
   if (!(await responde())) throw new Error('El navegador de las cuentas de investigación no respondió.')
 }

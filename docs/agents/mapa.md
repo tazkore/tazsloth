@@ -85,6 +85,13 @@ Este es el mapa:
 - `server/modelos3d.ts` y `web/src/Modelos3D.tsx`: «Modelos 3D» enseña la biblioteca `skills/modelos-3d` que usan los
   agentes (la de `SKILLS`), que llenan los videos (solo se mira). Empieza vacía; la moneda de la plantilla
   va en `modelos-3d/plantilla`, sin enseñarse.
+- Hacer, ampliar e importar modelos 3D (`server/modelos3d-hilos.ts`, `web/src/Modelos3DAcciones.tsx`): «Nuevo modelo» y
+  «Ampliar» abren un hilo de la card `nuevo-modelo-3d` (la carpeta de la card es el proyecto de prueba compartido, que
+  arma `modelos.py nuevo`); «Importar .glb» corre `modelos.py importar` sin agente. Flujo en `skills/modelos-3d/SKILL.md` §6.
+- `server/feedback.ts` y `web/src/Feedback.tsx`: el botón «Feedback» de la barra. Arma con Claude un prompt para Claude
+  Code, lo guarda siempre en `data/feedback/<fecha>-<slug>.md` y, con `VID_AGENCIA_LLAVE` y `VID_API_URL`, lo manda a
+  `vid-api` de Kold.Gold (`op: 'feedback'`, cabecera `x-vid-key`).
+- Seguridad del navegador (lista blanca por perfil, confirmación humana, Edge en puerto al azar): `docs/agents/navegador-seguridad.md`.
 - `server/originales.ts` y `web/src/TusCambios.tsx`: en la app que se vende, «Con tus cambios (N)» bajo la card dice qué
   archivos de su skill (y de video-base) ya no son como los trae la versión, y vuelve a la original, entera o uno a uno.
   Lo que se pisa, también al actualizar (`prepararSkills`), se copia antes a `data/skills-tuyas`.

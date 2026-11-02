@@ -1,7 +1,7 @@
 // Primero: copia los datos de TazSloth a las carpetas de v!d, antes de que los demás módulos creen las suyas.
 import './migrar-arranque.ts'
 import { spawn } from 'node:child_process'
-import { createReadStream, createWriteStream, existsSync, mkdirSync, readdirSync, statSync, watch } from 'node:fs'
+import { createReadStream, createWriteStream, existsSync, mkdirSync, readdirSync, readFileSync, statSync, watch } from 'node:fs'
 import { createServer, type IncomingMessage, type ServerResponse } from 'node:http'
 import { createServer as servidorTcp } from 'node:net'
 import { basename, dirname, extname, join, resolve } from 'node:path'
@@ -28,15 +28,17 @@ import { enlacesApi } from './enlaces.ts' // tarjeta de los enlaces
 import { cerrarVigilantesOciosos, etapasApi, folderOf, mismaCwd, queFalta, videosApi } from './etapas.ts' // panel de etapas
 import { cerrarMotoresOciosos } from './motor.ts'
 import { modelos3d } from './modelos3d.ts' // modelos 3D
+import { modelos3dHilos } from './modelos3d-hilos.ts' // modelos 3D
+import { feedback, resumenDeHilo } from './feedback.ts' // feedback
 import { miniaturas } from './miniaturas.ts' // panel de etapas
-import { cargarVariables, guardarMeta, guardarYoutube, opciones } from './opciones.ts'
+import { cargarVariables, guardarMeta, guardarYoutube, leer, opciones } from './opciones.ts'
 import { previas } from './previas.ts' // previas de las cards
 import { radar } from './radar/index.ts' // radar
 import { redes } from './redes/index.ts' // redes
 import { voz } from './voz/index.ts' // voz de AI Studio
 import { youtube } from './youtube.ts'
 import { peticionDeConfianza } from './origen.ts'
-import { asegurarYtDlp, instalandoAlgo, instalar, pythonVidEntero, requisitos } from './requisitos.ts'
+import { asegurarYtDlp, instalandoAlgo, instalar, pythonVidEntero, requisitos, rutaPythonVid } from './requisitos.ts'
 import { espacio } from './espacio.ts' // espacio en disco
 import { equipo } from './equipo.ts' // tu equipo
 import { Sessions } from './sessions.ts'
@@ -176,6 +178,35 @@ const idear = VENTA ? undefined : ideas(APP, sessions, broadcast, subirLargos?.l
 // La biblioteca de modelos 3D que llenan los videos, para verla: la de la skill que usan los agentes, que es donde guardan.
 const biblioteca3d = modelos3d(carpetaSkill('modelos-3d') ?? join(APP, 'skills', 'modelos-3d')) // modelos 3D
 // El buscador propio de noticias de tecnología: lee sus fuentes en segundo plano y las skills buscan ahí.
+const hilos3d = modelos3dHilos({
+  cards: () => cards(),
+  sessions,
+  skillRef,
+  modeloPorOmision: () => {
+    const m = modelos.find((x) => proveedorDe(x.id) === 'claude') ?? modelos[0]
+    return m && { model: m.id }
+  },
+  adjuntos: ATTACHMENTS,
+  biblioteca: carpetaSkill('modelos-3d') ?? join(APP, 'skills', 'modelos-3d'),
+  python: () => rutaPythonVid() ?? (process.platform === 'win32' ? 'python' : 'python3')
+}) // modelos 3D
+const retroalimentacion = feedback({
+  app: APP,
+  version: (() => {
+    try {
+      return JSON.parse(readFileSync(join(APP, 'package.json'), 'utf8')).version as string
+    } catch {
+      return ''
+    }
+  })(),
+  llave: () => process.env.VID_AGENCIA_LLAVE || leer('VID_AGENCIA_LLAVE'),
+  url: () => process.env.VID_API_URL || leer('VID_API_URL'),
+  adjuntos: ATTACHMENTS,
+  resumenHilo: (id) => {
+    const h = sessions.get(id)
+    return h ? resumenDeHilo(h.meta, h.events) : undefined
+  }
+}) // feedback
 const noticias = radar(APP) // radar
 // En qué fase va cada video y cuántas etapas lleva, para la barra lateral.
 avance = avances(sessions, cards, broadcast)
@@ -564,6 +595,8 @@ async function api(req: IncomingMessage, res: ServerResponse, url: URL): Promise
   if (subirLargos && (await subirLargos.api(req, res, url))) return true // videos largos de YouTube
   if (await previa.api(req, res, url)) return true // previas de las cards
   if (idear && (await idear.api(req, res, url))) return true // ideas
+  if (await hilos3d.api(req, res, url)) return true // modelos 3D
+  if (await retroalimentacion.api(req, res, url)) return true // feedback
   if (await biblioteca3d.api(req, res, url)) return true // modelos 3D
   if (await noticias.api(req, res, url)) return true // radar
   if (await enlacesApi(req, res, url)) return true // tarjeta de los enlaces
