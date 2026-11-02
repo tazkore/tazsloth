@@ -17,6 +17,7 @@ Lo que comparten los estilos de vídeo: el lote, los errores ya vistos y los scr
 | [PORTADA.md](PORTADA.md) | La portada que todo vídeo vertical lleva de primer fotograma, en el estilo de su vídeo, y la miniatura de YouTube del horizontal |
 | [VOZ.md](VOZ.md) | La voz que el usuario elige al pedir el vídeo (`Voz:` del mensaje): mandarla él o generarla tú en AI Studio con el MCP `voz` |
 | [SERIES.md](SERIES.md) | Las series (`series/`), formatos fijos del canal para todo estilo: v!d las ofrece al crear un vídeo; solo se lee si el mensaje trae `Serie:` |
+| [PROYECTOS.md](PROYECTOS.md) | El proyecto y la serie del hilo (`Proyecto:`, `MemoriaProyecto:`, `MemoriaSerie:` del mensaje): leer su memoria, respetarla y proponer al final qué agregar |
 | `scripts/` | Las herramientas (abajo) |
 
 `<base>` es esta carpeta, `video-base`, junto a las skills de cada estilo.

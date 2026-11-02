@@ -97,3 +97,22 @@ Se quedan a propósito: el Python compartido con la Sloth original (`%APPDATA%\y
 módulos compartidos `%LOCALAPPDATA%\sloth-modulos`, las carpetas de la Sloth original que mira Espacio en disco, el
 referrer de Grok, el nombre del repo en GitHub (`tazkore/tazsloth`), la carpeta del repo (`C:\tazkore-sloth`), NOTICE,
 LICENSE, los créditos y los ADR.
+
+## Fase 3 — proyectos y series (v!d) (2 nov 2026)
+
+Cada hilo puede ser de un **proyecto** (marca o canal) y de una **serie** del proyecto, con su memoria (`MEMORIA.md`)
+que el agente lee al empezar.
+
+| Qué | Cómo | Archivos |
+| --- | --- | --- |
+| Entidad | `data/proyectos/<id>/proyecto.json` `{id, nombre, color, logo?, creado, archivado?}` + `MEMORIA.md` + `series/<id>/serie.json` y `MEMORIA.md`. Colores con nombre de la paleta (cobre, oro, plata, verde, rojo, gris). Archivar es una marca: nunca se borra nada | `server/proyectos.ts`, `shared/proyectos.ts` |
+| Siembra | Solo si no hay ningún proyecto: Kold.Gold (cobre; nicho y cierre de `skills/kold-gold/marca.json`, regla de oro «no vender de frente», serie «Kold Gold Radar»), Tazkore IA, Alan Korenfeld y Diplomado IA con la plantilla Marca/Tono/Público/Reglas/Cierre | `server/proyectos.ts` |
+| API | `GET/POST /api/proyectos`, `GET/POST /api/proyectos/<id>`, `POST /api/proyectos/<id>/series`, `POST /api/proyectos/<id>/series/<serie>`, `GET/POST …/memoria`, `POST /api/sessions/<id>/mover` | `server/proyectos.ts`, `server/index.ts` |
+| Hilos | `SessionMeta.proyecto` y `.serie`. `POST /api/sessions` y `/api/lotes` aceptan `proyecto` y `serie`; el primer mensaje lleva `Proyecto:`, `MemoriaProyecto:` y `MemoriaSerie:` | `shared/types.ts`, `server/sessions.ts`, `server/index.ts` |
+| Memoria al agente | `Sessions.turno` antepone `<contexto-del-proyecto>` (texto de las memorias) al primer turno de cada proceso sin sesión que retomar, para todos los proveedores; en el hilo solo se ven las líneas de control | `server/sessions.ts` (`contexto`), `server/proyectos.ts` (`contexto`) |
+| Skills | `video-base/PROYECTOS.md`: leer y respetar la memoria, proponer al final (sin escribir) qué agregar. Referido en `LEEME.md`, `kold-gold` y `video-explicativo` (El Diff no se toca: recibe el bloque igual) | `skills/video-base/*`, `skills/kold-gold/SKILL.md`, `skills/video-explicativo/SKILL.md` |
+| Barra lateral | Sección «Proyectos» (+ Proyecto) con cada proyecto y sus series plegables (recordado en localStorage), y «Sin proyecto» con la lista por fechas de siempre. Menú del proyecto: Renombrar, Color, Nueva serie, Editar memoria, Archivar. Mover un hilo arrastrándolo o con «Mover a…». Plegada (Ctrl+B) se ven los puntos de color | `web/src/Proyectos.tsx`, `web/src/Proyectos.css`, `web/src/App.tsx` |
+| Compositor | Selector de proyecto y serie junto al de estilo; por defecto el del último hilo abierto o el que tocaste en la barra. Si la serie coincide con una del banco de la skill, se elige también esa (`Serie:`) | `web/src/Proyectos.tsx` (`SelectorProyecto`), `web/src/App.tsx` |
+| Editor de memoria | Modal con textarea monoespaciada, Guardar y Ctrl+S | `web/src/Proyectos.tsx` (`EditorMemoria`) |
+| Mis videos | Filtro por proyecto y serie, además del estilo | `web/src/MisVideos.tsx` |
+| Tests | CRUD, siembra, archivar sin borrar, líneas de control, inyección de memoria por proveedor | `server/proyectos.test.ts` |

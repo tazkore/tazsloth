@@ -74,6 +74,9 @@ Si el mensaje trae la línea `Serie:`, sigue [`SERIES.md`](../video-base/SERIES.
 serie antes de investigar, elige el tema del banco o de lo que pide la serie, y el nicho es el de la marca. La forma, el
 mundo y la imagen siguen siendo de cada video (ver "Cada video es único").
 
+Si trae `Proyecto:` y `MemoriaProyecto:` (y quizá `MemoriaSerie:`), sigue [`PROYECTOS.md`](../video-base/PROYECTOS.md): lee
+esa memoria, respétala en marca, tono, reglas y cierre, y al terminar propón (sin escribirlo) qué agregarle.
+
 ## Lo que el usuario pidió y no se negocia
 
 - **Lo único de collage es el personaje**: el narrador de la marca es una imagen recortada como sticker con borde
