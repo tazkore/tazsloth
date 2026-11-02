@@ -218,7 +218,7 @@ export const Feedback = memo(function Feedback() {
               <textarea className="fb-prompt" rows={16} value={prompt} placeholder="Armando el prompt…" onChange={(e) => setPrompt(e.target.value)} />
             </label>
             {origen && <p className="fb-nota">{origen}</p>}
-            <p className="fb-nota">{enviaAVid ? 'Se guarda en esta computadora y se manda a Kold.Gold.' : 'Se guarda en esta computadora. Para mandarlo a Kold.Gold hace falta la llave de agencia (VID_AGENCIA_LLAVE).'}</p>
+            <p className="fb-nota">{enviaAVid ? 'Se guarda en esta computadora y se manda a Kold.Gold.' : 'Se guarda en esta computadora. Para mandarlo a Kold.Gold hace falta la llave de agencia (Opciones → Agencia).'}</p>
             <div className="fb-fila">
               <button className="fb-boton principal" disabled={!prompt.trim() || trabajando !== null} onClick={enviar}>
                 {trabajando === 'enviar' ? 'Enviando…' : 'Enviar'}

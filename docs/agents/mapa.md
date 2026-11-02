@@ -102,8 +102,9 @@ Este es el mapa:
   «Ampliar» abren un hilo de la card `nuevo-modelo-3d` (la carpeta de la card es el proyecto de prueba compartido, que
   arma `modelos.py nuevo`); «Importar .glb» corre `modelos.py importar` sin agente. Flujo en `skills/modelos-3d/SKILL.md` §6.
 - `server/feedback.ts` y `web/src/Feedback.tsx`: el botón «Feedback» de la barra. Arma con Claude un prompt para Claude
-  Code, lo guarda siempre en `data/feedback/<fecha>-<slug>.md` y, con `VID_AGENCIA_LLAVE` y `VID_API_URL`, lo manda a
-  `vid-api` de Kold.Gold (`op: 'feedback'`, cabecera `x-vid-key`).
+  Code, lo guarda siempre en `data/feedback/<fecha>-<slug>.md` y, con la llave de agencia del proyecto activo (o la por
+  defecto, `server/agencia/llaves.ts`), lo manda a `vid-api` de Kold.Gold con el cliente de `server/agencia/vid-api.ts`
+  (`op: 'feedback'`, cabecera `x-vid-key`, contexto recortado a 20 KB).
 - Seguridad del navegador (lista blanca por perfil, confirmación humana, Edge en puerto al azar): `docs/agents/navegador-seguridad.md`.
 - `server/originales.ts` y `web/src/TusCambios.tsx`: en la app que se vende, «Con tus cambios (N)» bajo la card dice qué
   archivos de su skill (y de video-base) ya no son como los trae la versión, y vuelve a la original, entera o uno a uno.

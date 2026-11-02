@@ -179,7 +179,10 @@ export function clienteVidApi(o: OpcionesVidApi) {
       op<{ total: number; posts: PostSocial[] }>('listar_posts', filtro),
     editarPost: (id: string, cambios: Partial<NuevoPost>) => op<{ post: PostSocial }>('editar_post', { ...cambios, id }),
     borrarPost: (id: string) => op<{ ok: true }>('borrar_post', { id }),
-    categorias: () => op<{ categorias: { id: string; nombre: string }[] }>('categorias')
+    categorias: () => op<{ categorias: { id: string; nombre: string }[] }>('categorias'),
+    /** El botón Feedback (`server/feedback.ts`): prompt y contexto de hasta 20 KB cada uno (README de vid-api). */
+    feedback: (f: { tipo: 'error' | 'mejora'; titulo: string; prompt: string; version: string; contexto: Record<string, unknown> }, tiempo = 20_000) =>
+      op<{ feedback: { id: string; estado: string } }>('feedback', { ...f }, tiempo)
   }
 }
 

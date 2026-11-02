@@ -3,6 +3,8 @@ import { copyFileSync, existsSync, mkdirSync, readdirSync, readFileSync, statSyn
 import type { IncomingMessage, ServerResponse } from 'node:http'
 import { basename, join, resolve, sep } from 'node:path'
 import type { AgentEvent, SessionMeta } from '../shared/types.ts'
+import { URL_VID_API } from '../shared/agencia.ts'
+import { clienteVidApi } from './agencia/vid-api.ts'
 import { programaClaude } from './agentes.ts'
 import { guardar } from './disco.ts'
 import { cuerpo, json } from './http.ts'
@@ -10,15 +12,17 @@ import { cuerpo, json } from './http.ts'
 /**
  * El botón «Feedback» de la barra lateral (`web/src/Feedback.tsx`): la persona cuenta un error o una mejora, v!d arma con
  * el agente local un prompt listo para Claude Code (contexto, pasos para reproducir, archivos probables, criterio de
- * terminado) y lo guarda en la cola local `data/feedback/<fecha>-<slug>.md`, SIEMPRE. Si hay llave de agencia
- * (`VID_AGENCIA_LLAVE`) y dirección (`VID_API_URL`), también lo manda a `vid-api` de Kold.Gold.
+ * terminado) y lo guarda en la cola local `data/feedback/<fecha>-<slug>.md`, SIEMPRE. Si hay llave de agencia (la del
+ * proyecto activo o la por defecto de Opciones → Agencia, `server/agencia/llaves.ts`), también lo manda a `vid-api` de
+ * Kold.Gold con el mismo cliente que Social Media (`server/agencia/vid-api.ts`).
  *
  *  - `GET  /api/feedback`: la cola local, con su estado (`nuevo` o `enviado`).
  *  - `GET  /api/feedback/contexto`: la versión y las últimas líneas del registro, para que la persona vea qué se incluiría.
  *  - `POST /api/feedback/armar`: `{ tipo, titulo, descripcion, incluir, pantalla?, hiloId?, captura? }` → `{ prompt, contexto, origen }`.
  *  - `POST /api/feedback/enviar`: `{ tipo, titulo, prompt, contexto?, captura? }` → `{ archivo, enviado, aviso? }`.
  *  - `POST /api/feedback/reenviar`: `{ archivo }`, para los que quedaron en `nuevo`.
- * Contrato de vid-api: POST JSON `{ op: 'feedback', tipo, titulo, prompt, version, contexto }` con la cabecera `x-vid-key`.
+ * Contrato de vid-api: POST JSON `{ op: 'feedback', tipo, titulo, prompt, version, contexto }` con la cabecera `x-vid-key`;
+ * prompt y contexto de hasta 20 KB cada uno (README de `supabase/functions/vid-api` en koldgold).
  */
 
 export type TipoFeedback = 'error' | 'mejora'
@@ -42,17 +46,19 @@ export interface Entrada {
   aviso?: string
 }
 
-/** La dirección de vid-api si nadie dice otra: lleva `<proyecto>` y no se manda a ninguna parte hasta que se configure. */
-export const URL_POR_OMISION = 'https://<proyecto>.supabase.co/functions/v1/vid-api'
+/** La dirección de vid-api si nadie dice otra: la de Kold.Gold, la misma que usa Social Media. */
+export const URL_POR_OMISION = URL_VID_API
+/** Lo más que acepta vid-api en `contexto` (JSON). */
+const TOPE_CONTEXTO = 20 * 1024
 const LINEAS_LOG = 200
 const TOPE_LOG = 40_000
 
 export interface Dependencias {
   app: string
   version: string
-  /** La llave de agencia (`VID_AGENCIA_LLAVE`); vacía si no hay. */
+  /** La llave de agencia del proyecto activo (o la por defecto) de `server/agencia`; vacía si no hay. */
   llave(): string
-  /** La dirección de vid-api (`VID_API_URL`); vacía si no hay. */
+  /** La dirección de vid-api de esa llave; vacía para la de Kold.Gold. */
   url(): string
   /** Dónde se guardan las capturas que sube la interfaz. */
   adjuntos: string
@@ -71,6 +77,16 @@ export function sinSecretos(texto: string): string {
     .replace(/(x-vid-key|authorization|api[_-]?key|token|secret|password|contraseña)(["']?\s*[:=]\s*["']?)(?!\[oculto\]|Bearer \[oculto\])[^\s"',;]+/gi, '$1$2[oculto]')
     .replace(/\b(?:sk|pk|rk|ghp|gho|xox[abp])[-_][\w-]{12,}/g, '[oculto]')
     .replace(/\beyJ[\w-]{10,}\.[\w-]{10,}\.[\w-]{5,}/g, '[oculto]')
+}
+
+/** El contexto que viaja a vid-api: si pasa de 20 KB, se recorta el registro desde el principio (lo último es lo útil). */
+export function contextoParaVid(c: Contexto, tope = TOPE_CONTEXTO): Contexto {
+  const pesa = (x: Contexto) => Buffer.byteLength(JSON.stringify(x), 'utf8')
+  if (pesa(c) <= tope || !c.log) return c
+  const sinLog = pesa({ ...c, log: '' })
+  let log = c.log.slice(-Math.max(0, tope - sinLog - 64))
+  while (log && pesa({ ...c, log }) > tope) log = log.slice(Math.ceil(log.length / 10))
+  return { ...c, log }
 }
 
 /** Las últimas `n` líneas de un archivo de texto (sin leer más de 1 MB del final). */
@@ -259,25 +275,20 @@ export function feedback(d: Dependencias) {
   function destino(): { url: string; llave: string } | null {
     const llave = d.llave().trim()
     const url = (d.url().trim() || URL_POR_OMISION).trim()
-    if (!llave || url.includes('<') || !/^https:\/\//.test(url)) return null
+    if (!llave || !/^https:\/\//.test(url)) return null
     return { url, llave }
   }
 
   /** Lo manda a vid-api. `null` si salió bien; si no, por qué no. */
   async function mandar(e: Pick<Entrada, 'tipo' | 'titulo' | 'prompt' | 'version'>, contexto: Contexto): Promise<string | null> {
     const dest = destino()
-    if (!dest) return 'Se guardó solo en esta computadora: no hay llave de agencia (VID_AGENCIA_LLAVE) o dirección de vid-api (VID_API_URL).'
+    if (!dest) return 'Se guardó solo en esta computadora: no hay llave de agencia (pégala en Opciones → Agencia).'
     try {
-      const r = await peticion(dest.url, {
-        method: 'POST',
-        headers: { 'content-type': 'application/json', 'x-vid-key': dest.llave },
-        body: JSON.stringify({ op: 'feedback', tipo: e.tipo, titulo: e.titulo, prompt: e.prompt, version: e.version, contexto }),
-        signal: AbortSignal.timeout(20_000)
-      })
-      if (!r.ok) return `Se guardó en esta computadora, pero vid-api respondió ${r.status}.`
+      const cliente = clienteVidApi({ llave: dest.llave, url: dest.url, fetch: peticion })
+      await cliente.feedback({ tipo: e.tipo, titulo: e.titulo, prompt: e.prompt, version: e.version, contexto: { ...contextoParaVid(contexto) } })
       return null
     } catch (error) {
-      return `Se guardó en esta computadora, pero no se pudo llegar a vid-api: ${error instanceof Error ? error.message : String(error)}`
+      return `Se guardó en esta computadora, pero vid-api no lo recibió: ${error instanceof Error ? error.message : String(error)}`
     }
   }
 

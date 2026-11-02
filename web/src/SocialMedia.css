@@ -34,8 +34,9 @@
 .social-cuenta { display: flex; align-items: center; gap: 8px; padding-left: 26px; font-size: 13px; }
 .redes-conectadas { display: flex; flex-wrap: wrap; gap: 10px; }
 .red-conectada { display: flex; align-items: center; gap: 6px; }
-.logo.chico { width: 22px; height: 22px; border-radius: 6px; }
-.logo.chico svg { width: 13px; height: 13px; }
+/* Solo en la vista de Social Media: el tamaño global de .logo.chico (Opciones, Ideas, la barra) no se toca. */
+.social .logo.chico { width: 22px; height: 22px; border-radius: 6px; }
+.social .logo.chico svg { width: 13px; height: 13px; }
 .logo-facebook { background: #0866ff; box-shadow: none; }
 .logo-linkedin { background: #0a66c2; box-shadow: none; }
 .logo-google { background: #4285f4; box-shadow: none; }

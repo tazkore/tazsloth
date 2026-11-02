@@ -199,6 +199,14 @@ const hilos3d = modelos3dHilos({
   biblioteca: carpetaSkill('modelos-3d') ?? join(APP, 'skills', 'modelos-3d'),
   python: () => rutaPythonVid() ?? (process.platform === 'win32' ? 'python' : 'python3')
 }) // modelos 3D
+/** La llave de vid-api del proyecto activo, o la por defecto; nada si no hay o no se puede leer. */
+function llaveDeAgencia() {
+  try {
+    return social.llaves.de(social.llaves.activo())
+  } catch {
+    return undefined
+  }
+}
 const retroalimentacion = feedback({
   app: APP,
   version: (() => {
@@ -208,8 +216,9 @@ const retroalimentacion = feedback({
       return ''
     }
   })(),
-  llave: () => process.env.VID_AGENCIA_LLAVE || leer('VID_AGENCIA_LLAVE'),
-  url: () => process.env.VID_API_URL || leer('VID_API_URL'),
+  // La llave de agencia del proyecto activo (o la por defecto) de Opciones → Agencia, la misma que usa Social Media.
+  llave: () => llaveDeAgencia()?.llave || leer('VID_AGENCIA_LLAVE'),
+  url: () => llaveDeAgencia()?.url || leer('VID_API_URL'),
   adjuntos: ATTACHMENTS,
   resumenHilo: (id) => {
     const h = sessions.get(id)

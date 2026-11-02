@@ -829,7 +829,9 @@ function NewSession(props: {
   const [formatos, setFormatos] = useStored<Record<string, 'vertical' | 'horizontal'>>('formato', {})
   const formatoEscrito = /^Formato: (vertical|horizontal)\s*$/m.exec(props.draft?.text ?? '')?.[1] as 'vertical' | 'horizontal' | undefined
   const formato = formatoEscrito ?? formatos[card.id] ?? 'vertical'
-  const conFormato = !!card.etapas
+  // Solo los estilos de video (etapas con `fase`, como `sessions.esVideo` del servidor): «Nuevo modelo 3D» también tiene
+  // etapas, pero no lleva formato, voz ni avatar.
+  const conFormato = !!card.etapas?.some((e) => e.fase)
   // La voz: mandarla tú o que el agente la genere en AI Studio (`Voz.tsx`). La card recuerda la última; sin la cuenta
   // de Google conectada, la mandas tú.
   const voz = useVoz()

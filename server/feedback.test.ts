@@ -182,8 +182,8 @@ test('enviar: si la red falla o responde mal, queda en la cola como nuevo y se p
   }
 })
 
-test('enviar: una dirección con <proyecto> o sin https no se usa', async () => {
-  for (const url of ['', URL_POR_OMISION, 'http://inseguro.mx/vid-api']) {
+test('enviar: una dirección sin https no se usa', async () => {
+  for (const url of ['http://inseguro.mx/vid-api', 'ftp://otro.mx/vid-api']) {
     const e = entorno({ llave: () => 'k', url: () => url })
     try {
       const r = await e.api.enviar({ tipo: 'error', titulo: 'x', prompt: 'p' })
@@ -192,6 +192,41 @@ test('enviar: una dirección con <proyecto> o sin https no se usa', async () => 
     } finally {
       e.limpiar()
     }
+  }
+})
+
+test('enviar: sin dirección usa la de Kold.Gold (la de Social Media); sin llave no manda nada', async () => {
+  const e = entorno({ llave: () => 'k', url: () => '' })
+  try {
+    await e.api.enviar({ tipo: 'error', titulo: 'x', prompt: 'p' })
+    assert.equal(e.llamadas.length, 1)
+    assert.equal(e.llamadas[0].url, URL_POR_OMISION)
+    assert.match(URL_POR_OMISION, /^https:\/\/udzsxmgyedojtirjpepc\.supabase\.co\/functions\/v1\/vid-api$/)
+  } finally {
+    e.limpiar()
+  }
+  const sin = entorno({ llave: () => '', url: () => '' })
+  try {
+    assert.equal(((await sin.api.enviar({ tipo: 'error', titulo: 'x', prompt: 'p' })).cuerpo as { enviado: boolean }).enviado, false)
+    assert.equal(sin.llamadas.length, 0)
+  } finally {
+    sin.limpiar()
+  }
+})
+
+test('enviar: el contexto que viaja a vid-api no pasa de 20 KB (se recorta el registro, no el local)', async () => {
+  const e = entorno({ llave: () => 'k', url: () => 'https://proyecto.supabase.co/functions/v1/vid-api' })
+  try {
+    const log = Array.from({ length: 2000 }, (_, i) => `linea ${i} ${'x'.repeat(20)}`).join('\n')
+    await e.api.enviar({ tipo: 'error', titulo: 'Log largo', prompt: 'p', contexto: { pantalla: 'Inicio', log } })
+    const enviado = JSON.parse(String(e.llamadas[0].init.body)).contexto
+    assert.ok(Buffer.byteLength(JSON.stringify(enviado), 'utf8') <= 20 * 1024)
+    assert.equal(enviado.pantalla, 'Inicio')
+    assert.ok(log.endsWith(enviado.log))
+    const md = readFileSync(join(e.app, 'data', 'feedback', readdirSync(join(e.app, 'data', 'feedback'))[0]), 'utf8')
+    assert.ok(md.includes('linea 0 '))
+  } finally {
+    e.limpiar()
   }
 })
 

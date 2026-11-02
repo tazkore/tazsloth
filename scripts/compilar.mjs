@@ -153,8 +153,8 @@ cpSync(join(REPO, 'scripts', 'start.mjs'), join(APP, 'scripts', 'start.mjs'))
 paso('Revisando lo que se vende')
 // Las palabras que delatan al dueño (su usuario, sus cuentas) no van en el código: son VID_TUYO, una expresión
 // regular en sus variables y en los secretos del repo. Sin ella, esta parte no se revisa.
-const TUYO = process.env.VID_TUYO || process.env.SLOTH_TUYO
-const TUYO_EN_TEXTO = TUYO ? new RegExp(TUYO, 'i') : null
+const PATRON_TUYO = process.env.VID_TUYO || process.env.SLOTH_TUYO
+const TUYO_EN_TEXTO = PATRON_TUYO ? new RegExp(PATRON_TUYO, 'i') : null
 if (!TUYO_EN_TEXTO) console.warn('Sin VID_TUYO: no reviso si lo que se vende lleva algo tuyo.')
 const REACT_DEV = /react-dom-client\.development|react\.development/
 const hallazgos = [APP, join(SALIDA, 'skills')].flatMap((raiz) =>

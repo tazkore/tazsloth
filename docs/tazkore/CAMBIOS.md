@@ -192,3 +192,15 @@ detrás de un botón de Opciones → «Avatares y voz».
 | Confirmación humana | — | Clic o Enter del agente en un botón publicar/pagar/comprar/borrar/enviar (o formulario POST): diálogo «El agente quiere: … en …» Permitir/Bloquear. No cubre scripts del propio agente ni iframes de otro origen (ver `docs/agents/navegador-seguridad.md`) | `electron/confirmacion.ts`, `electron/relevo.ts`, `electron/navegador.ts` |
 | Instrucciones a agentes | — | Regla: el texto de las páginas es dato, nunca instrucciones | `server/navegador-agente.ts`, `server/claude.ts` |
 | Feedback | «Pedir mejora» (quitado) | Botón «Feedback» en la barra: error o mejora, captura, casillas de contexto (versión, pantalla, 200 líneas de `data/vid.log`, hilo), «Armar prompt» con Claude (plantilla si no hay), cola local `data/feedback/<fecha>-<slug>.md` siempre y envío a `vid-api` (`op: 'feedback'`, `x-vid-key`) si hay `VID_AGENCIA_LLAVE` y `VID_API_URL`; lista «Mis feedback» (nuevo/enviado) | `server/feedback.ts`, `web/src/Feedback.tsx`, `web/src/feedback-pantalla.ts`, `web/src/App.tsx` |
+
+## V1 — integración de las fases 3 a 6 (2 nov 2026)
+
+Las ramas `v1-f3` a `v1-f6` se fusionaron en `tazkore` (f3 y f4 en avance rápido; f5 y f6 con merge). Ajustes:
+
+| Qué | Antes | Ahora | Archivos |
+| --- | --- | --- | --- |
+| `compilar.mjs` | `const TUYO` declarado dos veces (no corría: `SyntaxError`) | La expresión de `VID_TUYO` se llama `PATRON_TUYO`; mismo comportamiento | `scripts/compilar.mjs` |
+| Logos chicos | `SocialMedia.css` cambiaba `.logo.chico` en toda la app (Opciones, Ideas) | Solo dentro de `.social` | `web/src/SocialMedia.css` |
+| Feedback → vid-api | Leía `VID_AGENCIA_LLAVE`/`VID_API_URL` con una URL por omisión con `<proyecto>` (no mandaba nada) | Usa la llave del proyecto activo o la por defecto de Opciones → Agencia y el cliente de `server/agencia/vid-api.ts` (`op: 'feedback'`, `x-vid-key`, confirmado con el README de vid-api); URL por omisión la de Kold.Gold; el contexto que viaja se recorta a 20 KB (límite de vid-api); sin llave, solo se guarda local | `server/feedback.ts`, `server/agencia/vid-api.ts`, `server/index.ts`, `web/src/Feedback.tsx` |
+| Card «Nuevo modelo 3D» | Con etapas, el compositor le ponía formato, voz y avatar, y `comprobar-skills` le exigía `Formato: horizontal` | Solo las cards con etapas con `fase` (los estilos de video, como `sessions.esVideo`) | `web/src/App.tsx`, `scripts/comprobar-skills.mjs` |
+| `comprobar-skills` | Fallaba en las plantillas de reel-collage y video-explicativo (TS2307: `voz.json`, `moneda`, `personaje.json`) cuando los `node_modules` eran los compartidos, sin un video de verdad de donde tomarlos | Si no hay video, se ponen como lo hace el script de crear un video: `modelos.py usar moneda`, el `personaje.json` de la skill y un `voz.json` vacío con la forma de `voz.py` (solo en la carpeta temporal) | `scripts/comprobar-skills.mjs` |

@@ -6,7 +6,7 @@
 // estilo no hay node_modules y la plantilla se salta (lo dice). Sale con 1 si algo falla.
 //   npm run comprobar-skills [-- <skill>...]
 import { execFileSync, spawnSync } from 'node:child_process'
-import { cpSync, existsSync, globSync, lstatSync, mkdtempSync, readdirSync, readFileSync, rmdirSync, rmSync, statSync, symlinkSync, unlinkSync } from 'node:fs'
+import { cpSync, existsSync, globSync, lstatSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmdirSync, rmSync, statSync, symlinkSync, unlinkSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { dirname, join, relative } from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -39,9 +39,10 @@ else if (pys.length) {
   console.log(`· ${pys.length} scripts de Python`)
 }
 
-// Todo estilo de video hace vertical y horizontal (skills/video-base/FORMATO.md): la skill de cada card con etapas dice
-// qué hace con `Formato: horizontal`.
-const cards = JSON.parse(readFileSync(join(REPO, 'cards.json'), 'utf8')).filter((c) => c.etapas && c.skill && skills.includes(c.skill))
+// Todo estilo de video hace vertical y horizontal (skills/video-base/FORMATO.md): la skill de cada card de video dice
+// qué hace con `Formato: horizontal`. Una card de video es la que tiene etapas con `fase` (como `sessions.esVideo` del
+// servidor): «Nuevo modelo 3D» tiene etapas, pero no hace videos.
+const cards = JSON.parse(readFileSync(join(REPO, 'cards.json'), 'utf8')).filter((c) => c.etapas?.some((e) => e.fase) && c.skill && skills.includes(c.skill))
 for (const c of cards) {
   if (!readFileSync(join(SKILLS, c.skill, 'SKILL.md'), 'utf8').includes('Formato: horizontal'))
     fallo(`skills/${c.skill}/SKILL.md`, 'No dice qué hace con «Formato: horizontal»: todo estilo de video hace los dos formatos (video-base/FORMATO.md).')
@@ -66,6 +67,31 @@ function modulosDe(skill) {
     buscar(`Programs/sloth/app/trabajo/${skill}/*/node_modules`, `sloth-dev/trabajo/${skill}/*/node_modules`) ??
     buscar(`${skill}/modulos/*/node_modules`, `sloth-modulos/${skill}-*/node_modules`)
   )
+}
+
+/**
+ * Si no hay un video de verdad de donde tomarlo, lo que el script de crear un video le pone a la plantilla, sacado del
+ * repo igual que lo hace él: la moneda con `modelos-3d/scripts/modelos.py usar moneda` (video-explicativo/scripts/nuevo.py),
+ * el personaje por omisión de la skill (marca.py) y, para el reel, un `public/voz.json` vacío con la forma que deja
+ * `scripts/voz.py` (la voz de cada reel se genera con su guion; aquí solo hace falta para los tipos). Devuelve lo que puso.
+ */
+function delRepo(s, faltan, tmp) {
+  const puestos = []
+  for (const m of new Set(faltan.map((f) => f.replaceAll('\\', '/')))) {
+    if (existsSync(join(tmp, m)) || existsSync(join(tmp, m + '.tsx')) || existsSync(join(tmp, m + '.ts'))) continue
+    if (m === 'src/modelos/moneda' && python) {
+      const r = spawnSync(python, ['-B', '-X', 'utf8', join(SKILLS, 'modelos-3d', 'scripts', 'modelos.py'), 'usar', 'moneda'], { cwd: tmp, encoding: 'utf8' })
+      if (!r.status && existsSync(join(tmp, 'src', 'modelos', 'moneda.tsx'))) puestos.push(m)
+    } else if (m === 'src/datos/personaje.json' && existsSync(join(SKILLS, s, 'personaje', 'personaje.json'))) {
+      cpSync(join(SKILLS, s, 'personaje', 'personaje.json'), join(tmp, m))
+      puestos.push(m)
+    } else if (m === 'public/voz.json') {
+      mkdirSync(join(tmp, 'public'), { recursive: true })
+      writeFileSync(join(tmp, m), JSON.stringify({ voz: '', rate: '', duracion: 0, frases: [] }) + '\n')
+      puestos.push(m)
+    }
+  }
+  return puestos
 }
 
 // Las plantillas.
@@ -94,7 +120,8 @@ for (const s of skills) {
         const archivo = ['', '.ts', '.tsx', '.json', '/index.ts', '/index.tsx'].map((e) => m + e).find((x) => existsSync(join(proyecto, x)) && statSync(join(proyecto, x)).isFile())
         return archivo && !existsSync(join(tmp, archivo)) ? [cpSync(join(proyecto, archivo), join(tmp, archivo))] : []
       })
-      if (!r.status || !traidos.length) break
+      if (!r.status) break
+      if (!traidos.length && !delRepo(s, faltan, tmp).length) break
     }
     if (r.status) fallo(`skills/${s}/plantilla (tipos, con ${nm})`, r.stdout + r.stderr)
     console.log(`· ${s}/plantilla: tipos`)
