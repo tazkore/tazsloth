@@ -12,11 +12,11 @@ La cara de quien habla es una imagen más del torrente, no la de siempre.
 `<skill>` es esta carpeta y `<base>` es `video-base`, la carpeta junto a ella: Chrome,
 masterizar, comprobar y la hoja de contacto. Lee su [`LEEME.md`](../video-base/LEEME.md) antes de empezar (los errores
 ya vistos). Los scripts de Python van con `python -I -B -X utf8` (el del sistema: numpy, opencv, pillow y soundfile);
-los que piden PyTorch o WhisperX se pasan solos al Python de Sloth.
+los que piden PyTorch o WhisperX se pasan solos al Python de v!d.
 
 > **De dónde sale.** Es la skill EDITOR V1 de NextPhase, que venía para HyperFrames. Aquí se dibuja con Remotion: los
 > dispositivos (Python) siguen escribiendo HTML y una línea de tiempo de GSAP, pero en `src/edicion.json`, y
-> `src/Edicion.tsx` la mueve cuadro a cuadro. Así se ve en vivo en el estudio de Sloth (cada `build.py` se ve al
+> `src/Edicion.tsx` la mueve cuadro a cuadro. Así se ve en vivo en el estudio de v!d (cada `build.py` se ve al
 > momento) y se renderiza con Remotion, con los mismos cuadros medidos. Tres reels (REF-1 historia de fundadores,
 > 78,4 s; REF-2 teoría de juegos, 93,6 s; REF-3 origen de una empresa, 70,5 s) se desarmaron cuadro a cuadro:
 > `reference/reference-log.md` tiene el método y cada cifra, `reference/edl/REF-1..3.md` los planos y
@@ -30,7 +30,7 @@ letra, ritmo, la cara) · `reference/sound-design.md` + `reference/edl/SOUND.md`
 ## La carpeta del video
 
 - El proyecto va en la carpeta de la línea `Carpeta: <nombre>` del mensaje, con ese nombre exacto, dentro del
-  directorio donde te lanzó Sloth (`trabajo/video-documental`). Sin esa línea, `doc-<tema>`.
+  directorio donde te lanzó v!d (`trabajo/video-documental`). Sin esa línea, `doc-<tema>`.
 - **Horizontal o vertical, el mismo estilo.** Sin `Formato:` o con `Formato: horizontal`, 1920×1080 para YouTube. Con
   `Formato: vertical`, 1080×1920 para TikTok, Reels y Shorts: `nuevo.py ... --vertical` deja `formato.txt` en la
   carpeta, y de ahí leen el tamaño los dispositivos, `ev1_treat`, `ev1_clip`, `matte.py` y `terminar.py`. Ver
@@ -88,7 +88,7 @@ desgloses cuadro a cuadro son la especificación; donde `devices.md` y los `edl/
 8. **Los derechos se marcan antes del render.** Cada fuente va en la tabla de PLAN.md con su licencia; lo que no esté
    claro (la película de una empresa, una foto de prensa, el clip de alguien) se marca y decide el usuario. La música la
    trae el usuario.
-9. **No se publica nada.** Render, mezcla, `out/final.mp4` para revisar, y para. Subirlo es cosa de Sloth y del usuario.
+9. **No se publica nada.** Render, mezcla, `out/final.mp4` para revisar, y para. Subirlo es cosa de v!d y del usuario.
 
 ## El estilo en un párrafo
 
@@ -186,7 +186,7 @@ Cada paso, desde la carpeta del video salvo el primero.
    todos los documentales: no corras `npm install` en el video, cambiaría el de todos). La grabación original queda en
    `fuentes/`, fuera de `public/`: Remotion copia `public/` entero cada vez que empaqueta. Si no hay grabación todavía,
    pídela: la etapa «Tu grabación» del estudio la recibe (en horizontal, con el celular de lado basta; en vertical, de pie).
-2. **Transcribir:** `python -I -B -X utf8 <skill>/scripts/transcribir.py .` (el transcriptor de Sloth en español, con
+2. **Transcribir:** `python -I -B -X utf8 <skill>/scripts/transcribir.py .` (el transcriptor de v!d en español, con
    los nombres de `terminos.txt` como pistas) deja `work/tx/words.json` y `transcript.txt`, avisa de los tramos con voz
    y sin palabras y corre `snap-onsets.py` (la primera palabra después de cada pausa cae en el sonido, no 60–220 ms
    antes). Corrige a mano en `words.json` los nombres mal oídos, sin tocar los tiempos. Si la toma tiene arranques
@@ -201,7 +201,7 @@ Cada paso, desde la carpeta del video salvo el primero.
    `ev1_clip.make(...)`, todo a 30 fps constantes) en `public/assets/...`, y apuntarlos en `work/assets.json` con su
    ruta relativa a `public/` (`"hq": "assets/img/hq.jpg"`). El recorte de quien habla para las líneas estrella:
    `python -I -B -X utf8 <skill>/scripts/matte.py --plate public/assets/media/cam_raw.mp4 --start S --dur D --out
-   public/assets/media/matte_a.webm` (va con el Python de Sloth y su GPU).
+   public/assets/media/matte_a.webm` (va con el Python de v!d y su GPU).
 5. **Construir** `build.py`: un bloque por línea del PLAN, sobre los inicios de las palabras (`find`, `span`), un
    dispositivo cada uno y su `c.escena(...)`. `python -I -B -X utf8 build.py`. El usuario lo ve en vivo en el estudio.
 6. **Revisar:** `node <skill>/scripts/cuadros.mjs` saca un cuadro por escena al 90 % de su tramo (o `--t`, o

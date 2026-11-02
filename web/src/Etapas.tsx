@@ -11,7 +11,7 @@ import './Etapas.css'
 
 /**
  * El avance de la sesión, leído de sus archivos al abrirla y cada vez que el servidor avisa de que cambió su carpeta
- * (`sloth-etapas`, que App reparte desde el WebSocket; sin hilo, al reconectar, es para todos).
+ * (`vid-etapas`, que App reparte desde el WebSocket; sin hilo, al reconectar, es para todos).
  */
 export function useAvance(sessionId: string) {
   const [avance, setAvance] = useState<Avance | null>(null)
@@ -41,10 +41,10 @@ export function useAvance(sessionId: string) {
       const id = (e as CustomEvent<string | undefined>).detail
       if (!id || id === sessionId) read()
     }
-    addEventListener('sloth-etapas', aviso)
+    addEventListener('vid-etapas', aviso)
     return () => {
       alive = false
-      removeEventListener('sloth-etapas', aviso)
+      removeEventListener('vid-etapas', aviso)
     }
   }, [sessionId])
 

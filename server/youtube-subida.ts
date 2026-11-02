@@ -18,7 +18,7 @@ export interface SubidaYoutube extends EstadoSubidaYoutube {
 const BLOQUE = 8 * 1024 * 1024
 
 /**
- * Título, descripción e idioma. Los videos de Sloth van en español: sin decirlo, YouTube marcó su audio en inglés. Al
+ * Título, descripción e idioma. Los videos de v!d van en español: sin decirlo, YouTube marcó su audio en inglés. Al
  * actualizar, lo que no se manda se borra, así que subir y programar usan esta misma forma.
  */
 export const snippetYoutube = (d: DatosYoutube) => ({ title: d.titulo, description: d.descripcion, categoryId: '28', defaultLanguage: 'es', defaultAudioLanguage: 'es' })

@@ -6,10 +6,10 @@ import { enVentana } from './cuenta.ts'
 
 /**
  * La cuenta de un agente que inicia sesión en su propio programa (`grok login`, `muse login`, `/login` de Pi), como la de
- * Claude: «Conectar» lo baja si falta y abre su ventana; al cerrarla, se mira si quedó conectada. Sloth no toca el código
+ * Claude: «Conectar» lo baja si falta y abre su ventana; al cerrarla, se mira si quedó conectada. v!d no toca el código
  * ni las credenciales: las guarda el agente, donde las guarda siempre.
  */
-export type Estado = Pick<CuentaClaude, 'conectada' | 'quien' | 'plan' | 'llavesSloth'>
+export type Estado = Pick<CuentaClaude, 'conectada' | 'quien' | 'plan' | 'llavesVid'>
 
 export function cuentaConVentana(
   p: Proveedor,

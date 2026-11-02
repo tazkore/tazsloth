@@ -5,7 +5,7 @@ Prepara la voz que grabó el usuario y escribe src/datos/voz.json, lo que lee el
     python -I -B scripts/alinear.py --frases     (subtitulos.txt cambió: vuelve a emparejar sin transcribir)
 
 1. Nivela la voz a -14 LUFS (masterizar.mjs de video-base) en public/voz.wav.
-2. La transcribe con tiempos por palabra (transcribir.py de Sloth, con las cifras en letra: el alineador no sabe situar
+2. La transcribe con tiempos por palabra (transcribir.py de v!d, con las cifras en letra: el alineador no sabe situar
    dígitos).
 3. Si Whisper se saltó un tramo con voz o escribió otra frase en lugar de la dicha (pasa: en un video dejó fuera los
    primeros 17 s y apretó lo que seguía al principio), vuelve a transcribir esas zonas en trozos cortos cortados en
@@ -34,9 +34,9 @@ from pathlib import Path
 
 import numpy as np
 
-BASE = Path(os.environ.get("SLOTH_SKILLS") or Path.home() / ".claude" / "skills") / "video-base" / "scripts"
+BASE = Path(os.environ.get("VID_SKILLS") or os.environ.get("SLOTH_SKILLS") or Path.home() / ".claude" / "skills") / "video-base" / "scripts"
 sys.path.insert(0, str(BASE))
-from sloth import MODELOS, proceso, wav16k  # noqa: E402
+from vid import MODELOS, proceso, wav16k  # noqa: E402
 
 RAIZ = Path(__file__).resolve().parent.parent
 FPS = 30

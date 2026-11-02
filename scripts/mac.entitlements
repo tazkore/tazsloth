@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- Lo que pide Sloth en Mac con la firma de Apple (scripts/compilar.mjs): Electron y su Node compilan JavaScript al vuelo,
-     el Node de Sloth carga los binarios de los paquetes (Claude Code, Codex) y la interfaz graba tu voz. -->
+<!-- Lo que pide v!d en Mac con la firma de Apple (scripts/compilar.mjs): Electron y su Node compilan JavaScript al vuelo,
+     el Node de v!d carga los binarios de los paquetes (Claude Code, Codex) y la interfaz graba tu voz. -->
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
   <dict>

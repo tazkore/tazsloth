@@ -6,7 +6,7 @@ import { Segmento } from './Segmento'
 
 /**
  * El monitor del estudio, uno solo para todos los estilos en la fase Video (`useMonitor` y `Monitor`). Enseña el video
- * en vivo, sin renderizar: lo arma el motor de Sloth (`server/motor.ts`) para cualquier proyecto de Remotion, y cada vez
+ * en vivo, sin renderizar: lo arma el motor de v!d (`server/motor.ts`) para cualquier proyecto de Remotion, y cada vez
  * que el agente cambia algo llega una versión nueva, que se carga detrás de la que se ve y la reemplaza en el mismo
  * segundo, sin parpadeo. Si no hay motor, la vista en vivo de la skill o el render. Con el video en pausa, un clic en el
  * cuadro elige lo que hay debajo para pedir un cambio. Debajo, la barra de transporte; la línea de tiempo va en
@@ -64,7 +64,7 @@ export type Elemento = { tipo: string; texto: string; componentes: string[]; caj
 type Marco = { url: string; n: number }
 
 /**
- * La vista en vivo va en la otra dirección de esta computadora (`127.0.0.1` si Sloth es `localhost`, y al revés): para el
+ * La vista en vivo va en la otra dirección de esta computadora (`127.0.0.1` si v!d es `localhost`, y al revés): para el
  * navegador es otro sitio y la carga en su propio proceso. Armar su primer cuadro (el video, Three.js, sus texturas) tarda
  * segundos, y en el mismo proceso congelaba la interfaz entera cada vez que el agente cambiaba algo. Se habla con ella por
  * `postMessage`, que no necesita el mismo sitio (`server/origen.ts` la deja abrir así).

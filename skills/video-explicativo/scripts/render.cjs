@@ -14,7 +14,7 @@
 // con que queden 2 GB libres; con menos, decide Remotion.
 //
 // Renderiza a un nombre nuevo y luego lo pone en su sitio: Windows no deja reemplazar un archivo que otro tiene abierto
-// (el monitor de Sloth enseñando el video, un ffprobe), y Remotion fallaba al final del render (nuevo-10 y nuevo-11).
+// (el monitor de v!d enseñando el video, un ffprobe), y Remotion fallaba al final del render (nuevo-10 y nuevo-11).
 const fs = require("node:fs");
 const os = require("node:os");
 const path = require("node:path");
@@ -38,14 +38,14 @@ if (os.freemem() >= LIBRE) {
   memoria.shouldUseParallelEncoding = (a) => ({ ...original(a), hasEnoughMemory: true });
 }
 // Empaqueta en una carpeta de %TEMP% que se borra al terminar: la de `bundle()` lleva una copia de `public/` y se quedaba.
-const { empaquetar } = require(path.join(process.env.SLOTH_SKILLS || path.join(os.homedir(), ".claude", "skills"), "video-base", "scripts", "remotion.cjs"));
+const { empaquetar } = require(path.join(process.env.VID_SKILLS || process.env.SLOTH_SKILLS || path.join(os.homedir(), ".claude", "skills"), "video-base", "scripts", "remotion.cjs"));
 // Cuánto falta y, del final, cuánto tardó: en una computadora lenta el render es lo más largo y, sin decirlo, parece colgado.
-const equipo = require(path.join(process.env.SLOTH_SKILLS || path.join(os.homedir(), ".claude", "skills"), "video-base", "scripts", "equipo.cjs"));
+const equipo = require(path.join(process.env.VID_SKILLS || process.env.SLOTH_SKILLS || path.join(os.homedir(), ".claude", "skills"), "video-base", "scripts", "equipo.cjs"));
 const { openBrowser, renderMedia, selectComposition } = desde("@remotion/renderer");
 
 const espera = (ms) => new Promise((r) => setTimeout(r, ms));
 
-/** Pone `nuevo` en lugar de `destino`. Si el destino está abierto, lo aparta (`_viejo-…`, que Sloth no enseña). */
+/** Pone `nuevo` en lugar de `destino`. Si el destino está abierto, lo aparta (`_viejo-…`, que v!d no enseña). */
 const reemplaza = async (nuevo, destino) => {
   const carpeta = path.dirname(destino);
   for (let vuelta = 0; ; vuelta++) {

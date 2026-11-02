@@ -5,7 +5,7 @@ import type { Biblioteca3D, Modelo3D } from '../shared/types.ts'
 import { servir } from './etapas.ts'
 
 /**
- * La biblioteca de modelos 3D (`skills/modelos-3d`), para verla en Sloth: cada modelo (`modelos/<id>`) con su foto, su
+ * La biblioteca de modelos 3D (`skills/modelos-3d`), para verla en v!d: cada modelo (`modelos/<id>`) con su foto, su
  * giro, qué es y qué puede hacer, sus etiquetas y de qué video salió, y los tipos en que se agrupan (`categorias.json`). Solo se lee: los videos la llenan con `modelos.py guardar` y el agente busca en
  * ella antes de hacer uno. Quitarlo es borrar este archivo, sus líneas en `server/index.ts` y las marcadas
  * «modelos 3D» en `web/src`.

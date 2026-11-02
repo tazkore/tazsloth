@@ -1,6 +1,6 @@
-// El puente con el SDK de Cursor (`@cursor/sdk`). Sloth lo copia a la carpeta donde bajó el SDK y lo corre con su Node
+// El puente con el SDK de Cursor (`@cursor/sdk`). v!d lo copia a la carpeta donde bajó el SDK y lo corre con su Node
 // (server/cursor.ts): así el SDK encuentra sus ayudantes de cada sistema (los busca desde el script que se corre), y si
-// falla algo suyo (T3 Code vio promesas sin atender que tumbaban el proceso) cae este proceso, no el servidor de Sloth.
+// falla algo suyo (T3 Code vio promesas sin atender que tumbaban el proceso) cae este proceso, no el servidor de v!d.
 //
 // Uno por vez: `estado`, `modelos`, `login` y `salir` escriben su resultado y acaban; `agente` es un hilo, que lee
 // órdenes por su entrada (una por línea) y escribe por su salida lo que pasa.
@@ -24,7 +24,7 @@ if (modo === 'estado') {
   }
 } else if (modo === 'login') {
   try {
-    await Cursor.auth.login({ openBrowser: false, apiKeyName: 'Sloth', onLoginUrl: (url) => decir({ type: 'url', url }) })
+    await Cursor.auth.login({ openBrowser: false, apiKeyName: 'v!d', onLoginUrl: (url) => decir({ type: 'url', url }) })
     decir({ type: 'listo' })
   } catch (e) {
     decir({ type: 'error', error: mensajeDe(e) })

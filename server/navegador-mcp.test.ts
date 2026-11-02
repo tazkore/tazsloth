@@ -28,7 +28,7 @@ createInterface(process.stdin).on('line', (l) => {
 `
 
 function preparar(t: { after(f: () => void): void }, { guardado = false, suelta = 0 } = {}) {
-  const dir = mkdtempSync(join(tmpdir(), 'sloth-mcp-'))
+  const dir = mkdtempSync(join(tmpdir(), 'vid-mcp-'))
   const falso = join(dir, 'falso.mjs')
   const huella = join(dir, 'huella.txt')
   const cache = join(dir, 'cache.json')

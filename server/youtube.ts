@@ -20,7 +20,7 @@ import { modeloYoutube } from './youtube-modelo.ts'
 /**
  * YouTube para videos largos, separado del calendario de verticales: autorización OAuth de escritorio con PKCE,
  * elección explícita de privacidad y subida reanudable. Las credenciales viven en el entorno del usuario, como las
- * llaves de Opciones; el avance y las sesiones de subida, en data/youtube.json. Solo acepta videos terminados de Sloth.
+ * llaves de Opciones; el avance y las sesiones de subida, en data/youtube.json. Solo acepta videos terminados de v!d.
  */
 const CLIENTE = 'YOUTUBE_CLIENT_ID'
 const SECRETO = 'YOUTUBE_CLIENT_SECRET'
@@ -46,7 +46,7 @@ export function youtube(app: string, sessions: Sessions, cards: () => Card[], re
       datos.borradores ??= {}
       for (const subida of Object.values(datos.subidas)) if (subida.estado === 'subiendo' || subida.estado === 'preparando') {
         subida.estado = subida.datos.cuando ? 'cola' : 'error'
-        subida.error = 'Sloth se cerró durante la subida. Pulsa «Reintentar» para retomarla.'
+        subida.error = 'v!d se cerró durante la subida. Pulsa «Reintentar» para retomarla.'
       }
     }
   } catch { roto = true }
@@ -151,7 +151,7 @@ export function youtube(app: string, sessions: Sessions, cards: () => Card[], re
   function buscar(cardId: unknown, ruta: unknown): VideoHecho {
     const card = cards().find((c) => c.id === cardId)
     const v = card?.etapas?.length && typeof ruta === 'string' && videosDe(card, sessions).find((v) => v.ruta.toLowerCase() === resolve(ruta).toLowerCase())
-    if (!v) throw new Error('Este archivo no es un video terminado de Sloth.')
+    if (!v) throw new Error('Este archivo no es un video terminado de v!d.')
     return v
   }
   const claveDe = (v: VideoHecho) => `${datos.cuenta!.id}:${huella(v.ruta)}`
@@ -269,7 +269,7 @@ export function youtube(app: string, sessions: Sessions, cards: () => Card[], re
     if (roto) return json(res, 500, { error: 'data/youtube.json no se pudo leer. Recupéralo antes de subir, para no repetir videos.' })
     const post = req.method === 'POST'
     if (post && req.headers.origin && ![new URL(retorno).origin, new URL(retorno).origin.replace('127.0.0.1', 'localhost')].includes(req.headers.origin))
-      return json(res, 403, { error: 'La petición tiene que venir de Sloth.' })
+      return json(res, 403, { error: 'La petición tiene que venir de v!d.' })
     if (post && eliminando) return json(res, 409, { error: 'Espera a que termine de enviar los videos a la Papelera.' })
     try {
       if (url.pathname === '/api/youtube' && req.method === 'GET') return json(res, 200, estado())
@@ -428,11 +428,11 @@ export function youtube(app: string, sessions: Sessions, cards: () => Card[], re
       }
       if (url.pathname === '/api/youtube/oauth' && req.method === 'GET') {
         const p = permiso
-        if (!p || p.hasta < Date.now() || url.searchParams.get('state') !== p.state) return json(res, 400, { error: 'La conexión no es válida o venció. Vuelve a iniciarla desde Sloth.' })
+        if (!p || p.hasta < Date.now() || url.searchParams.get('state') !== p.state) return json(res, 400, { error: 'La conexión no es válida o venció. Vuelve a iniciarla desde v!d.' })
         permiso = null
         autorizando = true
         try {
-          if (url.searchParams.has('error')) throw new Error('No se concedió el permiso a Sloth. Puedes conectar el canal de nuevo.')
+          if (url.searchParams.has('error')) throw new Error('No se concedió el permiso a v!d. Puedes conectar el canal de nuevo.')
           const code = url.searchParams.get('code')
           if (!code) throw new Error('Google no devolvió la autorización del canal.')
           const j = await canjear(new URLSearchParams({ client_id: credenciales.leer(CLIENTE), client_secret: credenciales.leer(SECRETO), code,
@@ -446,7 +446,7 @@ export function youtube(app: string, sessions: Sessions, cards: () => Card[], re
           error = undefined
           void seguir()
           res.writeHead(200, { 'content-type': 'text/plain; charset=utf-8', 'cache-control': 'no-store' })
-          res.end('Canal de YouTube conectado. Puedes cerrar esta pestaña y volver a Sloth.')
+          res.end('Canal de YouTube conectado. Puedes cerrar esta pestaña y volver a v!d.')
           return true
         } catch (e) {
           acceso = null
@@ -469,7 +469,7 @@ export function youtube(app: string, sessions: Sessions, cards: () => Card[], re
         const b = post ? await body(req) : Object.fromEntries(url.searchParams)
         const card = cards().find((c) => c.id === b.cardId)
         const video = card?.etapas?.length && typeof b.ruta === 'string' && videosDe(card, sessions).find((v) => v.ruta.toLowerCase() === resolve(b.ruta).toLowerCase())
-        if (!video) return json(res, 404, { error: 'Este archivo no es un video terminado de Sloth.' })
+        if (!video) return json(res, 404, { error: 'Este archivo no es un video terminado de v!d.' })
         if (!conectado() || !datos.cuenta) return post ? json(res, 400, { error: 'Conecta tu canal de YouTube en Opciones antes de subir.' }) : json(res, 200, null)
         const clave = `${datos.cuenta.id}:${huella(video.ruta)}`
         let s = datos.subidas[clave]

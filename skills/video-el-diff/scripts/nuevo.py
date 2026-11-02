@@ -38,7 +38,7 @@ def main() -> None:
     p.add_argument("nombre")
     p.add_argument("--formato", choices=FORMATOS, default="vertical")
     a = p.parse_args()
-    # Los episodios se crean donde trabaja el agente (en Sloth, trabajo/video-el-diff).
+    # Los episodios se crean donde trabaja el agente (en v!d, trabajo/video-el-diff).
     destino = Path.cwd() / a.nombre
     if destino.exists() and any(destino.iterdir()):
         raise SystemExit(f"{destino} ya existe y no está vacía")

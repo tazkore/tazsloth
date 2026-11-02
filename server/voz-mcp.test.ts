@@ -6,11 +6,11 @@ import { join } from 'node:path'
 import { createInterface } from 'node:readline'
 import { test } from 'node:test'
 
-// El MCP de la voz (`voz/mcp.mjs`) contra un servidor de Sloth de mentira: lo que el agente ve al pedir una voz.
+// El MCP de la voz (`voz/mcp.mjs`) contra un servidor de v!d de mentira: lo que el agente ve al pedir una voz.
 test('el MCP de la voz pide la voz, espera su turno y dice dónde quedó', async (t) => {
   const pedidos: string[] = []
   const tokens: string[] = []
-  const sloth = createServer(async (req, res) => {
+  const vid = createServer(async (req, res) => {
     let cuerpo = ''
     for await (const p of req) cuerpo += p
     pedidos.push(`${req.method} ${req.url} ${cuerpo}`)
@@ -22,9 +22,9 @@ test('el MCP de la voz pide la voz, espera su turno y dice dónde quedó', async
     res.statusCode = 404
     res.end('{}')
   })
-  await new Promise<void>((r) => sloth.listen(0, '127.0.0.1', r))
-  t.after(() => sloth.close())
-  const mcp = spawn(process.execPath, [join(import.meta.dirname, 'voz', 'mcp.mjs')], { env: { ...process.env, SLOTH_URL: `http://127.0.0.1:${(sloth.address() as AddressInfo).port}`, VID_TOKEN: 'prueba' } })
+  await new Promise<void>((r) => vid.listen(0, '127.0.0.1', r))
+  t.after(() => vid.close())
+  const mcp = spawn(process.execPath, [join(import.meta.dirname, 'voz', 'mcp.mjs')], { env: { ...process.env, VID_URL: `http://127.0.0.1:${(vid.address() as AddressInfo).port}`, VID_TOKEN: 'prueba' } })
   t.after(() => mcp.kill())
   const respuestas = createInterface({ input: mcp.stdout })[Symbol.asyncIterator]()
   let n = 0

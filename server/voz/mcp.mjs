@@ -1,8 +1,8 @@
 /**
- * El MCP `voz`: las herramientas con que un agente (Claude, Codex u OpenCode) pide la voz de un video a Sloth, que la
- * genera en Google AI Studio con la cuenta del usuario (`index.ts`). Solo habla con la API del servidor (`SLOTH_URL`, con
+ * El MCP `voz`: las herramientas con que un agente (Claude, Codex u OpenCode) pide la voz de un video a v!d, que la
+ * genera en Google AI Studio con la cuenta del usuario (`index.ts`). Solo habla con la API del servidor (`VID_URL`, con
  * el token `VID_TOKEN` en la cabecera `x-vid-token`):
- * la sesión de Google no pasa por aquí. Es JavaScript sin paquetes, para que el Node de Sloth lo corra igual en el repo
+ * la sesión de Google no pasa por aquí. Es JavaScript sin paquetes, para que el Node de v!d lo corra igual en el repo
  * y en la app compilada (`scripts/compilar.mjs` lo copia tal cual). Habla MCP por stdio, un JSON por renglón.
  *
  * Cada herramienta espera como mucho 40 s a que acabe la voz: Codex corta una herramienta a los 60. Si no acabó, dice
@@ -10,7 +10,7 @@
  */
 import { createInterface } from 'node:readline'
 
-const URL_SLOTH = process.env.SLOTH_URL ?? 'http://127.0.0.1:4850'
+const URL_VID = process.env.VID_URL ?? process.env.SLOTH_URL ?? 'http://127.0.0.1:4850'
 const TOKEN = { 'x-vid-token': process.env.VID_TOKEN ?? '' }
 const ESPERA = 40
 
@@ -18,7 +18,7 @@ const HERRAMIENTAS = [
   {
     name: 'voces',
     description:
-      'Las voces de Google AI Studio (Gemini 3.8 Flash TTS) con que Sloth puede generar la narración, cada una con cómo suena y su grupo (Podcast, Storyteller…). Son las que enseña la página; AI Studio tiene más de 2.000 y cualquier nombre de su buscador sirve. Dice también si hay una cuenta de Google conectada.',
+      'Las voces de Google AI Studio (Gemini 3.8 Flash TTS) con que v!d puede generar la narración, cada una con cómo suena y su grupo (Podcast, Storyteller…). Son las que enseña la página; AI Studio tiene más de 2.000 y cualquier nombre de su buscador sirve. Dice también si hay una cuenta de Google conectada.',
     inputSchema: {
       type: 'object',
       properties: { buscar: { type: 'string', description: 'Solo las que tengan esto en su nombre, cómo suenan o su grupo («deep», «Podcast»)' } }
@@ -47,9 +47,9 @@ const HERRAMIENTAS = [
 ]
 
 async function pedir(ruta, datos) {
-  const r = await fetch(`${URL_SLOTH}${ruta}`, datos ? { method: 'POST', headers: { ...TOKEN, 'content-type': 'application/json' }, body: JSON.stringify(datos) } : { headers: TOKEN })
+  const r = await fetch(`${URL_VID}${ruta}`, datos ? { method: 'POST', headers: { ...TOKEN, 'content-type': 'application/json' }, body: JSON.stringify(datos) } : { headers: TOKEN })
   const json = await r.json().catch(() => ({}))
-  if (!r.ok) throw new Error(json.error ?? `Sloth respondió ${r.status}`)
+  if (!r.ok) throw new Error(json.error ?? `v!d respondió ${r.status}`)
   return json
 }
 

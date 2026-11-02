@@ -35,7 +35,7 @@ const ENLACE = /Open the following link to authenticate the ACP server:\s*(\S+)/
 /** Las llaves de Google del entorno mandarían sobre la cuenta: se quitan, como en T3 Code. */
 const FUERA = /^(GEMINI_API_KEY|GOOGLE_API_KEY|GOOGLE_APPLICATION_CREDENTIALS|GOOGLE_CLOUD_.*|GOOGLE_GENAI_USE_VERTEXAI|GCLOUD_PROJECT|CLOUDSDK_CORE_PROJECT|AGY_ACP_.*|GEMINI_HOME|ANTIGRAVITY_HARNESS_PATH|ELECTRON_RUN_AS_NODE)$/i
 
-/** Las carpetas temporales en uso. Al salir Sloth no llega el reloj que las borra (y el proceso ya se cerró: `server/acp.ts`). */
+/** Las carpetas temporales en uso. Al salir v!d no llega el reloj que las borra (y el proceso ya se cerró: `server/acp.ts`). */
 const temporales = new Set<string>()
 process.once('exit', () => {
   for (const t of temporales) {
@@ -50,7 +50,7 @@ process.once('exit', () => {
 /** Las carpetas temporales de un cierre brusco, que pesan cientos de MB: las de más de un día ya no las usa nadie. */
 function barrer() {
   for (const d of readdirSync(tmpdir())) {
-    if (!d.startsWith('sloth-agy-')) continue
+    if (!d.startsWith('vid-agy-')) continue
     const ruta = join(tmpdir(), d)
     if (Date.now() - (statSync(ruta, { throwIfNoEntry: false })?.mtimeMs ?? Date.now()) > 86_400_000) void rm(ruta, { recursive: true, force: true }).catch(() => {})
   }
@@ -63,7 +63,7 @@ function lanzar(exe: string) {
     mkdirSync(dirname(AJUSTES), { recursive: true })
     guardar(AJUSTES, JSON.stringify({ auth: { type: METODO } }, null, 2))
   }
-  const temporal = join(tmpdir(), `sloth-agy-${randomBytes(3).toString('hex')}`)
+  const temporal = join(tmpdir(), `vid-agy-${randomBytes(3).toString('hex')}`)
   mkdirSync(temporal, { recursive: true })
   temporales.add(temporal)
   const env: NodeJS.ProcessEnv = Object.fromEntries(Object.entries(entornoSinLlaves()).filter(([k]) => !FUERA.test(k)))
@@ -83,7 +83,7 @@ function lanzar(exe: string) {
   return { command: exe, args: process.platform === 'linux' ? ['--uid='] : [], env, alCerrar }
 }
 
-/** Lo que la sesión dice de los modelos, como los guarda Sloth para el catálogo. */
+/** Lo que la sesión dice de los modelos, como los guarda v!d para el catálogo. */
 function guardarModelos(opciones: OpcionAcp[]) {
   const modelo = opciones.find((o) => o.category === 'model' || o.id === 'model')
   const nivel = opciones.find((o) => o.category === 'thought_level')

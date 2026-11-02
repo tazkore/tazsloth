@@ -20,9 +20,9 @@ export function CalendarioYoutube() {
     const leer = () => api<CalendarioYoutube>('/api/youtube/calendario').then((r) => { if (vivo) { setDatos(r); setAhora(new Date()); setError('') } }, (e) => { if (vivo) setError(e.message) })
     void leer()
     const t = setInterval(leer, datos?.pendientes ? 5000 : 60_000)
-    addEventListener('sloth-youtube', leer)
-    addEventListener('sloth-videos', leer)
-    return () => { vivo = false; clearInterval(t); removeEventListener('sloth-youtube', leer); removeEventListener('sloth-videos', leer) }
+    addEventListener('vid-youtube', leer)
+    addEventListener('vid-videos', leer)
+    return () => { vivo = false; clearInterval(t); removeEventListener('vid-youtube', leer); removeEventListener('vid-videos', leer) }
   }, [!!datos?.pendientes])
   if (!datos?.cuenta) return error ? <p className="bad small">No se pudo leer el calendario de YouTube: {error}</p> : null
   const c = diasYoutube(datos.publicaciones, ahora, datos.siguiente)

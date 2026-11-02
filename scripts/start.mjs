@@ -1,4 +1,4 @@
-// Levanta el servidor y abre Sloth en su ventana (electron/main.ts). Si el servidor sale con 75 (botón «Reiniciar
+// Levanta el servidor y abre v!d en su ventana (electron/main.ts). Si el servidor sale con 75 (botón «Reiniciar
 // backend»), lo vuelve a levantar: así la app aplica los cambios de su código.
 import { spawn } from 'node:child_process'
 import { existsSync, readFileSync } from 'node:fs'
@@ -12,26 +12,26 @@ const URL = `http://localhost:${PORT}`
 let opened = process.argv.includes('--no-open')
 // La app compilada (`scripts/compilar.mjs`) trae el servidor ya armado; el repo lo corre con tsx.
 const SERVIDOR = existsSync(join(APP, 'server', 'index.mjs')) ? ['server/index.mjs'] : ['--import', 'tsx', 'server/index.ts']
-// Lo que corren los agentes (`node`, `npm`, `codex`) sale de este Node y de los paquetes de Sloth, aunque la computadora
+// Lo que corren los agentes (`node`, `npm`, `codex`) sale de este Node y de los paquetes de v!d, aunque la computadora
 // no tenga otros.
 const camino = [dirname(process.execPath), join(APP, 'node_modules', '.bin')]
 /**
- * Fuera de Windows, lo que allí es %APPDATA% (el Python de Sloth y sus modelos, la llave de publicar) es
+ * Fuera de Windows, lo que allí es %APPDATA% (el Python de v!d y sus modelos, la llave de publicar) es
  * ~/Library/Application Support en Mac y ~/.config en Linux. Va en APPDATA para que el servidor, los agentes y los
- * scripts de las skills lo busquen igual en los tres. Ahí deja Sloth el Python y el FFmpeg que instala, en
- * sloth/piezas/bin (server/requisitos.ts), y las llaves de Opciones, cifradas, en sloth/variables.json (server/opciones.ts). Una
+ * scripts de las skills lo busquen igual en los tres. Ahí deja v!d el Python y el FFmpeg que instala, en
+ * vid-koldgold/piezas/bin (server/requisitos.ts), y las llaves de Opciones, cifradas, en vid-koldgold/variables.json (server/opciones.ts). Una
  * app abierta desde el Finder no hereda el PATH de la terminal: sin Homebrew, no vería lo que se instaló con él.
  */
 if (process.platform !== 'win32') {
   const mac = process.platform === 'darwin'
   process.env.APPDATA ??= mac ? join(homedir(), 'Library', 'Application Support') : process.env.XDG_CONFIG_HOME || join(homedir(), '.config')
-  camino.push(join(process.env.APPDATA, 'tazsloth', 'piezas', 'bin'), ...(mac ? ['/opt/homebrew/bin', '/usr/local/bin'] : []))
-  // Las llaves de Opciones (sloth/variables.json, cifradas) las pasa al entorno el servidor mismo (server/opciones.ts).
+  camino.push(join(process.env.APPDATA, 'vid-koldgold', 'piezas', 'bin'), ...(mac ? ['/opt/homebrew/bin', '/usr/local/bin'] : []))
+  // Las llaves de Opciones (vid-koldgold/variables.json, cifradas) las pasa al entorno el servidor mismo (server/opciones.ts).
 }
 process.env.PATH = [...camino, process.env.PATH].join(delimiter)
 
 /**
- * La ventana de Sloth, la misma que la app que se vende. Sin Electron (falta `npm install`), Edge en modo app: una
+ * La ventana de v!d, la misma que la app que se vende. Sin Electron (falta `npm install`), Edge en modo app: una
  * ventana sin barra de direcciones; en Mac y Linux, el navegador de siempre. La app compilada pone su ventana ella misma
  * (`--no-open`).
  */
@@ -41,7 +41,7 @@ async function abrir() {
     const { abrirVentana } = await import('./electron.mjs')
     if (await abrirVentana(URL)) return
   } catch (error) {
-    console.error(`No se pudo abrir la ventana de Sloth; va en el navegador. ${error instanceof Error ? error.message : error}`)
+    console.error(`No se pudo abrir la ventana de v!d; va en el navegador. ${error instanceof Error ? error.message : error}`)
   }
   const [cmd, ...args] = process.platform === 'win32' ? ['cmd', '/c', 'start', '', 'msedge', `--app=${URL}`] : [process.platform === 'darwin' ? 'open' : 'xdg-open', URL]
   spawn(cmd, args, { detached: true, stdio: 'ignore' }).on('error', () => {}).unref()
@@ -51,7 +51,7 @@ function run() {
   const child = spawn(process.execPath, SERVIDOR, { cwd: APP, stdio: ['inherit', 'pipe', 'inherit'] })
   child.stdout.on('data', (d) => {
     process.stdout.write(d)
-    if (!opened && String(d).includes('Sloth en')) void abrir()
+    if (!opened && String(d).includes('v!d en')) void abrir()
   })
   child.on('exit', (code, signal) => {
     if (code === 75) return run()
@@ -69,7 +69,7 @@ function run() {
 
 let caidas = []
 
-// Si Sloth ya corre (se abrió otra vez), solo abre su ventana: un segundo servidor no tendría puerto. Con el token del
+// Si v!d ya corre (se abrió otra vez), solo abre su ventana: un segundo servidor no tendría puerto. Con el token del
 // servidor (`data/servidor-token`, server/token.ts); un 401 también es que ya corre (con otro token).
 const TOKEN_ARCHIVO = join(APP, 'data', 'servidor-token')
 const token = process.env.VID_TOKEN ?? (existsSync(TOKEN_ARCHIVO) ? readFileSync(TOKEN_ARCHIVO, 'utf8').trim() : '')

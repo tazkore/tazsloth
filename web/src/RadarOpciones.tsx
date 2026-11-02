@@ -128,7 +128,7 @@ export function RadarOpciones() {
       {error && <p className="bad small fila-extra">{error}</p>}
       {reiniciar && (
         <Confirm title="¿Volver a las fuentes de siempre?" action="Volver" onConfirm={() => guardar(null)} onClose={() => setReiniciar(false)}>
-          Se quitan las {datos.fuentes.length} que tienes ahora y vuelven las de IA y tecnología con que viene vid.kold.gold. Lo que ya leyeron se queda en el
+          Se quitan las {datos.fuentes.length} que tienes ahora y vuelven las de IA y tecnología con que viene v!d. Lo que ya leyeron se queda en el
           radar.
         </Confirm>
       )}

@@ -15,7 +15,7 @@ por la nube). Esto es lo que un hilo necesita para mirarla o moverla sin escribi
 
 `npm run redes` enseña la cola de cada red, de hoy en adelante, y lo que falló, con la `ref` de cada una. Las órdenes
 están en la cabecera de `scripts/redes.ts`: `nube` (lo que espera en el Worker de Instagram), `quitar`, `reintentar` y
-`deshacer`. Lo que cambia algo va por la API de Sloth, que también lo quita de la red.
+`deshacer`. Lo que cambia algo va por la API de v!d, que también lo quita de la red.
 
 - Mover una ya programada es `quitar` y volver a programarla: la API no cambia la hora de una publicación.
 - Programar es `POST /api/redes/borradores` (los textos que escribe Claude) y después `POST /api/redes/programar`, con la
@@ -27,10 +27,10 @@ están en la cabecera de `scripts/redes.ts`: `nube` (lo que espera en el Worker 
 - Una hora fuera del ritmo (p. ej. hoy a las 17:00) no tiene API: `quitar` la que aún está en `cola`, parar el servidor,
   poner en `data/redes/redes.json` su `estado: "cola"` y su `cuando`, y arrancarlo otra vez; la sube con esa hora.
 - La API está en `http://127.0.0.1:$PORT`. El puerto de la copia en que trabajas está en `$PORT`, y no siempre es 4850.
-  La app instalada (la de venta) no trae redes: la cola vive en el Sloth del repo, que se arranca con
+  La app instalada (la de venta) no trae redes: la cola vive en el v!d del repo, que se arranca con
   `PORT=4849 node --import tsx server/index.ts` si la instalada ya ocupa el 4850.
 - Los finales de El Diff pesan cerca de 1 GB. Varios a Instagram a la vez, o junto con una subida a TikTok, saturan la
-  conexión y la nube responde «No llegué a la nube de Sloth: fetch failed»: reintenta de uno en uno (unos 11 minutos
+  conexión y la nube responde «No llegué a la nube de v!d: fetch failed»: reintenta de uno en uno (unos 11 minutos
   cada uno; 25 de octubre).
 
 ## Dónde mirar cuando algo falla
@@ -40,18 +40,18 @@ están en la cabecera de `scripts/redes.ts`: `nube` (lo que espera en el Worker 
   se rompen los selectores de `server/redes/tiktok.ts`: empieza por la captura. TikTok alterna dos páginas de fecha y
   hora, y `ponerHora` usa la que le toque: `ponerEnCampos` (`14:30` y `2026-10-30`) o `ponerEnMenus` (`13:00` y
   `23 oct 2026`).
-- Con la ventana de Sloth abierta, TikTok va en la página `redes` del navegador integrado, con su perfil
+- Con la ventana de v!d abierta, TikTok va en la página `redes` del navegador integrado, con su perfil
   (`persist:redes`), sin otra ventana: «Conectar» en Opciones → Redes la enseña ahí para iniciar sesión. Sin la ventana,
   va en un Edge con el perfil `data/redes/perfil` y el puerto CDP 9334. Las dos sesiones son aparte: la de una no vale
   en la otra. `POST /api/redes/tiktok/conectar` abre la página de iniciar sesión en el que toque. En la app, Google
-  rechaza su inicio de sesión («el navegador no es seguro»): si la página va a `accounts.google.com`, Sloth la devuelve
+  rechaza su inicio de sesión («el navegador no es seguro»): si la página va a `accounts.google.com`, v!d la devuelve
   al login, abre Edge con ese perfil para ese paso y, al ver la cuenta ahí, pasa las cookies de la red a la app y cierra
   Edge (`conGoogle` y `pasarDeEdge`). TikTok Studio pone «¿Salir del sitio?», que la app no contesta y que cancela
   cada navegación: antes de mover la página va `sinAviso` (la ventana ya lo ignora sola). Su tour de novedades
   (`.react-joyride__overlay`) tapa la página la primera vez en un perfil y con cada novedad: lo cierra `cerrarTour`.
   Lo que sube se ve en Mis videos, a la derecha (`enNavegador`); en Opciones, solo mientras inicias sesión.
-- La nube de quien usa la app que se vende está en su cuenta de Cloudflare, y Sloth la monta y la pone al día con su
+- La nube de quien usa la app que se vende está en su cuenta de Cloudflare, y v!d la monta y la pone al día con su
   token (`server/redes/cloudflare.ts`, cambio del 2026-10-24 en el ADR 0003).
-- La nube lee `SLOTH_NUBE` y `SLOTH_NUBE_SECRETO` de las variables del usuario, igual que el servidor
+- La nube lee `VID_NUBE` y `VID_NUBE_SECRETO` de las variables del usuario, igual que el servidor
   (`leer()` de `server/opciones.ts`). Se despliega con `npm run nube -- deploy`. Borra de R2 cada video al publicarlo;
   lo que aún espera puede no tener otra copia, así que «limpiar la nube» nunca toca lo pendiente.

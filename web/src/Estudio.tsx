@@ -14,7 +14,7 @@ import './Estudio.css'
  * fases (`FASES`), siempre las mismas y en su orden; al centro la elegida, que por defecto es la del agente y va
  * cambiando con él; abajo, en todas las fases, la línea de tiempo; a la derecha, siempre, el chat.
  * Un estilo nuevo no toca nada de aquí: su card dice en qué fase va cada etapa, y el resto sale de sus archivos. La fase
- * Video es la misma para todos (`Editor.tsx`): el video en vivo, sin renderizar, que arma el motor de Sloth, y la línea de
+ * Video es la misma para todos (`Editor.tsx`): el video en vivo, sin renderizar, que arma el motor de v!d, y la línea de
  * tiempo debajo, con sus escenas. El navegador del hilo, si lo abres, va en el centro.
  */
 

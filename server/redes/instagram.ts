@@ -9,7 +9,7 @@ import { leer } from '../opciones.ts'
 import type { ModuloRed } from './index.ts'
 
 /**
- * Instagram: el video sube a la nube de Sloth (`nube/`, un Worker de Cloudflare con un bucket R2) con su texto y su hora,
+ * Instagram: el video sube a la nube de v!d (`nube/`, un Worker de Cloudflare con un bucket R2) con su texto y su hora,
  * y de ahí sale como Reel aunque esta computadora esté apagada. La API de Instagram no programa ni acepta el archivo, así
  * que el Worker se lo sirve y lo publica a su hora (ver `docs/adr/0003-instagram-por-su-api.md`). El token de Instagram
  * también vive en el Worker, que lo renueva solo.
@@ -19,8 +19,8 @@ import type { ModuloRed } from './index.ts'
  * Dónde está el Worker y el secreto que comparte con él, en las variables del usuario de Windows como las llaves. Los
  * escribes tú (la nube del dueño) o los deja `montarNube` al montarla en tu cuenta de Cloudflare.
  */
-export const NUBE = 'SLOTH_NUBE'
-export const SECRETO = 'SLOTH_NUBE_SECRETO'
+export const NUBE = 'VID_NUBE'
+export const SECRETO = 'VID_NUBE_SECRETO'
 /** ¿Ya hay una nube donde esperan los videos? Sin ella, Instagram no se puede conectar. */
 export const hayNube = () => !!leer(NUBE)
 /** El Worker no recibe más de 100 MB de una vez: el video va en partes de este tamaño. */
@@ -47,7 +47,7 @@ export const instagram: ModuloRed = {
 
   // La `ref` es el nombre del video y de su publicación en la nube.
   async programar(_nav, p) {
-    // Un reintento puede ser de algo que ya llegó (se perdió la respuesta, o Sloth se cerró a la mitad). Si la nube lo
+    // Un reintento puede ser de algo que ya llegó (se perdió la respuesta, o v!d se cerró a la mitad). Si la nube lo
     // tiene y no falló, está programado o ya salió: subirlo y dejarlo otra vez lo publicaría dos veces. Con `media` ya
     // salió, aunque diga que falló (lo de después de publicar).
     const caption = [p.texto, p.tags.map((x) => `#${x}`).join(' ')].filter(Boolean).join('\n\n')
@@ -91,16 +91,16 @@ async function nube<T = unknown>(ruta: string, init: RequestInit = {}): Promise<
   const url = leer(NUBE)
   if (!url) throw new Error('Falta tu nube: móntala en Opciones → Redes → Instagram.')
   const res = await fetch(`${url}${ruta}`, { ...init, headers: { authorization: `Bearer ${leer(SECRETO)}` } }).catch((e) => {
-    throw new Error(`No llegué a la nube de Sloth: ${e instanceof Error ? e.message : e}`)
+    throw new Error(`No llegué a la nube de v!d: ${e instanceof Error ? e.message : e}`)
   })
   if (init.method === 'HEAD') {
-    if (!res.ok) throw new Error(`La nube de Sloth respondió ${res.status}`)
+    if (!res.ok) throw new Error(`La nube de v!d respondió ${res.status}`)
     return null as T
   }
   const json = await res.json().catch(() => ({}))
   // Recién montada, Cloudflare responde su página de «aún no hay nada» hasta que estrena la dirección.
   if (res.status === 404 && !json.error) throw new Error('Tu nube aún se está estrenando: Cloudflare tarda unos minutos la primera vez. Prueba otra vez en un momento.')
-  if (!res.ok) throw new Error(json.error ?? `La nube de Sloth respondió ${res.status}`)
+  if (!res.ok) throw new Error(json.error ?? `La nube de v!d respondió ${res.status}`)
   return json as T
 }
 
@@ -123,7 +123,7 @@ async function subir(ref: string, ruta: string) {
 async function moovAlPrincipio(ruta: string) {
   const c = cajas(ruta)
   if (!c.includes('moov') || c.indexOf('moov') < c.indexOf('mdat')) return ruta
-  const copia = join(tmpdir(), `sloth-instagram-${Date.now()}.mp4`)
+  const copia = join(tmpdir(), `vid-instagram-${Date.now()}.mp4`)
   await execFileP('ffmpeg', ['-nostdin', '-v', 'error', '-y', '-i', ruta, '-c', 'copy', '-movflags', '+faststart', copia])
   return copia
 }

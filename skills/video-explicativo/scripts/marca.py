@@ -1,6 +1,6 @@
 """
 La marca de quien hace los videos: de qué habla su canal, cómo habla, quién narra abajo y a dónde invita el cierre.
-Vive en `marca.json`, en la carpeta de la card (donde se crean los proyectos; en Sloth, `trabajo/video-explicativo`),
+Vive en `marca.json`, en la carpeta de la card (donde se crean los proyectos; en v!d, `trabajo/video-explicativo`),
 y es la misma para todos sus videos. Sus personajes propios, en `personajes/<id>/` junto a ella.
 
     python -B -X utf8 <skill>/scripts/marca.py ver

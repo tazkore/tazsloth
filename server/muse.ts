@@ -6,16 +6,16 @@ import type { AgentEvent, Model, Tokens } from '../shared/types.ts'
 import { conRutas, IMAGE_TYPES, type AgentOptions, type AgentRun, type SkillRef } from './agent.ts'
 import { rutaAgente } from './agentes.ts'
 import { cuentaConVentana } from './cuenta-ventana.ts'
-import { conSkill, INSTRUCCIONES, mcpSloth } from './instrucciones.ts'
+import { conSkill, INSTRUCCIONES, mcpVid } from './instrucciones.ts'
 import { RpcLineas } from './rpc-lineas.ts'
 
 /**
  * Muse Code, el agente de Meta, por su protocolo (MSP: JSON-RPC por líneas, `muse serve`), como en T3 Code. Lo instala
- * el instalador de Meta en la carpeta de Sloth (`server/agentes.ts`) y trabaja con la cuenta de Meta de cada quien
+ * el instalador de Meta en la carpeta de v!d (`server/agentes.ts`) y trabaja con la cuenta de Meta de cada quien
  * (`muse login`, que la guarda donde la guarda siempre Muse). Un proceso por hilo, sin permisos (`allowAll`), como los
- * demás agentes de Sloth.
+ * demás agentes de v!d.
  *
- * Muse no admite instrucciones de sistema: las de Sloth van al principio del primer mensaje.
+ * Muse no admite instrucciones de sistema: las de v!d van al principio del primer mensaje.
  */
 
 /** El id de cada orden y de cada sesión: un UUIDv7, como los pide Muse. */
@@ -42,7 +42,7 @@ async function abrir(args: string[], cwd: string, eventos: Partial<ConstructorPa
   const exe = rutaAgente('muse')
   if (!exe) throw new Error('Muse Code aún no está descargado.')
   const r = new RpcLineas('Muse Code', exe, ['serve', ...args], { cwd, env: entorno() }, { alAvisar() {}, alPedir: () => ({}), alCerrar() {}, ...eventos })
-  const ini = await r.request('initialize', { clientInfo: { name: 'sloth', title: 'Sloth', version: '1' }, capabilities: { requestedCapabilities: ['sessionMcp'] } }, 60_000)
+  const ini = await r.request('initialize', { clientInfo: { name: 'vid', title: 'v!d', version: '1' }, capabilities: { requestedCapabilities: ['sessionMcp'] } }, 60_000)
   r.notify('initialized', {})
   return { r, ini }
 }
@@ -157,7 +157,7 @@ export function startMuse(opts: AgentOptions): AgentRun {
         return
       }
       case 'userInput/requested':
-        void rpc?.request('userInput/cancel', { commandId: uuid7(), userInputId: p.userInputId, reason: 'Sloth no puede contestar formularios. Pregunta al usuario en un mensaje normal.' }).catch(() => {})
+        void rpc?.request('userInput/cancel', { commandId: uuid7(), userInputId: p.userInputId, reason: 'v!d no puede contestar formularios. Pregunta al usuario en un mensaje normal.' }).catch(() => {})
         return
     }
   }
@@ -175,7 +175,7 @@ export function startMuse(opts: AgentOptions): AgentRun {
       }
     })
     rpc = r
-    const config = { mcpServers: Object.fromEntries(Object.entries(mcpSloth(opts.lote, opts.hilo)).map(([n, s]) => [n, { transport: 'stdio', mode: 'optional', ...s }])) }
+    const config = { mcpServers: Object.fromEntries(Object.entries(mcpVid(opts.lote, opts.hilo)).map(([n, s]) => [n, { transport: 'stdio', mode: 'optional', ...s }])) }
     if (opts.resume) {
       sesion = opts.resume
       const ok = await r.request('session/resume', { commandId: uuid7(), sessionId: sesion, excludeItems: true, config, permissionProfile: ':unrestricted', ...(modelo ? { modelId: modelo } : {}) }).then(
@@ -194,7 +194,7 @@ export function startMuse(opts: AgentOptions): AgentRun {
   void ready.catch(() => {})
 
   function partes(text: string, images: string[]) {
-    const texto = conRutas(primero ? `<sloth>\n${INSTRUCCIONES}\n</sloth>\n\n${text}` : text, images)
+    const texto = conRutas(primero ? `<vid>\n${INSTRUCCIONES}\n</vid>\n\n${text}` : text, images)
     primero = false
     return [{ type: 'text', text: texto }, ...images.map((p) => ({ type: 'image', mediaType: IMAGE_TYPES[extname(p).toLowerCase()] ?? 'image/png', base64Data: readFileSync(p).toString('base64') }))]
   }
@@ -253,7 +253,7 @@ export function startMuse(opts: AgentOptions): AgentRun {
   }
 }
 
-/** Los errores de Muse, en palabras de Sloth. */
+/** Los errores de Muse, en palabras de v!d. */
 function errorDe(error = '', tipo?: string): string {
   if (tipo === 'authRequired' || /not logged in|login required|unauthenticated/i.test(error)) return 'Conecta tu cuenta de Meta en Opciones → Muse Code.'
   if (/quota|usage limit|\b429\b/i.test(error)) return 'Llegaste al límite de uso de Muse Code. Espera a que se reinicie.'

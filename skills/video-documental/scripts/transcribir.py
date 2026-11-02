@@ -4,7 +4,7 @@ Las palabras de la toma con su tiempo, para cortar sobre ellas: work/tx/words.js
     python -I -B -X utf8 <skill>/scripts/transcribir.py <video>
     python -I -B -X utf8 <skill>/scripts/transcribir.py <video> --comparar out/final.mp4
 
-Transcribe public/assets/media/vo.wav con el transcriptor de Sloth (WhisperX large-v3-turbo y el alineador del español,
+Transcribe public/assets/media/vo.wav con el transcriptor de v!d (WhisperX large-v3-turbo y el alineador del español,
 `python/procesos/transcribir.py`), con los nombres de `terminos.txt` (uno por línea, si existe) como pistas, y sigue
 con snap-onsets.py. Avisa de los tramos con voz y sin palabras: Whisper a veces se salta uno entero; léelos antes de
 construir. Los nombres mal oídos se corrigen a mano en words.json, sin tocar los tiempos.
@@ -27,8 +27,8 @@ from pathlib import Path
 
 import numpy as np
 
-sys.path.insert(0, str(Path(os.environ.get("SLOTH_SKILLS") or Path.home() / ".claude" / "skills") / "video-base" / "scripts"))
-from sloth import MODELOS, proceso, wav16k  # noqa: E402
+sys.path.insert(0, str(Path(os.environ.get("VID_SKILLS") or os.environ.get("SLOTH_SKILLS") or Path.home() / ".claude" / "skills") / "video-base" / "scripts"))
+from vid import MODELOS, proceso, wav16k  # noqa: E402
 
 SKILL = Path(__file__).resolve().parent.parent
 

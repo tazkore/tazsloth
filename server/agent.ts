@@ -38,7 +38,7 @@ export interface AgentOptions {
   onDraft?(draft: FileDraft): void
   /**
    * El proceso del agente ya no está: lo que se le mande se perdería, el siguiente mensaje abre otro. Con `caida`, se cayó
-   * (no lo cerró Sloth), y `turno` dice si cortó un turno a la mitad.
+   * (no lo cerró v!d), y `turno` dice si cortó un turno a la mitad.
    */
   onExit?(caida?: { error: string; turno: boolean }): void
 }

@@ -12,7 +12,7 @@ Todo menos `buscar` se corre en la carpeta del proyecto (la que tiene package.js
 src/modelos/<id>.tsx (con src/modelos/comun.tsx) y sus archivos en public/modelos/<id>/; en la biblioteca, en
 modelos/<id>/ con su modelo.json y su vista (vista.webp, la foto, y vista.webm, la cámara que se mece). Cada proyecto lleva su copia: guardar una versión nueva no rompe
 los videos ya hechos. La biblioteca de cada quien empieza vacía: los que trae la plantilla del explicativo (la moneda, con
-lo que usa) están en plantilla/<id>/, que `usar` encuentra y `buscar` y Sloth no enseñan.
+lo que usa) están en plantilla/<id>/, que `usar` encuentra y `buscar` y v!d no enseñan.
 """
 
 import argparse
@@ -32,7 +32,7 @@ PLANTILLA = BIBLIOTECA / "plantilla"
 # Lo único que un modelo puede importar, además de comun y otros modelos: lo demás le llega por props.
 PERMITIDOS = re.compile(r"^(react|react-dom|three|three/.+|@react-three/fiber|remotion|@remotion/.+)$")
 ORDEN = ["nombre", "resumen", "categoria", "descripcion", "hace", "etiquetas", "exporta", "usa", "iconos", "cuadro", "origen", "creado", "actualizado"]
-# Los tipos de modelo, en el orden en que Sloth los enseña. Uno nuevo se suma ahí, con su «para».
+# Los tipos de modelo, en el orden en que v!d los enseña. Uno nuevo se suma ahí, con su «para».
 CATEGORIAS = [c["nombre"] for c in json.loads((BIBLIOTECA / "categorias.json").read_text("utf-8"))]
 # Lo que la ficha tiene que traer cuando el modelo es nuevo.
 PIDE = {
@@ -225,7 +225,7 @@ def guardar(id_: str, dados: dict[str, str | None], cuadro: int | None, sin_vist
     if dados.get("categoria") and dados["categoria"] not in CATEGORIAS:
         sys.exit(f"«{dados['categoria']}» no es un tipo: {', '.join(CATEGORIAS)}. Si de verdad hace falta otro, súmalo a categorias.json.")
     if len(dados.get("resumen") or "") > 45:
-        sys.exit("El resumen es para leerse de un vistazo en Sloth: 45 letras como mucho.")
+        sys.exit("El resumen es para leerse de un vistazo en v!d: 45 letras como mucho.")
     lista = lambda texto, sep: [x.strip() for x in texto.split(sep) if x.strip()]  # noqa: E731
     hoy = date.today().isoformat()
     m = {

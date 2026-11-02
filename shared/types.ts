@@ -7,7 +7,7 @@ export interface Card {
   description: string
   /** Nombre de la carpeta de la skill en `SKILLS` (`server/skills.ts`). */
   skill?: string
-  /** Carpeta donde trabaja el agente. `{app}` es la carpeta de Sloth. Si falta, es `<trabajo>/<id>` (`carpetaTrabajo`). */
+  /** Carpeta donde trabaja el agente. `{app}` es la carpeta de v!d. Si falta, es `<trabajo>/<id>` (`carpetaTrabajo`). */
   cwd: string
   icon?: string
   /** Con varios enlaces, un video por enlace, cada uno en su hilo. */
@@ -37,7 +37,7 @@ export interface ModeloTarea {
 
 /**
  * `principal` es el del hilo (un id del catálogo, como `claude-opus-5-5`). `tareas` son sus subagentes, con el nombre
- * con que la skill los conoce y el modelo como lo pide la herramienta Agent (`opus`, `sonnet`, `haiku`): Sloth se los
+ * con que la skill los conoce y el modelo como lo pide la herramienta Agent (`opus`, `sonnet`, `haiku`): v!d se los
  * pasa en la línea `Subagentes:` del primer mensaje.
  */
 export interface ModelosConf {
@@ -122,7 +122,7 @@ export interface Serie {
   archivo: string
 }
 
-/** Un archivo de una skill que ya no es como lo trae Sloth (`server/originales.ts`): cambiado o, con `borrado`, quitado. */
+/** Un archivo de una skill que ya no es como lo trae v!d (`server/originales.ts`): cambiado o, con `borrado`, quitado. */
 export interface CambioSkill {
   skill: string
   archivo: string
@@ -186,7 +186,7 @@ export interface Avance {
   /** Los archivos de la línea de tiempo del editor de escenas que ya existen; `cuadros` va por id de escena. */
   editor?: { guion?: Archivo; linea?: Archivo; cuadros: Record<string, Archivo> }
   /**
-   * El monitor de la fase Video, el mismo para todos los estilos. `motor`: el motor en vivo de Sloth (`server/motor.ts`),
+   * El monitor de la fase Video, el mismo para todos los estilos. `motor`: el motor en vivo de v!d (`server/motor.ts`),
    * el video sin renderizar de cualquier proyecto de Remotion; `v` sube con cada versión y `armando` dice que viene otra.
    * `vivo`: la página en vivo que arma la propia skill (la de El Diff), para cuando el motor no puede (sin `node_modules`);
    * `t` es el de su entrada más nueva. Las dos hablan con el monitor por `postMessage` (`listo`, `tiempo`, `ir`, `play`,
@@ -287,9 +287,9 @@ export interface SessionMeta {
   /** Si es un video de un lote: cuál es, de cuántos, y la carpeta que le tocó dentro de `cwd`. */
   lote?: Lote
   /**
-   * Panel de etapas: la carpeta de un hilo suelto dentro de `cwd`. La de un video nuevo la nombra Sloth al crearlo, y la
+   * Panel de etapas: la carpeta de un hilo suelto dentro de `cwd`. La de un video nuevo la nombra v!d al crearlo, y la
    * skill la lee en la línea `Carpeta:` del primer mensaje; la de un video que sigue, la elige el usuario. La de un video
-   * de un lote va en `lote`. Si el usuario la cambia desde el panel, manda sobre las dos. Los hilos de antes de que Sloth
+   * de un lote va en `lote`. Si el usuario la cambia desde el panel, manda sobre las dos. Los hilos de antes de que v!d
    * la nombrara no tienen.
    */
   carpeta?: string
@@ -336,7 +336,7 @@ export interface Enlace {
   autor?: string
 }
 
-/** Las redes donde Sloth programa los videos verticales terminados (`server/redes/`). Cada una es un módulo. */
+/** Las redes donde v!d programa los videos verticales terminados (`server/redes/`). Cada una es un módulo. */
 export type RedId = 'tiktok' | 'instagram'
 
 /**
@@ -398,8 +398,8 @@ export interface Borrador {
 /**
  * Un video en una red: en `cola` espera su turno; `programado` sale solo a la hora `cuando` (`'2026-10-12 16:00'`), y
  * `publicado` es que la red dijo que ya salió. `descartado` es que lo quitaste (de la cola, o tras fallar): «Programar los
- * que faltan» no lo vuelve a poner hasta que lo deshagas. `ref` es el nombre que le da Sloth antes del primer intento (en
- * Instagram, el del video en la nube de Sloth), para reintentarlo sin subirlo otra vez. `huella` identifica el contenido
+ * que faltan» no lo vuelve a poner hasta que lo deshagas. `ref` es el nombre que le da v!d antes del primer intento (en
+ * Instagram, el del video en la nube de v!d), para reintentarlo sin subirlo otra vez. `huella` identifica el contenido
  * del video (ver `huella()` en `server/disco.ts`). `captura` es lo que se veía en la página de la red cuando falló
  * (`data/redes/fallos/<captura>`).
  */
@@ -428,7 +428,7 @@ export interface MarcasDeRedes {
   otraVersion: string[]
   programados: string[]
   calendario: CalendarioRed[]
-  /** Sloth sube algo ahora por el navegador de las redes (TikTok): Mis videos lo enseña mientras tanto. */
+  /** v!d sube algo ahora por el navegador de las redes (TikTok): Mis videos lo enseña mientras tanto. */
   enNavegador?: boolean
 }
 
@@ -472,7 +472,7 @@ export interface TandaRedes {
   redes: RedId[]
 }
 
-/** `GET /api/claude/version` (y la de Codex y OpenCode): la versión que trae Sloth. `null` si no está instalado. */
+/** `GET /api/claude/version` (y la de Codex y OpenCode): la versión que trae v!d. `null` si no está instalado. */
 export interface VersionClaude {
   instalada: string | null
 }
@@ -490,8 +490,8 @@ export interface EstadoAgente {
 }
 
 /**
- * `GET /api/requisitos`: algo que las skills necesitan fuera de Sloth (FFmpeg, Python…). `detalle` es la versión que se
- * encontró o lo que falta; `aMano`, cómo conseguirlo cuando Sloth no lo puede instalar.
+ * `GET /api/requisitos`: algo que las skills necesitan fuera de v!d (FFmpeg, Python…). `detalle` es la versión que se
+ * encontró o lo que falta; `aMano`, cómo conseguirlo cuando v!d no lo puede instalar.
  */
 export interface Requisito {
   id: string
@@ -557,10 +557,10 @@ export interface CuentaClaude {
   /** Dónde se ven el saldo y el uso de la cuenta, en su página (OpenCode). */
   uso?: string
   /**
-   * Pi: las llaves de API guardadas en Sloth (de Claude, ChatGPT, DeepSeek) que puede usar, y si se las da. Sin dárselas no
+   * Pi: las llaves de API guardadas en v!d (de Claude, ChatGPT, DeepSeek) que puede usar, y si se las da. Sin dárselas no
    * las ve (`server/acceso.ts`).
    */
-  llavesSloth?: { usar: boolean; de: string[] }
+  llavesVid?: { usar: boolean; de: string[] }
 }
 
 export interface LlaveAgente {
@@ -778,7 +778,7 @@ export interface TrabajoYT {
 
 /**
  * `transcripciones/<id>.json` en la carpeta de un canal: lo que se dice en un video. En YouTube sale de sus subtítulos
- * (`fuente: 'subtitulos'`); en TikTok e Instagram, de su audio con el Whisper de Sloth. Se guarda entera: al preparar un
+ * (`fuente: 'subtitulos'`); en TikTok e Instagram, de su audio con el Whisper de v!d. Se guarda entera: al preparar un
  * video, Claude lee completas las de su evidencia. Sin voz, `segmentos` va vacío.
  */
 export interface Transcripcion {
@@ -836,7 +836,7 @@ export interface Idea {
   techo: number
   cta?: string
   /**
-   * Solo en un canal vertical (skill `ideas-vertical`): el id de la card de Sloth con que conviene hacerlo (`cards.json`).
+   * Solo en un canal vertical (skill `ideas-vertical`): el id de la card de v!d con que conviene hacerlo (`cards.json`).
    * Ahí `titulo` es el texto del primer cuadro, y `miniatura`, lo que se ve en él.
    */
   estilo?: string
@@ -875,7 +875,7 @@ export interface HiloIdeas {
 }
 
 /**
- * Una vuelta anterior de «Proponer ideas»: antes de cada vuelta nueva, Sloth guarda la que había en
+ * Una vuelta anterior de «Proponer ideas»: antes de cada vuelta nueva, v!d guarda la que había en
  * `anteriores/<vuelta>/`, para que ninguna idea se pierda.
  */
 export interface VueltaAnterior {
@@ -914,7 +914,7 @@ export interface CanalCompleto {
   esquemas: Record<string, string>
   /** Si está puesta la llave de la API de YouTube. */
   api: boolean
-  /** Si se puede leer YouTube: hace falta yt-dlp (el Python de Sloth, o uno con yt-dlp instalado). */
+  /** Si se puede leer YouTube: hace falta yt-dlp (el Python de v!d, o uno con yt-dlp instalado). */
   ytdlp: boolean
   /** Solo en un canal vertical: si está puesto el token de Meta, sin el que Instagram no se investiga. */
   meta?: boolean
@@ -1028,11 +1028,11 @@ export interface FuenteProbada {
   detalle: string
 }
 
-/** Lo que la ventana de Sloth (electron/preload.ts) le da a la interfaz como `window.sloth`. En un navegador no está. */
-export interface PuenteSloth {
+/** Lo que la ventana de v!d (electron/preload.ts) le da a la interfaz como `window.vid`. En un navegador no está. */
+export interface PuenteVid {
   /** La ventana al frente (al pulsar un aviso). */
   traer(): void
-  /** Si Sloth está anclada a la barra de tareas; `null` donde no se puede ofrecer (fuera de la app instalada en Windows). */
+  /** Si v!d está anclada a la barra de tareas; `null` donde no se puede ofrecer (fuera de la app instalada en Windows). */
   anclada(): Promise<boolean | null>
   /** Pide a Windows anclarla, que pregunta en su ventana. `windows`: Windows no dejó pedirlo. */
   anclar(): Promise<'anclada' | 'no' | 'windows'>
@@ -1041,13 +1041,13 @@ export interface PuenteSloth {
 }
 
 /**
- * La página del navegador integrado donde Sloth publica en TikTok (`server/redes/navegador.ts`), como si fuera otro
+ * La página del navegador integrado donde v!d publica en TikTok (`server/redes/navegador.ts`), como si fuera otro
  * hilo. Tiene su propio perfil: la sesión de las redes no la tienen los agentes.
  */
 export const NAVEGADOR_REDES = 'redes'
 
 /**
- * La página del navegador integrado donde Sloth genera las voces en Google AI Studio (`server/voz/`), con la sesión de
+ * La página del navegador integrado donde v!d genera las voces en Google AI Studio (`server/voz/`), con la sesión de
  * Google del usuario en su propio perfil: tampoco la tienen los agentes.
  */
 export const NAVEGADOR_VOZ = 'voz'
@@ -1060,7 +1060,7 @@ export interface VozStudio {
 }
 
 /**
- * `GET /api/voz`: la cuenta de Google con que Sloth genera las voces (`null`: sin conectar), si está esperando a que
+ * `GET /api/voz`: la cuenta de Google con que v!d genera las voces (`null`: sin conectar), si está esperando a que
  * entres en Edge, las voces que ofrece la página y cuántas esperan su turno. `error`: lo último que falló al conectar.
  */
 export interface EstadoVoz {
@@ -1136,12 +1136,12 @@ export interface GrupoEspacio {
   detalle: string
   bytes: number
   cuantos: number
-  /** Si Sloth lo borra solo (cada 6 horas) y entra en «Liberar»: lo demás se borra uno por uno, con su botón. */
+  /** Si v!d lo borra solo (cada 6 horas) y entra en «Liberar»: lo demás se borra uno por uno, con su botón. */
   seguro: boolean
 }
 
 export interface Espacio {
-  /** Bytes libres y totales del disco donde vive Sloth. */
+  /** Bytes libres y totales del disco donde vive v!d. */
   libre: number
   total: number
   grupos: GrupoEspacio[]
@@ -1163,9 +1163,9 @@ export interface Equipo {
   memoria: number
   /** La tarjeta de video, si se supo cuál. */
   tarjeta?: string
-  /** Con qué transcribe hoy la voz; null si aún no está el Python de Sloth. */
+  /** Con qué transcribe hoy la voz; null si aún no está el Python de v!d. */
   motor: MotorVoz | null
-  /** Si su Python de Sloth es el de CUDA: Whisper va en la tarjeta (si no, en el procesador, hasta bajar Parakeet). */
+  /** Si su Python de v!d es el de CUDA: Whisper va en la tarjeta (si no, en el procesador, hasta bajar Parakeet). */
   nvidia: boolean
   /** Lo medido de la voz: segundos de trabajo por segundo de voz (`veces`) y de cargar el motor (`carga`). */
   voz?: { motor: MotorVoz; veces: number; carga: number; fecha: string }

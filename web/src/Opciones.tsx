@@ -56,7 +56,7 @@ function Ajustes({ onDone, iniciando, onIniciando }: { onDone(): void; iniciando
         <div className="redes-cabeza">
           <div>
             <h2>Redes</h2>
-            <p>Por donde salen tus videos. vid.kold.gold los programa en cada red y te avisa si algo falla.</p>
+            <p>Por donde salen tus videos. v!d los programa en cada red y te avisa si algo falla.</p>
           </div>
           <a className="boton" href="#/mis-videos" title="Revisa y programa los que faltan, de todos los estilos">
             Programar videos
@@ -66,7 +66,7 @@ function Ajustes({ onDone, iniciando, onIniciando }: { onDone(): void; iniciando
           <RedesOpciones onIniciando={onIniciando} />
           <YoutubeOpciones />
         </div>
-        <p className="grupo-nota">Los verticales salen en TikTok e Instagram; los largos, en YouTube. vid.kold.gold tiene que estar abierto mientras sube a TikTok y a YouTube; Instagram publica aunque la computadora esté apagada.</p>
+        <p className="grupo-nota">Los verticales salen en TikTok e Instagram; los largos, en YouTube. v!d tiene que estar abierto mientras sube a TikTok y a YouTube; Instagram publica aunque la computadora esté apagada.</p>
       </section>
       <Grupo titulo="Agentes" nota="Cada agente se descarga la primera vez que lo eliges. Claude y ChatGPT necesitan un plan de pago o una llave de API; OpenCode, solo tu cuenta, que es gratis. Los demás, la cuenta o la llave de cada uno.">
         <Agentes />
@@ -76,7 +76,7 @@ function Ajustes({ onDone, iniciando, onIniciando }: { onDone(): void; iniciando
           <CuentaAgente key={p} p={p} />
         ))}
       </Grupo>
-      <Grupo titulo="Voz" nota="Al pedir un video eliges en «Voz» si la mandas tú o si el agente la genera aquí. La sesión de Google vive en un perfil aparte del navegador de vid.kold.gold: ningún agente la usa.">
+      <Grupo titulo="Voz" nota="Al pedir un video eliges en «Voz» si la mandas tú o si el agente la genera aquí. La sesión de Google vive en un perfil aparte del navegador de v!d: ningún agente la usa.">
         <VozOpciones />
       </Grupo>
       {/* Solo sirven a Ideas: sin la de YouTube, las recomendaciones van con el canal conectado. */}
@@ -112,7 +112,7 @@ function Grupo({ titulo, extra, nota, children }: { titulo: string; extra?: Reac
   )
 }
 
-/** Las llaves de API que usa Sloth: para qué es cada una y dónde se saca. `logo`, si no es el de su id. */
+/** Las llaves de API que usa v!d: para qué es cada una y dónde se saca. `logo`, si no es el de su id. */
 const LLAVES: Record<'youtube' | 'meta', { nombre: string; para: string; url: string; logo?: string; ayuda: ReactNode }> = {
   youtube: {
     nombre: 'YouTube',
@@ -257,7 +257,7 @@ function Llave({ id }: { id: keyof typeof LLAVES }) {
 }
 
 /**
- * La cuenta de Claude con la que trabaja Sloth (la de Claude Code en esta computadora). «Conectar con Claude» abre el
+ * La cuenta de Claude con la que trabaja v!d (la de Claude Code en esta computadora). «Conectar con Claude» abre el
  * navegador para autorizarla; si no se abrió, el enlace de respaldo da un código que se pega aquí. Sirve también para
  * cambiar de cuenta: vuelve a autorizar.
  */
@@ -401,7 +401,7 @@ function useLlave(c: UsoCuenta, proveedor: 'claude' | 'codex') {
         <a href={a.llaves} target="_blank" rel="noreferrer">
           {a.marca}
         </a>
-        , no en tu plan. Se guarda solo en vid.kold.gold, en esta computadora. {a.hilos}
+        , no en tu plan. Se guarda solo en v!d, en esta computadora. {a.hilos}
       </p>
     </form>
   )
@@ -418,7 +418,7 @@ export function CuentaClaude({ model, onFalta }: { model?: string; onFalta?(falt
   return p === 'codex' ? <CuentaCodex aviso onFalta={onFalta} /> : p === 'opencode' ? <CuentaOpenCode aviso onFalta={onFalta} /> : <AvisoClaude onFalta={onFalta} />
 }
 
-const CUENTA_CONECTADA = 'sloth-cuenta-conectada'
+const CUENTA_CONECTADA = 'vid-cuenta-conectada'
 
 /**
  * Con qué va un hilo nuevo si no está la cuenta de Claude (`undefined` mientras no se sabe; `false`, con Claude o sin
@@ -543,7 +543,7 @@ export function CuentaOpenCode({ aviso = false, onFalta }: { aviso?: boolean; on
             />
           ) : (
             <span>
-              vid.kold.gold trabaja con tu cuenta de OpenCode, que se crea gratis en su página. Sus modelos gratis no te cobran nada; si
+              v!d trabaja con tu cuenta de OpenCode, que se crea gratis en su página. Sus modelos gratis no te cobran nada; si
               le pones saldo, también puedes usar los de pago. Pueden equivocarse más que Claude o ChatGPT, y no hacen imágenes
               (portadas ni personajes nuevos).
             </span>
@@ -609,14 +609,14 @@ const OTROS: Record<OtroAgente, { titulo: string; logo: string; como: 'ventana' 
     logo: 'deepseek',
     como: 'llave',
     beta: true,
-    texto: 'Trabaja en el mismo Claude Code de vid.kold.gold, con los modelos de DeepSeek: las skills, los subagentes y el navegador van igual que con Claude. Se cobra por uso, del saldo de tu cuenta de DeepSeek.',
+    texto: 'Trabaja en el mismo Claude Code de v!d, con los modelos de DeepSeek: las skills, los subagentes y el navegador van igual que con Claude. Se cobra por uso, del saldo de tu cuenta de DeepSeek.',
     ayuda: (
       <>
         Créala en{' '}
         <a href="https://platform.deepseek.com/api_keys" target="_blank" rel="noreferrer">
           platform.deepseek.com
         </a>{' '}
-        y ponle saldo. Se guarda solo en vid.kold.gold, en esta computadora.
+        y ponle saldo. Se guarda solo en v!d, en esta computadora.
       </>
     )
   },
@@ -625,7 +625,7 @@ const OTROS: Record<OtroAgente, { titulo: string; logo: string; como: 'ventana' 
     logo: 'grok',
     como: 'ventana',
     beta: true,
-    texto: 'vid.kold.gold trabaja con tu cuenta de Grok. Al conectar se abre una ventana de Grok que te lleva a autorizarla en el navegador.',
+    texto: 'v!d trabaja con tu cuenta de Grok. Al conectar se abre una ventana de Grok que te lleva a autorizarla en el navegador.',
     uso: 'https://grok.com'
   },
   antigravity: {
@@ -634,19 +634,19 @@ const OTROS: Record<OtroAgente, { titulo: string; logo: string; como: 'ventana' 
     como: 'navegador',
     beta: true,
     abreSolo: 'Abriendo Antigravity: al terminar se abre sola la página de Google',
-    texto: 'vid.kold.gold trabaja con tu cuenta de Google en Antigravity, con sus modelos de Gemini. La cuenta se autoriza en el navegador.'
+    texto: 'v!d trabaja con tu cuenta de Google en Antigravity, con sus modelos de Gemini. La cuenta se autoriza en el navegador.'
   },
   cursor: {
     titulo: 'Cursor',
     logo: 'cursor',
     como: 'navegador',
-    texto: 'vid.kold.gold trabaja con tu cuenta de Cursor, que pide un plan de pago para su agente. La cuenta se autoriza en el navegador.'
+    texto: 'v!d trabaja con tu cuenta de Cursor, que pide un plan de pago para su agente. La cuenta se autoriza en el navegador.'
   },
   muse: {
     titulo: 'Muse Code · Meta',
     logo: 'muse',
     como: 'ventana',
-    texto: 'vid.kold.gold trabaja con tu cuenta de Meta. Al conectar se abre una ventana de Muse Code que te lleva a autorizarla.'
+    texto: 'v!d trabaja con tu cuenta de Meta. Al conectar se abre una ventana de Muse Code que te lleva a autorizarla.'
   },
   pi: {
     titulo: 'Pi',
@@ -657,7 +657,7 @@ const OTROS: Record<OtroAgente, { titulo: string; logo: string; como: 'ventana' 
     ayuda: (
       <>
         En la ventana de Pi, elige tu proveedor y sigue sus pasos: se cierra sola al terminar. Pi también usa las llaves de API que tengas en las variables
-        de tu usuario, pero no las que guardaste en vid.kold.gold, salvo que se lo elijas aquí.
+        de tu usuario, pero no las que guardaste en v!d, salvo que se lo elijas aquí.
       </>
     )
   }
@@ -751,7 +751,7 @@ export function CuentaAgente({ p, aviso = false, onFalta }: { p: OtroAgente; avi
           )
         )}
       </div>
-      {o.beta && <p className="fila-extra muted small">Está en beta: puedes probarlo, pero puede tener errores. Si te topas con uno, avísale a quien administra vid.kold.gold.</p>}
+      {o.beta && <p className="fila-extra muted small">Está en beta: puedes probarlo, pero puede tener errores. Si te topas con uno, avísale a quien administra v!d.</p>}
       {pegando && (
         <form className="fila-extra" onSubmit={(e) => (e.preventDefault(), llave.trim() && void guardarLlave(llave.trim()))}>
           <div className="opcion-fila">
@@ -777,13 +777,13 @@ export function CuentaAgente({ p, aviso = false, onFalta }: { p: OtroAgente; avi
         </p>
       )}
       {!cuenta?.conectada && !espera && !pegando && o.como === 'ventana' && o.ayuda && !aviso && <p className="fila-extra muted small"><span>{o.ayuda}</span></p>}
-      {cuenta?.llavesSloth && !!cuenta.llavesSloth.de.length && !aviso && (
+      {cuenta?.llavesVid && !!cuenta.llavesVid.de.length && !aviso && (
         <div className="fila-extra pago">
           <span className="muted small">
-            Tienes en vid.kold.gold llaves de {cuenta.llavesSloth.de.join(', ')}.{' '}
-            {cuenta.llavesSloth.usar ? `${o.titulo} las usa, y lo que hagas con esos modelos se cobra por uso en ellas.` : `${o.titulo} no las ve: así no cobra en ellas sin que lo elijas.`}
+            Tienes en v!d llaves de {cuenta.llavesVid.de.join(', ')}.{' '}
+            {cuenta.llavesVid.usar ? `${o.titulo} las usa, y lo que hagas con esos modelos se cobra por uso en ellas.` : `${o.titulo} no las ve: así no cobra en ellas sin que lo elijas.`}
           </span>
-          <Interruptor on={cuenta.llavesSloth.usar} disabled={c.ocupado} onCambiar={(usar) => void c.pedir(`/api/${p}/llaves`, { usar })} etiqueta="Usarlas en Pi" />
+          <Interruptor on={cuenta.llavesVid.usar} disabled={c.ocupado} onCambiar={(usar) => void c.pedir(`/api/${p}/llaves`, { usar })} etiqueta="Usarlas en Pi" />
         </div>
       )}
       {(c.error || error || a?.error) && <p className="bad small fila-extra">{c.error || error || a?.error}</p>}
@@ -810,7 +810,7 @@ function AvisoClaude({ onFalta }: { onFalta?(falta?: boolean): void }) {
           <Logo de="claude" />
           <div className="fila-nombre">
             <strong>Conecta tu cuenta de Claude</strong>
-            {!c.cuenta.conectando && <span>vid.kold.gold trabaja con tu plan de pago de Claude (Pro o Max), o con una llave de API. La cuenta se autoriza una sola vez en el navegador.</span>}
+            {!c.cuenta.conectando && <span>v!d trabaja con tu plan de pago de Claude (Pro o Max), o con una llave de API. La cuenta se autoriza una sola vez en el navegador.</span>}
           </div>
           {agentes?.claude.instalando ? (
             <Bajando a={agentes.claude} />
@@ -885,7 +885,7 @@ function CuentaCodex({ aviso = false, onFalta }: { aviso?: boolean; onFalta?(fal
               onChange={(que) => llave.elegir(que) || (que === 'uso' ? window.open('https://chatgpt.com/codex/settings/usage', '_blank', 'noreferrer') : conectar())}
             />
           ) : (
-            <span>vid.kold.gold trabaja con tu plan de pago de ChatGPT (Plus o Pro), o con una llave de API, y con ella hace las imágenes de los videos: portadas y personajes. La cuenta se autoriza en el navegador.</span>
+            <span>v!d trabaja con tu plan de pago de ChatGPT (Plus o Pro), o con una llave de API, y con ella hace las imágenes de los videos: portadas y personajes. La cuenta se autoriza en el navegador.</span>
           )}
         </div>
         {agentes?.codex.instalando ? <Bajando a={agentes.codex} /> : version.estado}
@@ -918,7 +918,7 @@ function CuentaCodex({ aviso = false, onFalta }: { aviso?: boolean; onFalta?(fal
 const conMayuscula = (s?: string) => s && s[0].toUpperCase() + s.slice(1)
 
 /**
- * Lo que las skills necesitan fuera de Sloth (FFmpeg, Python…), y el botón que baja lo que falta. Con `skill`, solo lo
+ * Lo que las skills necesitan fuera de v!d (FFmpeg, Python…), y el botón que baja lo que falta. Con `skill`, solo lo
  * que pide esa skill; sin ella (Opciones), todo.
  */
 function useRequisitos(fresco = false, skill?: string) {
@@ -953,7 +953,7 @@ function useRequisitos(fresco = false, skill?: string) {
 type UsoRequisitos = ReturnType<typeof useRequisitos>
 
 /**
- * Lo que ve quien abre la app si falta algo que Sloth puede bajar: encima del compositor, solo lo que falta para la skill
+ * Lo que ve quien abre la app si falta algo que v!d puede bajar: encima del compositor, solo lo que falta para la skill
  * de la card, con un botón que lo baja todo. En Opciones está la lista entera, cada uno con su botón.
  */
 export function Requisitos({ skill, onListo }: { skill?: string; onListo?(listo?: boolean): void }) {
@@ -1072,7 +1072,7 @@ function EstadoRequisito({ r }: { r: Requisito }) {
 }
 
 /**
- * La versión de un agente (`estado`, a la derecha de su fila), la que trae Sloth: llega al día con cada versión de Sloth.
+ * La versión de un agente (`estado`, a la derecha de su fila), la que trae v!d: llega al día con cada versión de v!d.
  * `aviso`, debajo, si no se pudo leer.
  */
 function useVersion(de: Proveedor, mirar = true, instalado?: boolean) {
@@ -1134,7 +1134,7 @@ function Agentes() {
             ) : cuenta.conectando ? (
               <span className="falta">Esperando al navegador…</span>
             ) : (
-              <span className="falta">Sin cuenta: vid.kold.gold trabaja con tu plan de pago de Claude (Pro o Max) o con una llave de API</span>
+              <span className="falta">Sin cuenta: v!d trabaja con tu plan de pago de Claude (Pro o Max) o con una llave de API</span>
             )}
           </div>
           {agentes?.claude.instalando ? <Bajando a={agentes.claude} /> : version.estado}
@@ -1203,7 +1203,7 @@ function cuandoReinicia(d: Date) {
 }
 
 /**
- * Los avisos de cuando un hilo termina o te necesita mientras miras otra cosa (`avisos.ts`). En la ventana de Sloth ya
+ * Los avisos de cuando un hilo termina o te necesita mientras miras otra cosa (`avisos.ts`). En la ventana de v!d ya
  * tienen permiso; en Edge, encenderlas se lo pide, y si lo niega se dice dónde dárselo.
  */
 function Avisos() {
@@ -1223,7 +1223,7 @@ function Avisos() {
     const p = permiso === 'default' ? await Notification.requestPermission() : permiso
     setPermiso(p)
     if (p !== 'granted') return setAyuda('permiso')
-    void notificar({ titulo: 'Así avisa vid.kold.gold', cuerpo: 'Cuando un hilo termine mientras miras otra cosa.', ids: [] })
+    void notificar({ titulo: 'Así avisa v!d', cuerpo: 'Cuando un hilo termine mientras miras otra cosa.', ids: [] })
     setAyuda('windows')
   }
 
@@ -1243,13 +1243,13 @@ function Avisos() {
       </div>
       {ayuda === 'permiso' && (
         <p className="small fila-extra">
-          Edge no deja avisar a vid.kold.gold. Para permitirlo, escribe <span className="mono">edge://settings/content/notifications</span> en una ventana de Edge,
+          Edge no deja avisar a v!d. Para permitirlo, escribe <span className="mono">edge://settings/content/notifications</span> en una ventana de Edge,
           añade <span className="mono">{location.origin}</span> en «Permitir» (o quítalo de «No permitir») y vuelve aquí.
         </p>
       )}
       {ayuda === 'windows' && (
         <p className="muted small fila-extra">
-          ¿No salió? Mira que Windows deje avisar a {window.sloth ? 'vid.kold.gold' : 'Microsoft Edge'} (Configuración → Sistema → Notificaciones) y que «No molestar» esté apagado.
+          ¿No salió? Mira que Windows deje avisar a {window.vid ? 'v!d' : 'Microsoft Edge'} (Configuración → Sistema → Notificaciones) y que «No molestar» esté apagado.
         </p>
       )}
     </div>

@@ -1,5 +1,5 @@
 /**
- * Los agentes con que trabaja Sloth. Claude va sin prefijo; los demás llevan el suyo en el id del modelo
+ * Los agentes con que trabaja v!d. Claude va sin prefijo; los demás llevan el suyo en el id del modelo
  * (`codex:gpt-5.6`, `grok:grok-build`) para no mezclar catálogos ni sesiones de proveedores.
  */
 export const PROVEEDORES = ['claude', 'codex', 'opencode', 'deepseek', 'grok', 'antigravity', 'cursor', 'muse', 'pi'] as const

@@ -8,7 +8,7 @@ nicho, para que Whisper no oiga «Cloud» donde dicen «Claude». Contesta con `
 archivo por ruta; sin voz (música, solo texto en pantalla), `segmentos` va vacío. El que no se puede transcribir va con
 `{"error"}` y no para a los demás.
 
-Espera su turno en la GPU con el candado de `turno_gpu()` (`video-base/scripts/sloth.py`): Whisper ocupa unos 3 GB de los
+Espera su turno en la GPU con el candado de `turno_gpu()` (`video-base/scripts/vid.py`): Whisper ocupa unos 3 GB de los
 6, y si un vídeo se está transcribiendo a la vez no caben los dos. Mientras espera, lo dice en la salida de errores. Por
 lo mismo, con el turno cierra la voz viva (`video-base/scripts/voz_viva.py`), que tiene otro Whisper cargado.
 """
@@ -37,8 +37,8 @@ BATCH = 8
 
 @contextmanager
 def gpu_turn():
-    """El mismo candado que `turno()` de sloth.py (`%TEMP%/sloth-gpu.lock`): si el proceso muere, se suelta solo."""
-    with open(Path(tempfile.gettempdir()) / "sloth-gpu.lock", "a+b") as lock:
+    """El mismo candado que `turno()` de vid.py (`%TEMP%/vid-gpu.lock`): si el proceso muere, se suelta solo."""
+    with open(Path(tempfile.gettempdir()) / "vid-gpu.lock", "a+b") as lock:
         waiting = False
         while True:
             try:
@@ -64,9 +64,9 @@ def gpu_turn():
 
 
 def close_live_voice() -> None:
-    """Cierra la voz viva, si está (`_soltar_voz()` de sloth.py), y espera a que suelte la tarjeta."""
+    """Cierra la voz viva, si está (`_soltar_voz()` de vid.py), y espera a que suelte la tarjeta."""
     try:
-        port = json.loads((Path(tempfile.gettempdir()) / "sloth-voz.json").read_text(encoding="utf8"))["puerto"]
+        port = json.loads((Path(tempfile.gettempdir()) / "vid-voz.json").read_text(encoding="utf8"))["puerto"]
         with socket.create_connection(("127.0.0.1", port), timeout=10) as c, c.makefile("rwb") as f:
             c.settimeout(60)
             f.write(b'{"salir": true}\n')

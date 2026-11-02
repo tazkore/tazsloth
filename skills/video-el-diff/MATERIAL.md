@@ -23,7 +23,7 @@ raíz dice qué archivo respalda cada frase y qué imagen remata cada chiste. Ej
 
 ## Recetas
 
-- **Una app del usuario** (el episodio 4 fue sobre Sloth): ábrela con Playwright `_electron` sobre una **copia** de sus
+- **Una app del usuario** (el episodio 4 fue sobre v!d): ábrela con Playwright `_electron` sobre una **copia** de sus
   datos, nunca sobre los reales, y sin pulsar nada que gaste IA o lance trabajos, con los scripts en
   `fuentes/scripts/`. Graba la vista previa con `recordVideo`. Un `git log` o un archivo se enseñan como terminal o
   editor: la salida real del comando en una página HTML (fondo oscuro, letra monoespaciada), capturada con `pagina.mjs`.

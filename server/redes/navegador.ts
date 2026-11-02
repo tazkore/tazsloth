@@ -7,13 +7,13 @@ import { NAVEGADOR_REDES } from '../../shared/types.ts'
 import { integrado } from '../navegador-agente.ts'
 
 /**
- * El navegador de las redes, donde viven las sesiones de TikTok y de las redes que vengan. Sloth lo maneja por CDP,
+ * El navegador de las redes, donde viven las sesiones de TikTok y de las redes que vengan. v!d lo maneja por CDP,
  * como lo harías tú a mano. TikTok no tiene API abierta para publicar en público sin una auditoría (ver `docs/adr/`),
  * así que se usa su página web. Instagram sí la tiene y no lo usa.
  *
- * Con la ventana de Sloth abierta, es su página `NAVEGADOR_REDES` del navegador integrado (`electron/navegador.ts`), con
+ * Con la ventana de v!d abierta, es su página `NAVEGADOR_REDES` del navegador integrado (`electron/navegador.ts`), con
  * su propio perfil: no abre otra ventana, y se ve en Opciones → Redes. Es una sola página: `pestana` la da y `cerrar` la
- * deja en blanco. Sin la ventana (Sloth en Edge), un Edge con su propio perfil (`data/redes/perfil`).
+ * deja en blanco. Sin la ventana (v!d en Edge), un Edge con su propio perfil (`data/redes/perfil`).
  *
  * Google no deja iniciar sesión dentro de una app («el navegador no es seguro»): si la página de la app va a Google, ese
  * paso se da en Edge (`conGoogle`), y la sesión de la red pasa a la app al entrar (`pasarDeEdge`).
@@ -67,7 +67,7 @@ export async function navegador(app: string, url = 'about:blank'): Promise<Brows
 async function abrirEdge(app: string, url: string): Promise<Browser> {
   if (!(await responde())) {
     const edge = EDGE.find((e) => existsSync(e))
-    if (!edge) throw new Error(process.platform === 'win32' ? 'No encontré Microsoft Edge, que es el navegador con el que Sloth publica.' : 'No encontré Microsoft Edge ni Google Chrome: instala uno para entrar con Google.')
+    if (!edge) throw new Error(process.platform === 'win32' ? 'No encontré Microsoft Edge, que es el navegador con el que v!d publica.' : 'No encontré Microsoft Edge ni Google Chrome: instala uno para entrar con Google.')
     const perfil = join(app, 'data', 'redes', 'perfil')
     mkdirSync(perfil, { recursive: true })
     spawn(edge, [`--remote-debugging-port=${PUERTO}`, `--user-data-dir=${perfil}`, '--no-first-run', '--no-default-browser-check', url], { detached: true, stdio: 'ignore' }).unref()

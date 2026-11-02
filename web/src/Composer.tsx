@@ -11,7 +11,7 @@ import { invocacion, LINK, LINK_ICON, linkParts, QUOTE_EVENT, QUOTE_ICON, quoteR
  * El aviso con el que el inicio le pasa al compositor lo que se soltó fuera de él (`Soltar.tsx`): los archivos y el texto
  * (un enlace). Le pasa lo mismo que si se hubiera soltado encima.
  */
-export const SOLTAR_EVENT = 'sloth:soltar'
+export const SOLTAR_EVENT = 'vid:soltar'
 export type Soltado = { files: File[]; texto: string }
 
 /**

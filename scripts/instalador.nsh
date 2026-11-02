@@ -1,12 +1,11 @@
-; Lo propio del instalador de Sloth, que arma electron-builder (scripts/compilar.mjs) con NSIS. Instala para tu usuario,
-; sin permisos de administrador, en %LOCALAPPDATA%\Programs\Sloth, donde estaba la 0.2: tus videos (app\trabajo), tus
+; Lo propio del instalador de vid-koldgold, que arma electron-builder (scripts/compilar.mjs) con NSIS. Instala para tu usuario,
+; sin permisos de administrador, en %LOCALAPPDATA%\Programs\vid-koldgold: tus videos (app\trabajo), tus
 ; hilos (app\data) y tus skills (app\skills) viven ahí y ninguna versión nueva los toca.
 
 ; Después de poner los archivos: lo que dejaba el instalador de antes de Electron (hasta la 0.2), su desinstalador, su
-; entrada en «Aplicaciones instaladas» y la ventana WebView2. Anclar Sloth a la barra de tareas no se ofrece aquí: Windows
-; solo deja pedirlo a la app que está al frente, y lo ofrece la bienvenida de Sloth.
+; entrada en «Aplicaciones instaladas» y la ventana WebView2. Anclar la app a la barra de tareas no se ofrece aquí: Windows
+; solo deja pedirlo a la app que está al frente, y lo ofrece la bienvenida de la app.
 !macro customInstall
-  DeleteRegKey HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\Sloth"
   Delete "$INSTDIR\Desinstalar.exe"
   Delete "$INSTDIR\LEEME.txt"
   Delete "$INSTDIR\Microsoft.Web.WebView2.Core.dll"
@@ -14,7 +13,7 @@
   Delete "$INSTDIR\WebView2Loader.dll"
 !macroend
 
-; Al desinstalar de verdad (no para poner otra versión), el ancla se va con Sloth: si no, quedaría rota.
+; Al desinstalar de verdad (no para poner otra versión), el ancla se va con la app: si no, quedaría rota.
 !macro customUnInstall
   ${IfNot} ${isUpdated}
     ExecWait '"$INSTDIR\resources\ayudante.exe" --desanclar "$INSTDIR\${APP_EXECUTABLE_FILENAME}"'
@@ -23,7 +22,7 @@
 
 ; Quitar la versión instalada. Al actualizar (`--updated`) se va todo menos app\data, app\trabajo y app\skills; al
 ; desinstalar también se van las skills y los node_modules que comparten los videos (se rehacen solos), tus videos y tus
-; hilos solo si dices que sí, y la IA local que bajó Sloth (el Python con torch y Whisper, 5 a 10 GB) si dices que sí.
+; hilos solo si dices que sí, y la IA local que bajó la app (el Python con torch y Whisper, 5 a 10 GB) si dices que sí.
 !macro customRemoveFiles
   SetOutPath $TEMP
   FindFirst $0 $1 "$INSTDIR\*.*"
@@ -64,9 +63,9 @@
         RMDir /r "$INSTDIR\app\trabajo"
         RMDir /r "$INSTDIR\app\data"
       quedan:
-      ; La IA local: el Python que instaló Sloth (`*-sloth`, server/requisitos.ts) y sus modelos. Se vuelve a bajar.
+      ; La IA local: el Python que instaló la app (`*-sloth`, server/requisitos.ts) y sus modelos. Se vuelve a bajar.
       IfFileExists "$APPDATA\youtube\piezas\python\*.*" 0 sinIA
-      MessageBox MB_YESNO|MB_ICONQUESTION "¿Borrar también la IA local que bajó Sloth (unos 5 a 10 GB)?$\n$\nSi vuelves a instalar Sloth, se baja otra vez." IDNO sinIA
+      MessageBox MB_YESNO|MB_ICONQUESTION "¿Borrar también la IA local que bajó ${PRODUCT_NAME} (unos 5 a 10 GB)?$\n$\nSi vuelves a instalar ${PRODUCT_NAME}, se baja otra vez." IDNO sinIA
         FindFirst $0 $1 "$APPDATA\youtube\piezas\python\*-sloth"
         ${DoWhile} $1 != ""
           RMDir /r "$APPDATA\youtube\piezas\python\$1"

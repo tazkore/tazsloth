@@ -6,7 +6,7 @@ import { fileURLToPath } from 'node:url'
 import { esOutlier, idiomaDe, urlVertical } from '../../shared/ideas.ts'
 import type { Transcripcion, VideoYT } from '../../shared/types.ts'
 import { guardar } from '../disco.ts'
-import { rutaPythonSloth } from '../requisitos.ts'
+import { rutaPythonVid } from '../requisitos.ts'
 import type { Ctx } from './investigar.ts'
 import { dormir } from './navegador-investigacion.ts'
 import { enLineas } from './resumen.ts'
@@ -15,7 +15,7 @@ import { correr, Detenido, Pausa, ytdlp } from './youtube.ts'
 /**
  * Lo que se dice en los videos de la investigación, en `transcripciones/<id>.json` dentro de la carpeta del canal: así el
  * resumen cuenta ganchos dichos y Claude lee completas las de su evidencia al preparar un video. YouTube va por sus
- * subtítulos, sin bajar el video; TikTok e Instagram, por su audio y el Whisper de Sloth (`python/procesos/
+ * subtítulos, sin bajar el video; TikTok e Instagram, por su audio y el Whisper de v!d (`python/procesos/
  * transcribir-lote.py`), de 20 en 20 para cargar el modelo una vez por lote. Mientras Whisper transcribe un lote, se baja el
  * siguiente. Lo transcrito no se repite, y si una red frena, lo que falta queda para la vuelta siguiente.
  */
@@ -66,7 +66,7 @@ export async function transcribirVideos(carpeta: string, videos: VideoYT[], ctx:
       } catch {}
   if (marcadas) ctx.guardar?.()
 
-  const python = rutaPythonSloth()
+  const python = rutaPythonVid()
   const terminos = terminosDelNicho(videos)
   const faltan = videos.filter((v) => !existsSync(ruta(v.id)))
   const sinEnlace = faltan.filter((v) => v.red === 'instagram' && !enlaces.has(v.id)).length
@@ -78,7 +78,7 @@ export async function transcribirVideos(carpeta: string, videos: VideoYT[], ctx:
   const avisos = [
     videos.length > faltan.length && `${videos.length - faltan.length} ya estaban transcritos.`,
     sinEnlace && `${sinEnlace} ${sinEnlace === 1 ? 'Reel no tiene' : 'Reels no tienen'} enlace para bajarlo: Meta no lo da de las cuentas ajenas, solo la búsqueda de Instagram y tu cuenta.`,
-    sinPython && `Sin el Python de Sloth no transcribo los ${sinPython} de TikTok e Instagram.`
+    sinPython && `Sin el Python de v!d no transcribo los ${sinPython} de TikTok e Instagram.`
   ]
   const detalle = avisos.filter(Boolean).join(' ') || undefined
   if (!cola.length) return void (detalle && ctx.paso('transcribir', 'No hay videos nuevos que transcribir.', detalle))
@@ -104,7 +104,7 @@ export async function transcribirVideos(carpeta: string, videos: VideoYT[], ctx:
     marcar(v, t)
   }
 
-  const tmp = mkdtempSync(join(tmpdir(), 'sloth-transcribir-'))
+  const tmp = mkdtempSync(join(tmpdir(), 'vid-transcribir-'))
   let hechos = 0
   let sinVoz = 0
   let sinSubtitulos = 0
@@ -449,7 +449,7 @@ async function whisper(python: string, wavs: string[], ctx: CtxTranscribir, term
 /** yt-dlp sin `-J`, con el Python con que lo lanza `ytdlp()`. Devuelve lo que imprimió. */
 function conYtdlp(args: string[], signal: AbortSignal) {
   const l = ytdlp()
-  if (!l) return Promise.reject(new Error('Falta yt-dlp: instala el Python de Sloth, o corre «python -m pip install yt-dlp».'))
+  if (!l) return Promise.reject(new Error('Falta yt-dlp: instala el Python de v!d, o corre «python -m pip install yt-dlp».'))
   return lanzar(l.exe, [...l.args, '-m', 'yt_dlp', '--no-warnings', ...args], signal)
 }
 

@@ -7,7 +7,7 @@ import { Segmento } from './Segmento'
 /**
  * El modelo de un hilo nuevo. «Optimizado» (lo normal) usa lo que medimos como mejor para la skill en cada tarea: el hilo
  * y cada subagente (`modelos` de la card); en una skill sin medir, el hilo va en lo último que elegiste a mano.
- * «Avanzado» deja elegir el modelo y el esfuerzo de cada uno. Sloth le pasa los de los subagentes al agente en la línea
+ * «Avanzado» deja elegir el modelo y el esfuerzo de cada uno. v!d le pasa los de los subagentes al agente en la línea
  * `Subagentes:`, que la skill respeta.
  */
 

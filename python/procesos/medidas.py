@@ -1,5 +1,5 @@
 """
-Lo que tarda la voz en esta computadora, para decir cuánto falta (`proceso()` de video-base/scripts/sloth.py) y
+Lo que tarda la voz en esta computadora, para decir cuánto falta (`proceso()` de video-base/scripts/vid.py) y
 enseñarlo en Opciones → Tu equipo (`server/equipo.ts`). Va en `equipo.json`, junto a la carpeta de los modelos
 (`%APPDATA%/youtube/equipo.json`), con lo que mide cada transcripción:
 

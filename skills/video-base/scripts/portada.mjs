@@ -14,7 +14,7 @@ import { join, resolve } from 'node:path'
 import { spawnSync } from 'node:child_process'
 import { ffmpeg, opciones, probar, uso } from './ffmpeg.mjs'
 
-const MARCA = 'sloth-portada'
+const MARCA = 'vid-portada'
 // Los presets de x264, del más usado al menos: el que da las mismas cabeceras que el vídeo es el suyo.
 const PRESETS = ['medium', 'slow', 'slower', 'fast', 'veryslow', 'faster', 'veryfast', 'superfast', 'ultrafast']
 
@@ -30,7 +30,8 @@ if (!v) throw new Error(`${video} no tiene vídeo.`)
 const { width: W, height: H } = v
 const [fn, fd] = v.r_frame_rate.split('/').map(Number)
 const fps = `${fn}/${fd}`
-const yaTenia = info.format.tags?.comment === MARCA
+// `sloth-portada`: la marca de antes de la Fase 2, en videos ya hechos.
+const yaTenia = [MARCA, 'sloth-portada'].includes(info.format.tags?.comment)
 // Las muestras de audio que dura un fotograma: el silencio que se pone delante (y el que se quita si ya tenía portada).
 const muestras = a ? Math.round((Number(a.sample_rate) * fd) / fn) : 0
 
@@ -141,7 +142,7 @@ try {
     renameSync(tmp, video)
   } catch (err) {
     if (!['EPERM', 'EBUSY', 'EACCES'].includes(err.code)) throw err
-    // Sloth tiene el vídeo abierto (lo sirve al panel): Windows no deja reemplazarlo, pero sí apartarlo y borrarlo.
+    // v!d tiene el vídeo abierto (lo sirve al panel): Windows no deja reemplazarlo, pero sí apartarlo y borrarlo.
     const viejo = `${tmp}.viejo`
     renameSync(video, viejo)
     renameSync(tmp, video)

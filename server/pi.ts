@@ -7,29 +7,29 @@ import type { AgentEvent, Model, Tokens } from '../shared/types.ts'
 import { conRutas, IMAGE_TYPES, type AgentOptions, type AgentRun, type SkillRef } from './agent.ts'
 import { comandoAgente } from './agentes.ts'
 import { cuentaConVentana } from './cuenta-ventana.ts'
-import { conSkill, INSTRUCCIONES, mcpSloth } from './instrucciones.ts'
+import { conSkill, INSTRUCCIONES, mcpVid } from './instrucciones.ts'
 import { matarArbol } from './rpc-lineas.ts'
 
 /**
  * Pi (`@earendil-works/pi-coding-agent`), en modo RPC (`pi --mode rpc`), como en T3 Code: un proceso por hilo que habla
  * JSON por líneas. Pi trabaja con el proveedor que cada quien conecte en él (`/login`: Claude, ChatGPT, Gemini, Copilot…,
  * o una llave de API como la de DeepSeek), y guarda las cuentas en `~/.pi/agent`, el mismo Pi de la terminal. Las llaves que
- * guardaste en Sloth las usa solo si se lo eliges en Opciones (`entornoAgente`).
+ * guardaste en v!d las usa solo si se lo eliges en Opciones (`entornoAgente`).
  *
- * Los MCP de Sloth (el navegador y la voz) y sus instrucciones entran con una extensión que Sloth escribe en
+ * Los MCP de v!d (el navegador y la voz) y sus instrucciones entran con una extensión que v!d escribe en
  * `data/pi` (`pi.registerMcpServer`): Pi conecta solo sus MCP, como los de `mcp.json`.
  */
 
 const APP = resolve(dirname(fileURLToPath(import.meta.url)), '..')
-const EXTENSION = join(APP, 'data', 'pi', 'sloth-extension.ts')
-const LOGIN = join(APP, 'data', 'pi', 'sloth-login.ts')
+const EXTENSION = join(APP, 'data', 'pi', 'vid-extension.ts')
+const LOGIN = join(APP, 'data', 'pi', 'vid-login.ts')
 /** Pi solo para iniciar sesión: sin sesión ni lo que carga para trabajar. */
 const ARGS_LOGIN = ['--no-session', '--no-skills', '--no-context-files', '--no-prompt-templates', '--no-extensions', '--extension']
 
-/** La extensión: registra los MCP del hilo, que le llegan en `SLOTH_MCP`, con sus herramientas a la vista del modelo. */
-const FUENTE = `// La escribe Sloth (server/pi.ts) cada vez que abre Pi: no la edites.
+/** La extensión: registra los MCP del hilo, que le llegan en `VID_MCP`, con sus herramientas a la vista del modelo. */
+const FUENTE = `// La escribe v!d (server/pi.ts) cada vez que abre Pi: no la edites.
 export default function (pi: any) {
-  const servidores = JSON.parse(process.env.SLOTH_MCP || '{}')
+  const servidores = JSON.parse(process.env.VID_MCP || process.env.SLOTH_MCP || '{}')
   for (const [nombre, s] of Object.entries(servidores)) pi.registerMcpServer(nombre, { ...(s as object), exposure: 'direct' })
 }
 `
@@ -39,7 +39,7 @@ export default function (pi: any) {
  * da Enter, y cierra la ventana en cuanto se guarda una cuenta. El Enter usa `focusedComponent`, que no es API pública:
  * si un Pi nuevo lo cambia, queda `/login` escrito y basta con pulsar Enter.
  */
-const FUENTE_LOGIN = `// La escribe Sloth (server/pi.ts) cada vez que abre Pi para conectar una cuenta: no la edites.
+const FUENTE_LOGIN = `// La escribe v!d (server/pi.ts) cada vez que abre Pi para conectar una cuenta: no la edites.
 import { statSync } from 'node:fs'
 import { homedir } from 'node:os'
 import { join } from 'node:path'
@@ -51,8 +51,8 @@ export default function (pi: any) {
   pi.on('session_start', (_e: unknown, ctx: any) => {
     const antes = fecha()
     let tui: any
-    ctx.ui.setWidget('sloth', (t: any) => ((tui = t), { render: () => [], invalidate() {} }))
-    ctx.ui.setWidget('sloth', undefined)
+    ctx.ui.setWidget('vid', (t: any) => ((tui = t), { render: () => [], invalidate() {} }))
+    ctx.ui.setWidget('vid', undefined)
     ctx.ui.setEditorText('/login')
     // Mientras Pi arranca, el Enter deja el texto donde está: se repite hasta que lo toma.
     const enter = setInterval(() => {
@@ -153,7 +153,7 @@ class Rpc {
   }
 
   orden(type: string, datos: Record<string, unknown> = {}, espera = 60_000): Promise<any> {
-    const id = `sloth-${++this.n}`
+    const id = `vid-${++this.n}`
     return new Promise((ok, mal) => {
       const reloj = espera ? setTimeout(() => (this.esperas.delete(id), mal(new Error(`Pi no contestó a tiempo (${type}).`))), espera) : undefined
       this.esperas.set(id, (r) => {
@@ -260,7 +260,7 @@ export function startPi(opts: AgentOptions): AgentRun {
 
   const { provider, modelId } = modeloDe(opts.model)
   const args = ['--extension', extension(), '--append-system-prompt', INSTRUCCIONES, ...(opts.resume ? ['--session', opts.resume] : [])]
-  const env = { ...entornoAgente('pi'), SLOTH_MCP: JSON.stringify(mcpSloth(opts.lote, opts.hilo)) }
+  const env = { ...entornoAgente('pi'), VID_MCP: JSON.stringify(mcpVid(opts.lote, opts.hilo)) }
   rpc = new Rpc(args, opts.cwd, env, oir, (code) => {
     const habia = busy
     if (busy) {
@@ -402,11 +402,11 @@ export const cuentaPi = cuentaConVentana('pi', {
   async estado() {
     // Quién: los proveedores que tiene conectados («deepseek, anthropic»).
     const proveedores = [...new Set((await modelosPi()).map((m) => modeloDe(m.id).provider))]
-    return { conectada: proveedores.length > 0, quien: proveedores.join(', ') || undefined, llavesSloth: llavesPrestables('pi') }
+    return { conectada: proveedores.length > 0, quien: proveedores.join(', ') || undefined, llavesVid: llavesPrestables('pi') }
   }
 })
 
-/** Darle a Pi las llaves de Sloth, o dejar de dárselas: cambia los modelos que tiene. Los hilos abiertos siguen como estaban. */
+/** Darle a Pi las llaves de v!d, o dejar de dárselas: cambia los modelos que tiene. Los hilos abiertos siguen como estaban. */
 export function llavesPi(usar: boolean) {
   prestarLlaves('pi', usar)
   return cuentaPi.cuenta(true)

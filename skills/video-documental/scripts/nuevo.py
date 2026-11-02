@@ -1,9 +1,9 @@
 """
-Crea el proyecto de un video documental desde la grabación, en `<nombre>` (el de la línea `Carpeta:` de Sloth):
+Crea el proyecto de un video documental desde la grabación, en `<nombre>` (el de la línea `Carpeta:` de v!d):
 
     python -I -B -X utf8 <skill>/scripts/nuevo.py <grabación> <nombre> [--vertical]
 
-Va en el directorio actual (Sloth lanza la card en `trabajo/video-documental`, y su panel de etapas busca ahí la
+Va en el directorio actual (v!d lanza la card en `trabajo/video-documental`, y su panel de etapas busca ahí la
 carpeta); dentro de un proyecto, junto a él. Deja:
 
   package.json, src/, build.py, PLAN.md   la plantilla: Remotion dibuja src/edicion.json, que escribe build.py

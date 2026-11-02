@@ -1,7 +1,7 @@
-> **TazSloth** es el fork de uso interno de Tazkore basado en Sloth de Vancci. No está afiliado a Vancci ni se vende. Cambios: [docs/tazkore/CAMBIOS.md](docs/tazkore/CAMBIOS.md).
+> **v!d by Kold.Gold** es el fork de uso interno de Tazkore basado en Sloth de Vancci. No está afiliado a Vancci ni se vende. Cambios: [docs/tazkore/CAMBIOS.md](docs/tazkore/CAMBIOS.md).
 
 <p align="center">
-  <img src="docs/imagenes/portada.png" alt="Sloth: videos verticales que se hacen casi solos" width="100%">
+  <img src="docs/imagenes/portada.png" alt="v!d: videos verticales que se hacen casi solos" width="100%">
 </p>
 
 <p align="center">
@@ -12,7 +12,7 @@
 
 ---
 
-**Sloth** es una app de escritorio que hace videos verticales para TikTok, Reels y Shorts. Eliges un estilo, le das
+**v!d** es una app de escritorio que hace videos verticales para TikTok, Reels y Shorts. Eliges un estilo, le das
 un tema o un enlace, y un agente de Claude investiga, escribe el guion, te pide tu voz y edita el video en tu
 computadora. No es una caja negra: lo ves trabajar paso a paso y le pides cambios con tus palabras.
 
@@ -48,7 +48,7 @@ Cada estilo de video es una **card**. Escribes qué quieres y el agente avanza p
 | **Entrega** | El video final con su portada, listo para descargar o publicar. Si algo no te gusta, se lo dices. |
 
 <p align="center">
-  <img src="docs/imagenes/estudio.jpg" alt="El estudio de Sloth: las cinco fases, el video y la línea de tiempo con sus escenas y la voz" width="560">
+  <img src="docs/imagenes/estudio.jpg" alt="El estudio de v!d: las cinco fases, el video y la línea de tiempo con sus escenas y la voz" width="560">
 </p>
 
 ## Instalar
@@ -71,9 +71,9 @@ npm ci
 npm start
 ```
 
-`npm start` levanta el servidor en `http://localhost:4850` y abre la ventana de Sloth. Sus agentes leen las skills de
+`npm start` levanta el servidor en `http://localhost:4850` y abre la ventana de v!d. Sus agentes leen las skills de
 `skills/` de este repo, con su propia configuración de Claude en `data/claude` (la cuenta se conecta una vez desde
-Sloth): tu `~/.claude` no cambia, y una Sloth instalada en la misma computadora sigue con las suyas.
+v!d): tu `~/.claude` no cambia, y una v!d instalada en la misma computadora sigue con las suyas.
 
 Antes de dar algo por hecho: `npm run typecheck`, `npm test` y, si tocaste `skills/`, `npm run comprobar-skills`.
 
@@ -94,7 +94,7 @@ web/        la interfaz
 shared/     los tipos que comparten servidor e interfaz
 skills/     los estilos de video (El Diff, explicativo, reel de comedia, documental) y sus herramientas
 nube/       la nube que publica en Instagram (Cloudflare Worker)
-python/     los procesos de Python de Sloth
+python/     los procesos de Python de v!d
 scripts/    compilar y desplegar
 docs/       las decisiones (adr/) y las guías para agentes (agents/)
 ```
@@ -110,21 +110,21 @@ abras un issue: sigue [`SECURITY.md`](SECURITY.md).
 
 ## Créditos
 
-v!d by Kold.Gold (TazSloth) está basado en [Sloth](https://github.com/Vancci-sloth/sloth), de
+**v!d by Kold.Gold** está basado en [Sloth](https://github.com/Vancci-sloth/sloth), de
 [Vancci](https://vancci.org), y conserva su licencia y su [`NOTICE`](NOTICE).
 
 El estilo **Documental** parte de EDITOR V1, de [NextPhase AI](https://www.skool.com/nextphase-5790/about), que
-venía para HyperFrames; en Sloth se dibuja con Remotion.
+venía para HyperFrames; en v!d se dibuja con Remotion.
 
 ## Licencia
 
-**Código abierto para uso libre, sin reventa.** Puedes usar Sloth para lo que quieras (también para trabajos de
+**Código abierto para uso libre, sin reventa.** Puedes usar v!d para lo que quieras (también para trabajos de
 paga), modificarla y compartirla. Lo que no puedes es venderla, ni una versión modificada, ni un servicio cuyo valor
 venga de ella. Los videos que hagas son tuyos y los puedes vender. Es la [Apache 2.0 con Commons Clause](LICENSE), a
 nombre de [Vancci](https://vancci.org); por esa condición no es «open source» según la definición de la OSI.
 
 Remotion, que arma los videos, tiene su [propia licencia](https://www.remotion.dev/license): gratis para personas y
-equipos pequeños; las empresas más grandes pagan la suya. Sloth no está afiliada, patrocinada ni respaldada por
+equipos pequeños; las empresas más grandes pagan la suya. v!d no está afiliada, patrocinada ni respaldada por
 Anthropic ni por OpenAI.
 
 <p align="center"><sub>Sloth original hecho por Vancci en México · v!d by Kold.Gold</sub></p>

@@ -1,4 +1,4 @@
-# Programación de YouTube en Sloth
+# Programación de YouTube en v!d
 
 ## Dirección
 
@@ -12,7 +12,7 @@ visual (07 y 08) sirve para valorar el título junto a la miniatura, sin copiar 
 
 ## Paleta
 
-La instrucción del proyecto prevalece sobre los colores de las referencias. Usar las variables actuales de Sloth:
+La instrucción del proyecto prevalece sobre los colores de las referencias. Usar las variables actuales de v!d:
 fondo `--bg` #0f0e0c, superficie `--panel` #171512 y `--panel-2` #221f1b, texto `--text` #ede6d6, secundario `--muted`
 #9a907f, bordes `--line` #2e2a24, acción `--amber` #e8a33d, hover `--amber-2` #f4b04a, éxito `--ok` #8fc177 y error
 `--bad` #e06c55. Mantener el tema oscuro existente; no introducir un tema nuevo.
@@ -41,7 +41,7 @@ estrechas, las columnas de cada publicación se apilan; controles y estado sigue
 - Un selector en la cabecera permite elegir Claude o Codex, modelo y esfuerzo para los tres botones de IA. Recuerda
   la elección de YouTube; cada petición usa esa elección y explica los límites de uso sin pedir reconectar la cuenta.
 - Las recomendaciones de varios videos se aceptan juntas, con dos análisis simultáneos y una cola que sobrevive al
-  cierre de Sloth. Cada video muestra su avance o posición y conserva el modelo y esfuerzo solicitados.
+  cierre de v!d. Cada video muestra su avance o posición y conserva el modelo y esfuerzo solicitados.
 - La barra de YouTube permite «Eliminar subidos del disco» por estilo, y la revisión ofrece limpieza individual.
   La confirmación manda solo los archivos de video a la Papelera; conserva proyectos, registros y publicaciones.
   Las subidas incompletas, versiones cambiadas y archivos en uso se quedan. La galería se actualiza tras limpiar.
@@ -59,11 +59,11 @@ una miniatura elegida. No programar publicaciones cuyos títulos o miniaturas to
 
 ---
 
-# Comunidad de Sloth
+# Comunidad de v!d
 
 ## Dirección
 
-Lo que la gente hace con Sloth y cómo lo hace, como la comunidad de Skool, pero cálido y oscuro como el resto de Sloth.
+Lo que la gente hace con v!d y cómo lo hace, como la comunidad de Skool, pero cálido y oscuro como el resto de v!d.
 Al centro, el feed: «Escribe algo», las secciones en píldoras (General, Lo que hice, Ayuda, Mejoras, Anuncios),
 «Comienza aquí» y una tarjeta por publicación. A la derecha, la tarjeta de la comunidad (portada con el logo, qué es,
 miembros, activos hoy, creador, caras y tu perfil), que se queda a la vista al bajar. El ámbar, solo donde hay vida: la
@@ -71,7 +71,7 @@ sección elegida, la acción principal, lo fijado y los comentarios que aún no 
 
 ## Paleta
 
-La de Sloth, sin colores nuevos: fondo `--bg`, tarjetas `--panel`, compositor y comentarios `--panel-2`, bordes `--line`
+La de v!d, sin colores nuevos: fondo `--bg`, tarjetas `--panel`, compositor y comentarios `--panel-2`, bordes `--line`
 (#4a4236 al pasar el ratón), texto `--text` y `--muted`. Acción y vida: `--amber`, `--amber-2` y `--amber-tinte`. Hecha
 y pasos cumplidos: `--ok`. Borrar: `--bad`.
 
@@ -93,7 +93,7 @@ y pasos cumplidos: `--ok`. Borrar: `--bad`.
   también salen en un contador ámbar junto a «Comunidad», en la barra lateral.
 - Reportar: una bandera en lo de los demás y una caja con los motivos. Lo reportado lleva para el creador una píldora
   roja («Reportada · 2») y «Está bien, se queda».
-- Sin foto, la cara es la inicial en ámbar sobre `--panel-2`; el creador sin foto, el logo de Sloth.
+- Sin foto, la cara es la inicial en ámbar sobre `--panel-2`; el creador sin foto, el logo de v!d.
 
 ## Evitar
 

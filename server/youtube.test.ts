@@ -88,7 +88,7 @@ test('OAuth comprueba el estado y el canal; solo sube finales y evita repetir un
   const server = createServer((req, res) => {
     const address = server.address()
     assert.ok(address && typeof address !== 'string')
-    if (!peticionDeConfianza(req, address.port)) { res.writeHead(403); res.end(JSON.stringify({ error: 'Sloth solo atiende a su propia ventana.' })); return }
+    if (!peticionDeConfianza(req, address.port)) { res.writeHead(403); res.end(JSON.stringify({ error: 'v!d solo atiende a su propia ventana.' })); return }
     void servicio.api(req, res, new URL(req.url!, 'http://localhost')).catch(() => { res.writeHead(500); res.end() })
   })
   await new Promise<void>((ok) => server.listen(0, '127.0.0.1', ok))

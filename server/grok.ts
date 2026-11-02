@@ -10,10 +10,10 @@ import { RpcLineas } from './rpc-lineas.ts'
 /**
  * Grok, el agente de xAI (`@xai-official/grok`), por ACP (`server/acp.ts`), como en T3 Code. Trabaja con la cuenta de
  * Grok de cada quien (`grok login`, que la guarda en `~/.grok`, la misma que usa en la terminal). Sin permisos
- * (`--always-approve`), como los demás agentes de Sloth.
+ * (`--always-approve`), como los demás agentes de v!d.
  */
 
-/** Sin el actualizador: abre consolas en Windows, y la versión la fija Sloth (`server/agentes.ts`). */
+/** Sin el actualizador: abre consolas en Windows, y la versión la fija v!d (`server/agentes.ts`). */
 const entorno = () => ({ ...entornoSinLlaves(), GROK_DISABLE_AUTOUPDATER: '1', GROK_OAUTH2_REFERRER: 'sloth' })
 
 const SABOR: SaborAcp = {
@@ -57,7 +57,7 @@ export async function modelosGrok(): Promise<Model[]> {
   if (!exe || !(await cuentaGrok.cuenta()).conectada) return []
   const r = new RpcLineas('Grok', exe, ['agent', 'stdio'], { cwd: process.cwd(), env: entorno() }, { alAvisar() {}, alPedir() {}, alCerrar() {} })
   try {
-    const ini = await r.request('initialize', { protocolVersion: 1, clientCapabilities: { fs: { readTextFile: false, writeTextFile: false }, terminal: false }, clientInfo: { name: 'sloth', version: '1' } }, 60_000)
+    const ini = await r.request('initialize', { protocolVersion: 1, clientCapabilities: { fs: { readTextFile: false, writeTextFile: false }, terminal: false }, clientInfo: { name: 'vid', version: '1' } }, 60_000)
     const modelos: { modelId: string; name?: string; _meta?: { reasoningEffort?: string; reasoningEfforts?: { value: string }[] } }[] = ini?._meta?.modelState?.availableModels ?? []
     return modelos.map((m) => ({ id: `grok:${m.modelId}`, label: `Grok · ${m.name ?? m.modelId}`, efforts: (m._meta?.reasoningEfforts ?? []).map((e) => e.value), defaultEffort: m._meta?.reasoningEffort }))
   } catch {

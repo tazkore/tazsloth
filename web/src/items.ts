@@ -290,7 +290,7 @@ const nombreDeModelo = (m: string) => {
 }
 
 /**
- * Las preguntas cerradas del agente: Sloth le pide (`server/claude.ts`) que las cierre con un bloque `<opciones>`, una
+ * Las preguntas cerradas del agente: v!d le pide (`server/claude.ts`) que las cierre con un bloque `<opciones>`, una
  * respuesta por línea, y aquí se separa del texto para dibujarlo como botones. Cuenta el bloque que empieza en su propia
  * línea, fuera de un bloque de código; sin cerrar (aún se escribe), llega hasta el final. Ninguno se queda en el texto,
  * que markdown.ts enseñaría con las etiquetas escritas: el último son los botones, y uno de antes queda como lista.

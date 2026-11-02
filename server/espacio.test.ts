@@ -6,7 +6,7 @@ import { test } from 'node:test'
 import { adjuntosSueltos, bajados, cachesViejas, compartir, mismoArbol, regenerables } from './espacio.ts'
 
 function carpeta(t: { after(fn: () => void): void }) {
-  const raiz = mkdtempSync(join(tmpdir(), 'sloth-espacio-'))
+  const raiz = mkdtempSync(join(tmpdir(), 'vid-espacio-'))
   t.after(() => rmSync(raiz, { recursive: true, force: true }))
   const poner = (ruta: string, texto = 'x') => {
     mkdirSync(join(raiz, ruta, '..'), { recursive: true })

@@ -573,7 +573,7 @@ export function Thinking({ text, nested = '' }: { text: string; nested?: string 
   )
 }
 
-/** Las herramientas que de verdad llegan (14.959 llamadas en los hilos de Sloth). Las demás llevan el engranaje. */
+/** Las herramientas que de verdad llegan (14.959 llamadas en los hilos de v!d). Las demás llevan el engranaje. */
 const ICONS: Record<string, string> = {
   Bash: '›_',
   PowerShell: '›_',

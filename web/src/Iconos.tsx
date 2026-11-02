@@ -1,5 +1,5 @@
 /**
- * Los iconos de trazo de Sloth (los de Lucide, lucide.dev): un nombre y sus trazos, del color del texto que los rodea y
+ * Los iconos de trazo de v!d (los de Lucide, lucide.dev): un nombre y sus trazos, del color del texto que los rodea y
  * del tamaño que les dé el CSS. Para la barra lateral y las secciones; los logos de otras marcas van en `Logos.tsx`.
  */
 const TRAZOS = {

@@ -81,7 +81,7 @@ export function YoutubeOpciones() {
           <ol className="youtube-pasos">
             <li>
               En Google Cloud, <a href="https://console.cloud.google.com/projectcreate" target="_blank" rel="noreferrer">crea un proyecto</a> (por ejemplo,
-              «Sloth») y <a href="https://console.cloud.google.com/apis/library/youtube.googleapis.com" target="_blank" rel="noreferrer">activa YouTube Data API v3</a>.
+              «v!d») y <a href="https://console.cloud.google.com/apis/library/youtube.googleapis.com" target="_blank" rel="noreferrer">activa YouTube Data API v3</a>.
             </li>
             <li>
               En <a href="https://console.cloud.google.com/auth/overview" target="_blank" rel="noreferrer">Google Auth Platform</a>, pulsa «Comenzar»: un nombre

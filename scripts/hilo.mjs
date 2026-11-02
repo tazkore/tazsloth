@@ -1,4 +1,4 @@
-// Resume un hilo de Sloth desde sus archivos (`data/sessions/<id>.json` y `.jsonl`), para no escribir otro lector cada vez:
+// Resume un hilo de v!d desde sus archivos (`data/sessions/<id>.json` y `.jsonl`), para no escribir otro lector cada vez:
 // cómo va, cuánto lleva y costó cada turno, en qué herramientas se fue, qué falló, qué sigue en segundo plano y cuánto
 // disco queda. Sin id, los hilos más recientes.
 //   npm run hilo                       los 15 últimos hilos
@@ -18,7 +18,7 @@ const corto = (s, n = 160) => String(s ?? '').replace(/\s+/g, ' ').slice(0, n)
 const meta = (i) => JSON.parse(readFileSync(join(SESIONES, `${i}.json`), 'utf8'))
 
 if (!existsSync(SESIONES)) {
-  console.error(`No hay hilos en ${SESIONES}: corre esto en la copia de Sloth donde trabajan (la de C:/tazkore-sloth).`)
+  console.error(`No hay hilos en ${SESIONES}: corre esto en la copia de v!d donde trabajan (la de C:/tazkore-sloth).`)
   process.exit(1)
 }
 

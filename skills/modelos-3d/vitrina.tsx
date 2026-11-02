@@ -1,5 +1,5 @@
 // La vitrina de la biblioteca: la miniatura de cada modelo (su `Muestra`, quieta en su `cuadro`) con la luz de estudio
-// de los videos, sobre fondo transparente (Sloth le pone detrás su foco) y con su sombra. La cámara, a tres cuartos, se
+// de los videos, sobre fondo transparente (v!d le pone detrás su foco) y con su sombra. La cámara, a tres cuartos, se
 // mece de un lado a otro en un ciclo que se repite sin salto: el cuadro 0 es la foto (vista.webp) y el ciclo entero, el
 // video que se ve al pasar el ratón (vista.webm). `modelos.py vista` la copia al proyecto como src/modelos/_vitrina_<pid>.tsx,
 // con _muestras_<pid>.ts (una composición por modelo), saca las dos y la borra.
@@ -107,7 +107,7 @@ const Estudio: React.FC<{ modelo: React.RefObject<THREE.Group | null> }> = ({ mo
   );
 };
 
-/** Solo la sombra en el piso: el fondo lo pone Sloth. */
+/** Solo la sombra en el piso: el fondo lo pone v!d. */
 const Sombra: React.FC = () => (
   <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.002, 0]} receiveShadow>
     <planeGeometry args={[200, 200]} />

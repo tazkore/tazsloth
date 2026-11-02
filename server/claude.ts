@@ -58,10 +58,10 @@ export async function claudeModels(): Promise<Model[]> {
 }
 
 /**
- * Sloth dibuja como botones las respuestas de una pregunta cerrada (`partirOpciones`, en web/src/items.ts). Así se lo
+ * v!d dibuja como botones las respuestas de una pregunta cerrada (`partirOpciones`, en web/src/items.ts). Así se lo
  * pide al agente de cada hilo, sin tocar las skills. Una skill que ya dice cómo preguntar (la entrevista de Ideas) manda.
  */
-export const OPCIONES = `Sloth, la app donde te usan, enseña botones para contestar. Cuando le hagas al usuario una pregunta de respuestas cerradas (de 2 a 5, cortas), termina el mensaje con este bloque, una respuesta por línea y nada después:
+export const OPCIONES = `v!d, la app donde te usan, enseña botones para contestar. Cuando le hagas al usuario una pregunta de respuestas cerradas (de 2 a 5, cortas), termina el mensaje con este bloque, una respuesta por línea y nada después:
 
 <opciones>
 Sí, sigue
@@ -250,7 +250,7 @@ const CERO: Gasto = { usd: 0, tokens: { input: 0, output: 0, cacheRead: 0 } }
 type PorModelo = Record<string, { inputTokens: number; outputTokens: number; cacheReadInputTokens: number; cacheCreationInputTokens: number }>
 
 /**
- * Los dólares y los tokens de todos los modelos juntos. La escritura en caché cuenta como entrada, como en el resto de Sloth.
+ * Los dólares y los tokens de todos los modelos juntos. La escritura en caché cuenta como entrada, como en el resto de v!d.
  * Con `precio`, los dólares salen de los tokens de cada modelo y no de lo que calcula Claude Code (DeepSeek).
  */
 function gastoDe(usd: number, modelos: PorModelo | undefined, precio?: (modelos: PorModelo) => number): Gasto {

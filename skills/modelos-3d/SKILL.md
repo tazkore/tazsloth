@@ -1,13 +1,13 @@
 ---
 name: modelos-3d
-description: La biblioteca de modelos 3D de los videos (three.js en Remotion), para no hacer dos veces el mismo. Antes de modelar cualquier objeto 3D, búscalo aquí y tráelo al proyecto; si no está o no alcanza, hazlo o mejóralo con el formato de la biblioteca y guárdalo para los siguientes videos. Se ve en Sloth, en «Modelos 3D».
+description: La biblioteca de modelos 3D de los videos (three.js en Remotion), para no hacer dos veces el mismo. Antes de modelar cualquier objeto 3D, búscalo aquí y tráelo al proyecto; si no está o no alcanza, hazlo o mejóralo con el formato de la biblioteca y guárdalo para los siguientes videos. Se ve en v!d, en «Modelos 3D».
 ---
 
 # La biblioteca de modelos 3D
 
 El usuario va a hacer muchos videos con 3D y no quiere que se desperdicie ninguno: **antes de hacer un modelo se busca
 aquí, y lo que se hace se guarda aquí.** Cada modelo es un componente de React Three Fiber con su miniatura
-(`modelos/<id>/vista.webp`, y `vista.webm` con la cámara que se mece) y su ficha (`modelo.json`: qué es, para qué sirve, sus etiquetas y de qué video salió). Sloth
+(`modelos/<id>/vista.webp`, y `vista.webm` con la cámara que se mece) y su ficha (`modelo.json`: qué es, para qué sirve, sus etiquetas y de qué video salió). v!d
 los enseña en «Modelos 3D», en la barra de la izquierda.
 
 Todo se hace con `scripts/modelos.py` (sin dependencias). Salvo `buscar`, se corre en la carpeta del proyecto del video:
@@ -81,7 +81,7 @@ python -B -X utf8 <esta skill>/scripts/modelos.py guardar <id> --nombre "Caja fu
   --hace "se abre; el candado se abre" --etiquetas "caja fuerte, bóveda, ahorro, bloqueado" [--cuadro 20]
 ```
 
-Su ficha es lo que el usuario lee en Sloth para decidir si le sirve, así que cada campo dice algo distinto:
+Su ficha es lo que el usuario lee en v!d para decidir si le sirve, así que cada campo dice algo distinto:
 
 - `--resumen`: para qué sirve, en pocas palabras (45 letras como mucho). Va debajo del nombre en el cartel.
 - `--categoria`: su tipo, uno de `categorias.json` (Protagonistas, Objetos, Logos e íconos, Medidores, Flujos,
@@ -99,5 +99,5 @@ vuelve a guardar. Al mejorar uno, solo se pasa lo que cambió; `--hace` y `--eti
 
 La biblioteca es de cada quien y empieza vacía: la moneda y el ícono 3D que trae la plantilla del explicativo están
 en `plantilla/`, que `usar` encuentra y `buscar` no enseña (si mejoras uno y lo guardas, pasa a la biblioteca). Lo
-guardado queda en la biblioteca de esta computadora (`modelos/` de esta skill), que se ve en «Modelos 3D» de Sloth: al
+guardado queda en la biblioteca de esta computadora (`modelos/` de esta skill), que se ve en «Modelos 3D» de v!d: al
 entregar el video, dile al usuario qué modelos sumaste o mejoraste.

@@ -8,7 +8,7 @@ import { AGENTE_OCIOSO, Sessions } from './sessions.ts'
 
 function preparar(t: test.TestContext, model = 'claude-prueba', guardada = true) {
   t.mock.timers.enable({ apis: ['setTimeout'] })
-  const dir = mkdtempSync(join(tmpdir(), 'sloth-ocioso-'))
+  const dir = mkdtempSync(join(tmpdir(), 'vid-ocioso-'))
   const procesos: { opts: AgentOptions; cerrado: boolean }[] = []
   const sesiones = new Sessions(dir, () => {}, () => {}, () => {}, () => {}, (opts) => {
     const p = { opts, cerrado: false }

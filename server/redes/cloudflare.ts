@@ -4,17 +4,17 @@ import { escribir, leer, variablesListas } from '../opciones.ts'
 import { NUBE, SECRETO } from './instagram.ts'
 
 /**
- * La nube de quien usa Sloth, en su propia cuenta de Cloudflare: con un token suyo, Sloth monta ahí el Worker de `nube/`
+ * La nube de quien usa v!d, en su propia cuenta de Cloudflare: con un token suyo, v!d monta ahí el Worker de `nube/`
  * (su bucket R2, el cron de cada minuto y su dirección en workers.dev) sin wrangler, y lo vuelve a subir cuando la app
  * trae otra versión (`nubeAlDia`). Así cada quien publica en Instagram con sus credenciales y su nube, sin pasar por la
  * del dueño. La del dueño se despliega con `npm run nube -- deploy` y no deja token aquí: esto no la toca.
  */
 
 /** El token de Cloudflare con que se montó, y la versión del Worker que quedó arriba. */
-const TOKEN = 'SLOTH_CLOUDFLARE_TOKEN'
-const VERSION = 'SLOTH_NUBE_VERSION'
+const TOKEN = 'VID_CLOUDFLARE_TOKEN'
+const VERSION = 'VID_NUBE_VERSION'
 /** El Worker y su bucket, en la cuenta de quien la monta. */
-const NOMBRE = 'sloth-redes'
+const NOMBRE = 'vid-redes'
 const API = 'https://api.cloudflare.com/client/v4'
 
 /** El Worker de `nube/` en un solo módulo: el compilador lo deja en `__NUBE__`; aquí, en el repo, se arma al pedirlo. */
@@ -54,11 +54,11 @@ async function cf<T>(token: string, metodo: string, ruta: string, cuerpo?: unkno
 
 /**
  * Monta (o pone al día) la nube en la cuenta del token y deja en las variables del usuario su dirección, el secreto que
- * comparte con Sloth y el token, para subirla otra vez con cada versión. Devuelve la dirección.
+ * comparte con v!d y el token, para subirla otra vez con cada versión. Devuelve la dirección.
  */
 export async function montarNube(token: string): Promise<string> {
   token = token.trim()
-  // El mismo secreto si ya la habías montado: si no, Sloth y la nube dejarían de entenderse a mitad de una cola.
+  // El mismo secreto si ya la habías montado: si no, v!d y la nube dejarían de entenderse a mitad de una cola.
   const secreto = (leer(TOKEN) && leer(SECRETO)) || randomBytes(32).toString('base64url')
   const { url, js } = await desplegar(token, NOMBRE, secreto)
   escribir(TOKEN, token)
@@ -75,9 +75,9 @@ export async function montarNube(token: string): Promise<string> {
 /** Sube el Worker `nombre`, con su bucket del mismo nombre, a la cuenta del token. No guarda nada en esta computadora. */
 export async function desplegar(token: string, nombre: string, secreto: string): Promise<{ url: string; js: string }> {
   const cuentas = await cf<{ id: string }[]>(token, 'GET', '/accounts').catch((e) => {
-    throw new Error(e instanceof Cloudflare ? 'Cloudflare no aceptó ese token. Créalo con el enlace de Sloth y cópialo entero.' : e.message)
+    throw new Error(e instanceof Cloudflare ? 'Cloudflare no aceptó ese token. Créalo con el enlace de v!d y cópialo entero.' : e.message)
   })
-  if (!cuentas.length) throw new Error('Ese token no tiene permiso sobre ninguna cuenta. Créalo otra vez con el enlace de Sloth.')
+  if (!cuentas.length) throw new Error('Ese token no tiene permiso sobre ninguna cuenta. Créalo otra vez con el enlace de v!d.')
   const cuenta = `/accounts/${cuentas[0].id}`
 
   // El bucket: si ya existe (la montaste antes), sirve el mismo. Sin R2 activado, Cloudflare no deja crearlo.
@@ -90,7 +90,7 @@ export async function desplegar(token: string, nombre: string, secreto: string):
 
   // La dirección de la cuenta en workers.dev. Una cuenta nueva no la tiene: se le pone una al azar.
   let sub = await cf<{ subdomain?: string }>(token, 'GET', `${cuenta}/workers/subdomain`).then((r) => r.subdomain, () => undefined)
-  if (!sub) sub = (await cf<{ subdomain: string }>(token, 'PUT', `${cuenta}/workers/subdomain`, { subdomain: `sloth-${randomBytes(4).toString('hex')}` })).subdomain
+  if (!sub) sub = (await cf<{ subdomain: string }>(token, 'PUT', `${cuenta}/workers/subdomain`, { subdomain: `vid-${randomBytes(4).toString('hex')}` })).subdomain
   const url = `https://${nombre}.${sub}.workers.dev`
 
   const js = await codigo()
@@ -122,7 +122,7 @@ export async function desplegar(token: string, nombre: string, secreto: string):
 }
 
 /**
- * Al arrancar: si la nube es de las que monta Sloth y la app trae otro Worker, se sube el nuevo. La del dueño (sin token)
+ * Al arrancar: si la nube es de las que monta v!d y la app trae otro Worker, se sube el nuevo. La del dueño (sin token)
  * no se toca. Si falla, sigue la de antes, y se intenta en el siguiente arranque.
  */
 export async function nubeAlDia() {

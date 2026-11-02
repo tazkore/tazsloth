@@ -158,8 +158,8 @@ export function Ideas(props: {
       if (t) setTrabajando((ids) => (t.estado === 'trabajando' ? [...new Set([...ids, t.canalId])] : ids.filter((i) => i !== t.canalId)))
       else leerLista()
     }
-    addEventListener('sloth-ideas', on)
-    return () => removeEventListener('sloth-ideas', on)
+    addEventListener('vid-ideas', on)
+    return () => removeEventListener('vid-ideas', on)
   }, [])
 
   /** La entrevista: Claude pregunta en un hilo lo que no sabes poner, y lo va guardando en el canal. */
@@ -187,12 +187,12 @@ export function Ideas(props: {
           <h1>💡 Ideas</h1>
           {!nuevo && esVertical(actual) ? (
             <p className="muted">
-              Qué video vertical hacer, con evidencia. vid.kold.gold busca tu nicho en TikTok y en Instagram, mide cada video contra su cuenta y lee qué piden sus comentarios, y Claude
+              Qué video vertical hacer, con evidencia. v!d busca tu nicho en TikTok y en Instagram, mide cada video contra su cuenta y lee qué piden sus comentarios, y Claude
               propone ideas con señales de demanda, empaque de nichos vecinos, gancho de 4 P en 3 segundos y el riesgo dicho claro.
             </p>
           ) : (
             <p className="muted">
-              Qué video largo hacer, con evidencia. vid.kold.gold lee tu nicho en YouTube, mide cada video contra su canal y Claude propone ideas con
+              Qué video largo hacer, con evidencia. v!d lee tu nicho en YouTube, mide cada video contra su canal y Claude propone ideas con
               señales de demanda, empaque de nichos vecinos, gancho de 4 P y el riesgo dicho claro.
             </p>
           )}
@@ -333,7 +333,7 @@ function CanalForm({
         <div>
           <strong>¿No sabes qué poner?</strong>
           <span className="muted small">
-            vid.kold.gold te hace preguntas, una a la vez y con ejemplos para elegir, y va llenando el canal contigo. Antes de poner cada frase de búsqueda, mira en
+            v!d te hace preguntas, una a la vez y con ejemplos para elegir, y va llenando el canal contigo. Antes de poner cada frase de búsqueda, mira en
             {vertical ? ' TikTok' : ' YouTube'} cuánta gente la busca.
           </span>
         </div>
@@ -368,7 +368,7 @@ function CanalForm({
         <span className="campo-titulo">
           ¿Para qué es el canal? {noSe('meta')}
         </span>
-        <input value={c.meta ?? ''} onChange={campo('meta')} placeholder="Vender vid.kold.gold, mi app para hacer videos con IA" />
+        <input value={c.meta ?? ''} onChange={campo('meta')} placeholder="Vender v!d, mi app para hacer videos con IA" />
         <small className="muted">Si vendes algo, cada idea trae la llamada a la acción que regala en vez de pedir.</small>
       </label>
       <div className="campo">
@@ -378,14 +378,14 @@ function CanalForm({
         <Fichas lista={c.semillas ?? []} onCambio={(semillas) => setC({ ...c, semillas })} placeholder="crear videos con ia ↵" />
         {vertical ? (
           <small className="muted">
-            Frases como las escribiría tu público en el buscador de TikTok («crear videos con ia», «editar con capcut»), no palabras sueltas: vid.kold.gold busca cada
+            Frases como las escribiría tu público en el buscador de TikTok («crear videos con ia», «editar con capcut»), no palabras sueltas: v!d busca cada
             una y abre las cuentas que salen. Pon de 5 a 12, en español y en inglés («faceless youtube channel»): lo que funciona en inglés suele llegar después
             al español. TikTok mezcla los resultados por tu país; de una búsqueda en inglés se toman los videos y las cuentas en inglés.
           </small>
         ) : (
           <small className="muted">
             Frases como las escribiría tu público en YouTube («crear videos con ia», «crecer en tiktok»), no palabras sueltas: «Tiktok» solo trae también mashups
-            de música. vid.kold.gold busca cada una y abre los canales que salen. Pon de 5 a 12.
+            de música. v!d busca cada una y abre los canales que salen. Pon de 5 a 12.
           </small>
         )}
       </div>
@@ -496,8 +496,8 @@ function CanalVista(props: {
       clearTimeout(espera.current)
       espera.current = setTimeout(() => ((ultima.current = Date.now()), leer()), p.trabajo.estado === 'trabajando' ? Math.max(0, falta) : 0)
     }
-    addEventListener('sloth-ideas', on)
-    return () => (removeEventListener('sloth-ideas', on), clearTimeout(espera.current))
+    addEventListener('vid-ideas', on)
+    return () => (removeEventListener('vid-ideas', on), clearTimeout(espera.current))
   }, [id])
 
   // El hilo que propone: al terminar su turno se vuelve a leer todo.
@@ -798,7 +798,7 @@ function TusVideos({ d, elegir, sessions, onHilo, onCambio }: { d: CanalCompleto
       {error && <p className="bad small">{error}</p>}
       {!r && (
         <p className="muted small">
-          vid.kold.gold lee de YouTube, con el canal que conectaste para subir, cómo le fue a cada video largo: cuántos lo vieron, qué parte vieron, cuántos seguían a los 30
+          v!d lee de YouTube, con el canal que conectaste para subir, cómo le fue a cada video largo: cuántos lo vieron, qué parte vieron, cuántos seguían a los 30
           segundos y de dónde llegaron. Luego Claude suma lo que solo dice Studio (cuántos vieron la miniatura y cuántos hicieron clic) y te dice qué cambiar.
         </p>
       )}
@@ -999,7 +999,7 @@ function CuentasInvestigacion({ canal, trabajando }: { canal: Canal; trabajando:
     {
       red: 'tiktok' as const,
       usuario: c.cuenta,
-      pista: c.abierto && abierta !== 'instagram' ? 'Inicia sesión con el QR en la ventana de Edge.' : 'Con ella busca vid.kold.gold y lee los comentarios.'
+      pista: c.abierto && abierta !== 'instagram' ? 'Inicia sesión con el QR en la ventana de Edge.' : 'Con ella busca v!d y lee los comentarios.'
     },
     {
       red: 'instagram' as const,
@@ -1125,7 +1125,7 @@ function Investigacion({
       </div>
       {!d.ytdlp && (
         <p className="bad small">
-          Falta yt-dlp para leer {vertical ? 'TikTok e Instagram' : 'YouTube'}: instala el Python de vid.kold.gold, o corre «python -m pip install yt-dlp».
+          Falta yt-dlp para leer {vertical ? 'TikTok e Instagram' : 'YouTube'}: instala el Python de v!d, o corre «python -m pip install yt-dlp».
         </p>
       )}
       {vertical && <CuentasInvestigacion canal={d.canal} trabajando={trabajando} />}
@@ -1143,7 +1143,7 @@ function Investigacion({
       )}
       {!toda && !t && vertical && (
         <p className="muted small">
-          vid.kold.gold busca cada término en TikTok y en Instagram, cada red con su cuenta de investigación; la de Instagram es una cuenta desechable aparte, nunca{' '}
+          v!d busca cada término en TikTok y en Instagram, cada red con su cuenta de investigación; la de Instagram es una cuenta desechable aparte, nunca{' '}
           {d.canal.instagram ? `@${usuarioDe(d.canal.instagram)}` : 'la tuya'}. Abre las cuentas de los videos más vistos y mide cada video contra la mediana de su
           cuenta: los que sacan {OUTLIER} veces o más, con al menos {mil(MIN_VISTAS_VERTICAL)} vistas, son outliers. De los mejores lee los comentarios con más
           likes, para saber qué pide la gente. También transcribe lo que se dice en cada video y lo agrupa en temas por lo que dicen, aunque estén en otro
@@ -1152,7 +1152,7 @@ function Investigacion({
       )}
       {!toda && !t && !vertical && (
         <p className="muted small">
-          vid.kold.gold busca cada término en YouTube y se queda con los videos de 4 minutos o más. Abre los canales de los más vistos y mide cada video contra la mediana
+          v!d busca cada término en YouTube y se queda con los videos de 4 minutos o más. Abre los canales de los más vistos y mide cada video contra la mediana
           de sus videos largos: los que sacan {OUTLIER} veces o más, con al menos {mil(MIN_VISTAS)} vistas, son outliers, una señal de que ese tema tiene demanda. También transcribe lo que se dice en cada video y lo agrupa en temas por lo que dicen. Tarda unos minutos y no gasta nada.
         </p>
       )}
@@ -1849,7 +1849,7 @@ function Propuestas(props: {
           )}
           <p className="muted small">
             Primero el mapa de demanda, luego las fórmulas con su tasa de éxito y al final las ideas. Cada archivo aparece aquí en cuanto lo escribe. Parte del
-            resumen de la investigación que vid.kold.gold ya contó; con Opus, una vuelta tarda varios minutos.
+            resumen de la investigación que v!d ya contó; con Opus, una vuelta tarda varios minutos.
           </p>
         </div>
       ) : (
@@ -1869,13 +1869,13 @@ function Propuestas(props: {
           ]
             .filter(Boolean)
             .join(' y ')}
-          . Antes de proponer, vid.kold.gold investiga solo eso (unos minutos, sin gastar) y luego Claude propone con todo.
+          . Antes de proponer, v!d investiga solo eso (unos minutos, sin gastar) y luego Claude propone con todo.
         </p>
       )}
       {props.investigando && !corriendo && (
         <p className="muted small">
           {d.trabajo?.proponer
-            ? 'vid.kold.gold investiga lo que faltaba de tu perfil; al terminar, Claude propone las ideas.'
+            ? 'v!d investiga lo que faltaba de tu perfil; al terminar, Claude propone las ideas.'
             : 'Espera a que termine la investigación: las ideas salen de ella.'}
         </p>
       )}
@@ -1939,7 +1939,7 @@ function Propuestas(props: {
 }
 
 /**
- * Las vueltas anteriores de «Proponer ideas», que Sloth guarda antes de cada vuelta nueva. Una idea que ya no está entre
+ * Las vueltas anteriores de «Proponer ideas», que v!d guarda antes de cada vuelta nueva. Una idea que ya no está entre
  * las de ahora se puede recuperar: vuelve a la lista con todo lo suyo.
  */
 function Anteriores({ d, corriendo, onCambio }: { d: CanalCompleto; corriendo: boolean; onCambio(): void }) {
@@ -1996,8 +1996,8 @@ function brief(d: CanalCompleto, idea: Idea): string {
   const x = (v: VideoYT) => (v.x !== undefined ? veces(v.x) : sinVistas(v) ? 'sin vistas (cuenta no medible)' : 'sin medir')
   return [
     vertical
-      ? `Un video vertical (9:16) para ${redesDe(idea.red)}, del canal «${d.canal.nombre}». Sale de la sección Ideas de vid.kold.gold.`
-      : `Un video largo para YouTube (horizontal), del canal «${d.canal.nombre}». Sale de la sección Ideas de vid.kold.gold.`,
+      ? `Un video vertical (9:16) para ${redesDe(idea.red)}, del canal «${d.canal.nombre}». Sale de la sección Ideas de v!d.`
+      : `Un video largo para YouTube (horizontal), del canal «${d.canal.nombre}». Sale de la sección Ideas de v!d.`,
     `${vertical ? 'Texto del primer cuadro' : 'Título'}: ${idea.titulo}`,
     `Tema: ${idea.tema}`,
     `Por qué: ${idea.porque}`,

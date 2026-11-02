@@ -38,7 +38,7 @@ function opciones(argv) {
   return o
 }
 
-/** El texto que `pagina.mjs` guardó en un PNG (bloque iTXt `sloth-pagina`), o null. */
+/** El texto que `pagina.mjs` guardó en un PNG (bloque iTXt `vid-pagina`), o null. */
 function textoDePagina(archivo) {
   const png = readFileSync(archivo)
   for (let i = 8; i < png.length - 12; ) {
@@ -47,7 +47,7 @@ function textoDePagina(archivo) {
     if (tipo === 'iTXt') {
       const datos = png.subarray(i + 8, i + 8 + largo)
       const fin = datos.indexOf(0)
-      if (datos.toString('latin1', 0, fin) === 'sloth-pagina') {
+      if (['vid-pagina', 'sloth-pagina'].includes(datos.toString('latin1', 0, fin))) { // sloth-pagina: PNG de antes de la Fase 2
         // clave \0 comprimido(1) método(1) idioma\0 traducida\0 texto
         let j = fin + 3
         j = datos.indexOf(0, j) + 1

@@ -4,13 +4,13 @@ import type { IncomingMessage, ServerResponse } from 'node:http'
 import { cpus, totalmem } from 'node:os'
 import { dirname, join } from 'node:path'
 import type { Equipo } from '../shared/types.ts'
-import { BANDERAS, instalacionDe, instalarMejora, MODELOS, mejoraDelPythonSloth, motorSloth, rutaPythonSloth } from './requisitos.ts'
+import { BANDERAS, instalacionDe, instalarMejora, MODELOS, mejoraDelPythonVid, motorVid, rutaPythonVid } from './requisitos.ts'
 import { CABEN } from './sessions.ts'
 
 /**
- * Opciones → Tu equipo: qué tiene esta computadora y cómo trabaja Sloth en ella. Nadie tiene que elegir nada para que
- * funcione igual de bien en una vieja que en una con NVIDIA; Sloth lo elige solo y aquí lo dice:
- * - la voz, con Whisper en la NVIDIA o con Parakeet en el procesador (`MotorVoz`, al instalar el Python de Sloth);
+ * Opciones → Tu equipo: qué tiene esta computadora y cómo trabaja v!d en ella. Nadie tiene que elegir nada para que
+ * funcione igual de bien en una vieja que en una con NVIDIA; v!d lo elige solo y aquí lo dice:
+ * - la voz, con Whisper en la NVIDIA o con Parakeet en el procesador (`MotorVoz`, al instalar el Python de v!d);
  * - cuántos videos de un lote van a la vez (`CABEN` de sessions.ts);
  * - y cuánto tarda cada cosa, de `equipo.json` (junto a los modelos), que escriben cada transcripción
  *   (`python/procesos/medidas.py`) y el render de cada estilo (`video-base/scripts/equipo.cjs`).
@@ -64,7 +64,7 @@ export function equipo(o: { app: string; ocupado: () => string | null }) {
   let midiendo = false
   let error: string | undefined
   let probado = false
-  // Mirar la mejora es lanzar el Python de Sloth (~1 s) y el hilo nuevo la pide cada vez: se recuerda un minuto, y se
+  // Mirar la mejora es lanzar el Python de v!d (~1 s) y el hilo nuevo la pide cada vez: se recuerda un minuto, y se
   // vuelve a mirar en cuanto termina de instalarse.
   let mejora: { hay: boolean; cuando: number; instalaba: boolean } | undefined
 
@@ -72,16 +72,16 @@ export function equipo(o: { app: string; ocupado: () => string | null }) {
     const estado = instalacionDe('mejora')
     const instala = !!estado.estado
     if (!mejora || (mejora.instalaba && !instala) || Date.now() - mejora.cuando > 60_000) {
-      mejora = { hay: !!(await mejoraDelPythonSloth(o.app))?.length, cuando: Date.now(), instalaba: instala }
+      mejora = { hay: !!(await mejoraDelPythonVid(o.app))?.length, cuando: Date.now(), instalaba: instala }
     }
     mejora.instalaba = instala
     return mejora.hay || instala ? { ...estado } : undefined
   }
 
-  /** Mide la voz con `medir.py`. Sin Python de Sloth o con algo trabajando, no. */
+  /** Mide la voz con `medir.py`. Sin Python de v!d o con algo trabajando, no. */
   function medir(): string | null {
-    const python = rutaPythonSloth()
-    if (!python) return 'Antes hay que descargar el Python de Sloth (Herramientas de video).'
+    const python = rutaPythonVid()
+    if (!python) return 'Antes hay que descargar el Python de v!d (Herramientas de video).'
     const ocupado = o.ocupado()
     if (ocupado) return ocupado
     if (midiendo) return null
@@ -100,7 +100,7 @@ export function equipo(o: { app: string; ocupado: () => string | null }) {
   }
 
   async function leer(): Promise<Equipo> {
-    const instalado = motorSloth()
+    const instalado = motorVid()
     const falta = await hayMejora()
     // Sin Parakeet todavía, uno sin NVIDIA transcribe con Whisper en el procesador.
     const motor = instalado === 'parakeet' && falta && !falta.estado ? 'whisper' : instalado
@@ -146,5 +146,5 @@ export function equipo(o: { app: string; ocupado: () => string | null }) {
     return false
   }
 
-  return { api, ocupado: () => (midiendo ? 'Sloth está midiendo tu equipo. Espera unos segundos.' : null) }
+  return { api, ocupado: () => (midiendo ? 'v!d está midiendo tu equipo. Espera unos segundos.' : null) }
 }

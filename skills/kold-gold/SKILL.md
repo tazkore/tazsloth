@@ -50,7 +50,7 @@ en "El enfoque" de [`GUION.md`](GUION.md).
 
 ## Formato
 
-Lo elige el usuario en Sloth y llega en el mensaje. Lo común a todos los estilos (un video, un formato; nada recortado
+Lo elige el usuario en v!d y llega en el mensaje. Lo común a todos los estilos (un video, un formato; nada recortado
 ni con barras; revisar a 480×270; la portada) está en [`FORMATO.md`](../video-base/FORMATO.md); aquí, cómo se acomoda
 este.
 
@@ -66,7 +66,7 @@ este.
   que no cabe lo dice `npm run encuadre -- --revisa`; lo fijo en la pantalla se coloca con `ZONA` de `src/tema.ts`,
   nunca con los números del vertical (540, 1080, 470). Su portada no va dentro: `portada.png` es la miniatura de
   YouTube (paso 9).
-- Si en el hilo piden el otro formato, no hagas una copia: que cree otro video en Sloth con ese formato.
+- Si en el hilo piden el otro formato, no hagas una copia: que cree otro video en v!d con ese formato.
 
 ## Series
 
@@ -100,8 +100,8 @@ mundo y la imagen siguen siendo de cada video (ver "Cada video es único").
 - **Cada dato es verdadero**, de su fuente primaria, con fecha de corte. Si una fuente choca con otra, gana la
   primaria y se dice en `fuentes/investigacion.md`.
 - El proyecto va en la carpeta de la línea `Carpeta: <nombre>` del mensaje, con ese nombre exacto y sin añadirle nada
-  (`nuevo.py <nombre>`): el panel de Sloth la busca así. Sin esa línea, `explicado-<tema>`. Va en la carpeta donde
-  Sloth te lanza (`trabajo/video-explicativo`), junto a `marca.json`; `nuevo.py` lo decide.
+  (`nuevo.py <nombre>`): el panel de v!d la busca así. Sin esa línea, `explicado-<tema>`. Va en la carpeta donde
+  v!d te lanza (`trabajo/video-explicativo`), junto a `marca.json`; `nuevo.py` lo decide.
 
 ## La marca
 
@@ -226,7 +226,7 @@ scripts dicen al empezar cuánto tardarán aquí y luego cuánto falta. Lánzalo
 4. **Su voz.** Llega en cualquier formato (el m4a del celular, mp3, ogg, opus, un video): pásala a
    `fuentes/voz/original.wav` con `ffmpeg -nostdin -v error -y -i <audio> -vn -c:a pcm_s16le -ar 48000
    fuentes/voz/original.wav` (si trae silencio largo al principio o al final, recórtalo en el mismo comando). Si
-   Sloth ya la dejó ahí, sigue. La de AI Studio llega en `fuentes/voz/ai-studio.wav`: pásala igual. Luego, **en segundo plano** mientras sigues con lo de arriba,
+   v!d ya la dejó ahí, sigue. La de AI Studio llega en `fuentes/voz/ai-studio.wav`: pásala igual. Luego, **en segundo plano** mientras sigues con lo de arriba,
    `python -I -B -X utf8 scripts/alinear.py fuentes/voz/original.wav` (la nivela, la transcribe, rehace solo lo que
    Whisper se saltó o cambió, y empareja los subtítulos; ~75 s) y
    `python -I -B -X utf8 scripts/acelerar.py fuentes/voz/original.wav fuentes/voz/voz-lenta.json` (la acerca a 224
@@ -299,7 +299,7 @@ scripts dicen al empezar cuánto tardarán aquí y luego cuánto falta. Lánzalo
 Codex usa la cuenta de ChatGPT del usuario. Antes de la primera imagen de cada video, `codex login status` (sale 0 si
 hay sesión). Sin sesión no se genera ninguna: se usa lo que ya hay (las poses que tiene el personaje, el logo real en
 vez de una textura) y se le dice al usuario una vez, en una frase llana, qué quedó sin hacer y que conectando ChatGPT
-en Sloth (Opciones → Codex) sale completo.
+en v!d (Opciones → Codex) sale completo.
 
 Siempre Codex, con su `image_gen` (no dibuja con código ni con Gemini). El pedido va en un `.txt`, en inglés, y dice
 qué archivo dejar:

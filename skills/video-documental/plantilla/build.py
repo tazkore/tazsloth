@@ -2,11 +2,11 @@
 
 Un bloque por línea de PLAN.md: un dispositivo de components/ev1_devices.py o ev1_more.py, con el material real que se
 encontró para esa línea (work/assets.json, lo llena work/prep.py) y su `c.escena(...)`, que es la escena en el estudio
-de Sloth. Los dispositivos escriben sus propios sonidos, así la hoja de efectos nunca se despega del corte.
+de v!d. Los dispositivos escriben sus propios sonidos, así la hoja de efectos nunca se despega del corte.
 
     python -I -B -X utf8 build.py         -> src/edicion.json (Remotion), sfx-cues.txt, public/sonido.wav, work/shots.json
 
-Cada vez que corre, el monitor de Sloth enseña la versión nueva en vivo. Para revisar:
+Cada vez que corre, el monitor de v!d enseña la versión nueva en vivo. Para revisar:
     node <skill>/scripts/cuadros.mjs      (un cuadro por escena, al 90 %, en revision/hoja-*.png: míralos todos)
 y para el final:
     FINAL=1 python -I -B -X utf8 build.py && python -I -B -X utf8 <skill>/scripts/terminar.py .
@@ -18,7 +18,7 @@ work/pass2_prep.py, PASS=2 (ver <skill>/ejemplo/). El ejemplo entero de 45 s es 
 import json, os, sys
 from pathlib import Path
 
-KIT = Path(os.environ.get('SLOTH_SKILLS') or Path.home() / '.claude' / 'skills') / 'video-documental'
+KIT = Path(os.environ.get('VID_SKILLS') or os.environ.get('SLOTH_SKILLS') or Path.home() / '.claude' / 'skills') / 'video-documental'
 sys.path.insert(0, str(KIT / 'components'))
 sys.path.insert(0, str(KIT / 'scripts'))
 from ev1_more import *          # noqa  (todos los dispositivos: ev1_devices + ev1_more)

@@ -49,7 +49,7 @@ for (const c of cards) {
 console.log(`· ${cards.length} estilos de video, con los dos formatos`)
 
 /**
- * Los node_modules con Remotion de un video de ese estilo: primero los de un video de verdad (de la Sloth instalada o de
+ * Los node_modules con Remotion de un video de ese estilo: primero los de un video de verdad (de la v!d instalada o de
  * la del repo), de donde se toma lo que el script de crear un video le pone a la plantilla; si no hay, los compartidos
  * (`<estilo>/modulos/*` de El Diff y `sloth-modulos/<estilo>-*` de los demás, ver espacio.py de video-base). De cada
  * grupo, el más nuevo.
@@ -62,7 +62,7 @@ function modulosDe(skill) {
       .filter((nm) => existsSync(join(nm, 'remotion', 'package.json')))
       .sort((a, b) => statSync(b).mtimeMs - statSync(a).mtimeMs)[0]
   return (
-    buscar(`Programs/tazsloth/app/trabajo/${skill}/*/node_modules`, `tazsloth-dev/trabajo/${skill}/*/node_modules`) ??
+    buscar(`Programs/vid-koldgold/app/trabajo/${skill}/*/node_modules`, `vid-koldgold-dev/trabajo/${skill}/*/node_modules`) ??
     buscar(`Programs/sloth/app/trabajo/${skill}/*/node_modules`, `sloth-dev/trabajo/${skill}/*/node_modules`) ??
     buscar(`${skill}/modulos/*/node_modules`, `sloth-modulos/${skill}-*/node_modules`)
   )

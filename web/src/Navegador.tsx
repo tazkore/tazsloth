@@ -6,22 +6,31 @@ import './Navegador.css'
 
 /**
  * El navegador de cada hilo, como el de T3 Code: el globo del encabezado lo enseña o lo esconde, a la derecha del chat (en
- * el estudio, en el centro). La página la pone la ventana de Sloth (`electron/navegador.ts`) encima de la interfaz, en la
+ * el estudio, en el centro). La página la pone la ventana de v!d (`electron/navegador.ts`) encima de la interfaz, en la
  * caja del panel; aquí van su barra y lo que se ve sin página. La usa también el agente: cuando empieza a usarla, el
- * panel de ese hilo se abre solo. Fuera de la ventana de Sloth (en Edge) no hay navegador, y el agente usa el suyo.
+ * panel de ese hilo se abre solo. Fuera de la ventana de v!d (en Edge) no hay navegador, y el agente usa el suyo.
  *
  * El borde izquierdo del panel se arrastra. Cada pestaña puede tener su tamaño fijo (fila del móvil), con bordes que
  * también se arrastran. La primera pestaña es la del hilo, la del agente; las demás son tuyas, y la de las redes no
- * tiene: es una sola página, la que maneja Sloth al publicar.
+ * tiene: es una sola página, la que maneja v!d al publicar.
  */
 
-const puente = window.sloth?.navegador
+const puente = window.vid?.navegador
 export const hayNavegador = !!puente
 
-const CLAVE = 'sloth-navegador'
-const CLAVE_PANTALLAS = 'sloth-navegador-pantallas'
-const CLAVE_ANCHO = 'sloth-navegador-ancho'
-const CLAVE_PESTANAS = 'sloth-navegador-pestanas'
+const CLAVE = 'vid-navegador'
+const CLAVE_PANTALLAS = 'vid-navegador-pantallas'
+const CLAVE_ANCHO = 'vid-navegador-ancho'
+const CLAVE_PESTANAS = 'vid-navegador-pestanas'
+// Respaldo: hasta la Fase 2 estas claves se llamaban `sloth-*`. Si la nueva aún no está, se toma la vieja (sin borrarla).
+for (const [donde, clave] of [[localStorage, CLAVE], [localStorage, CLAVE_PANTALLAS], [localStorage, CLAVE_ANCHO], [sessionStorage, CLAVE_PESTANAS]] as const) {
+  try {
+    const vieja = donde.getItem(clave.replace(/^vid-/, 'sloth-'))
+    if (vieja !== null && donde.getItem(clave) === null) donde.setItem(clave, vieja)
+  } catch {
+    // Sin almacenamiento (modo privado): no hay nada que recuperar.
+  }
+}
 /** El panel no baja de esto, ni deja menos que esto al chat. */
 const PANEL_MINIMO = 360
 /** El aire alrededor de una página de tamaño fijo: ahí van sus bordes, que la página taparía. */
@@ -116,7 +125,7 @@ if (puente) {
     const antes = estados.get(e.hilo)
     estados.set(e.hilo, e)
     // El agente empieza a usarlo: se abre en su hilo, para verlo trabajar. Si lo cierras, sigue cerrado hasta la próxima.
-    // El de las redes no: Sloth se conecta también para mirar la sesión, y lo abren Mis videos (al subir) y Opciones.
+    // El de las redes no: v!d se conecta también para mirar la sesión, y lo abren Mis videos (al subir) y Opciones.
     if (e.agente && !antes?.agente && e.hilo !== NAVEGADOR_REDES) {
       abrirNavegador(e.hilo, true)
       ponerPestanas(e.hilo, { ...pestanasDe(e.hilo), activa: e.hilo })

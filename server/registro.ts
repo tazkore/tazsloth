@@ -6,7 +6,7 @@ import { Worker } from 'node:worker_threads'
  */
 const CODIGO = `const { parentPort, workerData, threadId } = require('node:worker_threads')
 const fs = require('node:fs')
-const archivo = require('node:path').join(require('node:os').tmpdir(), 'sloth-reg-' + process.pid + '-' + threadId + '.txt')
+const archivo = require('node:path').join(require('node:os').tmpdir(), 'vid-reg-' + process.pid + '-' + threadId + '.txt')
 const salida = fs.openSync(archivo, 'w')
 const { error, status } = require('node:child_process').spawnSync('reg', workerData, { stdio: ['ignore', salida, 'ignore'], windowsHide: true, timeout: 15000 })
 fs.closeSync(salida)

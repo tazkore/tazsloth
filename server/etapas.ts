@@ -67,7 +67,7 @@ export function carpetaValida(cwd: string, nombre: string): string | undefined {
   return subcarpetas(cwd).get(nombre.toLowerCase())?.name
 }
 
-/** La carpeta de un hilo: la que le nombró Sloth al crearlo o eligió el usuario, o la de su lote. */
+/** La carpeta de un hilo: la que le nombró v!d al crearlo o eligió el usuario, o la de su lote. */
 const suyaDe = (s: SessionMeta) => s.carpeta ?? s.lote?.carpeta
 
 /**
@@ -83,7 +83,7 @@ function carpetasDeVideo(cwd: string, sessions: Sessions): CarpetaDeVideo[] {
 
 /**
  * La carpeta de un hilo dentro de `cwd` (`''` si es el propio `cwd`). La card trabaja en `cwd`, pero cada video va en su
- * carpeta: la nombra Sloth al crear el hilo (la de un lote va en `lote`), o la elige el usuario. Un hilo de antes de que
+ * carpeta: la nombra v!d al crear el hilo (la de un lote va en `lote`), o la elige el usuario. Un hilo de antes de que
  * se nombrara no tiene, y los de Ideas trabajan en la carpeta de su canal.
  */
 const carpetaDe = (meta: SessionMeta) => suyaDe(meta) ?? ''
@@ -430,7 +430,7 @@ export function avanceCorto(meta: SessionMeta, card: Card): { avance: AvanceCort
 
 /**
  * Lo que le falta al video de un hilo para estar terminado, los nombres de sus etapas, con lo mismo que lee el estudio.
- * Nada si ya está o si lo que sigue lo tiene que dar el usuario (una etapa con `espera`, como su voz). Para que Sloth le
+ * Nada si ya está o si lo que sigue lo tiene que dar el usuario (una etapa con `espera`, como su voz). Para que v!d le
  * pida al agente que siga si cerró su turno a medias (`Sessions`).
  */
 export function queFalta(meta: SessionMeta, card: Card): string[] {
@@ -594,7 +594,7 @@ export async function etapasApi(
   }
 
   // La carpeta del hilo, y cambiarla por otra que ya existe en `cwd`: un hilo que sigue el video de otro, uno que trabajó
-  // en otra, o uno de antes de que Sloth nombrara la suya.
+  // en otra, o uno de antes de que v!d nombrara la suya.
   if (m[2] === 'carpeta') {
     if (!card?.etapas?.length) return json(res, 400, { error: 'Este hilo no tiene carpeta de video' })
     if (req.method === 'GET') return json(res, 200, { actual: carpetaDe(meta), carpetas: carpetasDeVideo(meta.cwd, sessions) })

@@ -39,7 +39,7 @@ const { abrirChrome } = await import(pathToFileURL(join(AQUI, '..', '..', 'video
 const USO = `Uso: node pagina.mjs <url | copia.mhtml> <salida.png> [--ancho 400] [--alto 1600] [--escala 3]
        [--frase "texto exacto" ...] [--contexto] [--elemento "selector"] [--angosta 380] [--tema claro|oscuro]`
 /** Así se llama el bloque de texto dentro del PNG; `ubicar.py` lo lee con el mismo nombre. */
-export const CLAVE = 'sloth-pagina'
+export const CLAVE = 'vid-pagina'
 /** En una zona de 1080 px de ancho, la letra citada se lee en un celular desde unos 28 px. */
 const LEGIBLE = 28
 /** A 1080 de ancho, una captura de menos de este alto deja media zona vacía (1156 px; `BANDAS` de reglas.mjs). */

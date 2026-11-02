@@ -1,4 +1,4 @@
-"""Lo que comparten los scripts: el Python de Sloth y sus procesos, FFmpeg y el espacio de los renders."""
+"""Lo que comparten los scripts: el Python de v!d y sus procesos, FFmpeg y el espacio de los renders."""
 
 import hashlib
 import json
@@ -13,10 +13,10 @@ from pathlib import Path
 
 sys.stdout.reconfigure(encoding="utf-8")
 
-# El Python de Sloth, sus modelos, sus procesos, los turnos y FFmpeg son los de video-base (`sloth.py`), que sabe dónde
+# El Python de v!d, sus modelos, sus procesos, los turnos y FFmpeg son los de video-base (`vid.py`), que sabe dónde
 # los deja la app en cada computadora. Al final de la ruta: los scripts de esta skill ganan a los de igual nombre de la base.
 sys.path.append(str(Path(__file__).resolve().parents[2] / "video-base" / "scripts"))
-from sloth import (BANDERAS, MODELOS, PROCESOS, ffmpeg, proceso, python_sloth, sloth, turno,  # noqa: E402,F401
+from vid import (BANDERAS, MODELOS, PROCESOS, ffmpeg, proceso, python_vid, vid, turno,  # noqa: E402,F401
                    turno_gpu, turno_youtube, wav16k)
 
 
@@ -29,7 +29,7 @@ def turno_render():
 
 
 TEMP = Path(tempfile.gettempdir())
-# Un render deja varios GB de temporales; con el disco lleno se cae todo (el render, los agentes y Sloth).
+# Un render deja varios GB de temporales; con el disco lleno se cae todo (el render, los agentes y v!d).
 DISCO_MINIMO_GB = 8
 
 
@@ -54,7 +54,7 @@ def comprobar_disco(raiz: Path, minimo_gb: float = DISCO_MINIMO_GB) -> None:
     libre = shutil.disk_usage(raiz).free / 1e9
     if libre < minimo_gb:
         raise SystemExit(f"Quedan {libre:.1f} GB libres en el disco y un render deja varios GB de temporales. Con el disco "
-                         "lleno se cae todo (el render, los agentes y Sloth). Pide al usuario que libere espacio antes de seguir.")
+                         "lleno se cae todo (el render, los agentes y v!d). Pide al usuario que libere espacio antes de seguir.")
 
 
 PLANTILLA = Path(__file__).resolve().parent.parent / "plantilla"
@@ -221,7 +221,7 @@ def masterizar(audio: Path, salida: Path, retraso: int = 0) -> dict:
 
 
 def reemplazar(temporal: Path, destino: Path) -> None:
-    """Pone `temporal` en lugar de `destino`. Si Sloth lo tiene abierto (lo sirve al panel), Windows no deja reemplazarlo,
+    """Pone `temporal` en lugar de `destino`. Si v!d lo tiene abierto (lo sirve al panel), Windows no deja reemplazarlo,
     pero sí apartarlo y borrarlo después."""
     try:
         os.replace(temporal, destino)

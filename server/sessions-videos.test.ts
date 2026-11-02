@@ -9,7 +9,7 @@ import type { AgentOptions } from './agent.ts'
 import { Sessions } from './sessions.ts'
 
 function preparar(t: test.TestContext) {
-  const dir = mkdtempSync(join(tmpdir(), 'sloth-videos-'))
+  const dir = mkdtempSync(join(tmpdir(), 'vid-videos-'))
   const emitir = new Map<string, AgentOptions['onEvent']>()
   const recibido = new Map<string, string[]>()
   const anota = (hilo: string, texto: string) => void recibido.set(hilo, [...(recibido.get(hilo) ?? []), texto])
@@ -37,7 +37,7 @@ test(`hasta ${VIDEOS_SIN_AVISO} videos no hay aviso; con mÃ¡s, lo hay y dice cuÃ
   assert.equal(avisoDeVideos(0, 2), undefined)
 })
 
-test('Sloth no frena videos: un tercero confirmado arranca enseguida, sin cola', (t) => {
+test('v!d no frena videos: un tercero confirmado arranca enseguida, sin cola', (t) => {
   const h = preparar(t)
   const [a, b, c] = [h.hilo(), h.hilo(), h.hilo()]
   for (const [m, texto] of [[a, 'uno'], [b, 'dos'], [c, 'tres']] as const) h.sessions.send(m.id, texto)

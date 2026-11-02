@@ -41,9 +41,9 @@ export function MisVideos({ cards, sessions, estilo, onEstilo }: { cards: Card[]
   const [vuelta, setVuelta] = useState(0)
   const otraVuelta = () => setVuelta((n) => n + 1)
   useEffect(() => {
-    addEventListener('sloth-redes', otraVuelta)
-    addEventListener('sloth-videos', otraVuelta)
-    return () => { removeEventListener('sloth-redes', otraVuelta); removeEventListener('sloth-videos', otraVuelta) }
+    addEventListener('vid-redes', otraVuelta)
+    addEventListener('vid-videos', otraVuelta)
+    return () => { removeEventListener('vid-redes', otraVuelta); removeEventListener('vid-videos', otraVuelta) }
   }, [])
   const estilos = cards.filter((c) => c.etapas?.length).map((c) => c.id)
   const clave = estilos.join() + '|' + sessions.flatMap((s) => (estilos.includes(s.cardId) ? [s.id + s.updatedAt] : [])).join()
@@ -71,7 +71,7 @@ export function MisVideos({ cards, sessions, estilo, onEstilo }: { cards: Card[]
   const enRejilla = enEstado.length ? enEstado : vistos
   // redes: los que se ven y ya están en todas las redes conectadas. Su archivo sobra en el disco.
   const programados = vistos.filter((v) => todos?.redes?.programados?.includes(v.ruta))
-  // redes: mientras Sloth sube a TikTok, su navegador se ve a la derecha (`ConNavegadorRedes`); al acabar la cola, se
+  // redes: mientras v!d sube a TikTok, su navegador se ve a la derecha (`ConNavegadorRedes`); al acabar la cola, se
   // esconde. Entre un video y el siguiente no se cierra. Si lo escondes tú, sigue escondido.
   const enNavegador = !!todos?.redes?.enNavegador
   const abrio = useRef(false)
@@ -220,7 +220,7 @@ export function VideoDe({ video, onVer, insignia, estilo }: { video: VideoHecho;
           onClose={() => setBorrar(false)}
           onConfirm={async () => {
             await api('/api/videos/borrar', { ruta: video.ruta })
-            dispatchEvent(new Event('sloth-videos'))
+            dispatchEvent(new Event('vid-videos'))
           }}
         >
           <code>{video.archivo.split('/').pop()}</code> va a la Papelera de reciclaje, de donde puedes recuperarlo. Lo demás de su carpeta se queda, y lo

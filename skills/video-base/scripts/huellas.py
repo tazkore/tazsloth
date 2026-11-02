@@ -21,8 +21,8 @@ Desde la raíz del proyecto:
   más se le parecen en imagen y arma `revision/parecidos.jpg` con los tres, para que lo mire alguien que no lo hizo.
 - `cerrar` guarda la hoja del video terminado y marca la huella como terminada.
 
-Lo dicho se compara con vectores (multilingual-e5, el proceso `vectores.py` de Sloth: «sala» y «living» quedan cerca),
-guardados en `huellas/.cache`; sin el Python de Sloth, por palabras. El modelo queda cargado entre llamadas
+Lo dicho se compara con vectores (multilingual-e5, el proceso `vectores.py` de v!d: «sala» y «living» quedan cerca),
+guardados en `huellas/.cache`; sin el Python de v!d, por palabras. El modelo queda cargado entre llamadas
 (`vectores_vivo.py`): un texto nuevo tarda menos de un segundo, no ~18. La imagen, por sus colores y por cuánto se parece
 cada cuadro al más cercano del otro video, solo en la zona del medio (el texto de arriba y el perro son iguales a
 propósito en todos).
@@ -43,7 +43,7 @@ import numpy as np
 from PIL import Image, ImageDraw, ImageFont, ImageOps
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from sloth import MODELOS, ffmpeg, turno, vectorizar  # noqa: E402
+from vid import MODELOS, ffmpeg, turno, vectorizar  # noqa: E402
 
 # Lo que se dice de un video, en palabras. `paleta` (dos colores) y `objetos` (ids de la biblioteca) van aparte.
 CAMPOS = ["tema", "forma", "apertura", "lugar", "protagonista", "pieza"]
@@ -110,7 +110,7 @@ class Registro:
 # ---- Vectores ------------------------------------------------------------------------------------------------------
 
 class Vectores:
-    """Los vectores de cada texto, con su caché. Si no hay Python de Sloth o falla, `modo` pasa a «palabras»."""
+    """Los vectores de cada texto, con su caché. Si no hay Python de v!d o falla, `modo` pasa a «palabras»."""
 
     def __init__(self, registro: Registro):
         self.cache = registro.carpeta / ".cache" / "vectores.npz"

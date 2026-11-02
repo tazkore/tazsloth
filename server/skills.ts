@@ -12,16 +12,16 @@ import { cambiosDe, nombreCopia, respaldar, restaurar } from './originales.ts'
 /**
  * Donde los agentes buscan las skills. En la app que se vende, ~/.claude/skills, donde las enlaza `enlazarSkills`. Desde
  * el repo, las del repo: su Claude tiene su propia configuración (`configClaudeDev`) y no toca ~/.claude, que es de la
- * Sloth instalada en esta computadora; así esa funciona igual que en la de cualquier cliente. `SLOTH_SKILLS`, si ya viene
+ * v!d instalada en esta computadora; así esa funciona igual que en la de cualquier cliente. `VID_SKILLS`, si ya viene
  * puesta, manda (las pruebas imitan así la app que se vende).
  */
 /** Donde la app que se vende enlaza sus skills (`enlazarSkills`, `enlazarSkillsCodex`): la carpeta de Claude del usuario. */
 const CASA = join(homedir(), '.claude', 'skills')
-export const SKILLS = process.env.SLOTH_SKILLS || (VENTA ? CASA : resolve(dirname(fileURLToPath(import.meta.url)), '..', 'skills'))
+export const SKILLS = process.env.VID_SKILLS || process.env.SLOTH_SKILLS || (VENTA ? CASA : resolve(dirname(fileURLToPath(import.meta.url)), '..', 'skills'))
 
 /**
  * La configuración de Claude de la copia del repo, en su `data/claude` (`CLAUDE_CONFIG_DIR`), con sus `skills` enlazadas
- * a las del repo. Su cuenta se conecta aparte, una vez, desde Sloth.
+ * a las del repo. Su cuenta se conecta aparte, una vez, desde v!d.
  */
 export function configClaudeDev(app: string): string {
   const dir = join(app, 'data', 'claude')
@@ -38,7 +38,7 @@ export function configClaudeDev(app: string): string {
 /**
  * La app que se vende trae sus skills en `<app>/skills`, y Claude las busca en ~/.claude/skills: enlaza ahí, con una
  * unión, cada una que falte. Las que ya están no se tocan, que pueden ser del usuario; solo se rehace la unión que apunta
- * a una carpeta que ya no existe (Sloth se movió de sitio).
+ * a una carpeta que ya no existe (v!d se movió de sitio).
  */
 export function enlazarSkills(app: string) {
   mkdirSync(CASA, { recursive: true })
@@ -58,9 +58,9 @@ export function enlazarSkills(app: string) {
 
 /**
  * Codex no mira ~/.claude/skills: busca en las suyas (`$CODEX_HOME/skills` y `~/.agents/skills`), y si dos skills se
- * llaman igual no gana ninguna. Cada skill de Sloth se enlaza en las dos a la misma de Claude, para que los dos agentes
+ * llaman igual no gana ninguna. Cada skill de v!d se enlaza en las dos a la misma de Claude, para que los dos agentes
  * lean los mismos archivos y un cambio valga para ambos; Codex cuenta una sola vez lo que lleva al mismo sitio. Una copia
- * suelta con el nombre de una skill de Sloth (la de una versión de antes) sale a `skills-viejas`, donde Codex ya no la ve.
+ * suelta con el nombre de una skill de v!d (la de una versión de antes) sale a `skills-viejas`, donde Codex ya no la ve.
  */
 export function enlazarSkillsCodex(app: string, bases = basesCodex()) {
   for (const base of bases) {
@@ -96,7 +96,7 @@ const basesCodex = () => [process.env.CODEX_HOME || join(homedir(), '.codex'), j
 
 /**
  * Al borrar un estilo tuyo, su skill sale de `<app>/skills` a una copia en `data/skills-tuyas`, por si te arrepientes, y
- * se quitan los enlaces de Claude y Codex que se quedaron sin ella. Una que trae Sloth no se toca. Devuelve la copia.
+ * se quitan los enlaces de Claude y Codex que se quedaron sin ella. Una que trae v!d no se toca. Devuelve la copia.
  */
 export function guardarSkillTuya(app: string, skill: string, datos: string, enlaces = VENTA ? [CASA, ...basesCodex().map((b) => join(b, 'skills'))] : []) {
   const dir = join(app, 'skills', skill)
@@ -134,7 +134,7 @@ export function skillRef(name: string): SkillRef | undefined {
 }
 
 /** En la app que se vende, las skills como las trae esta versión (`server/originales.ts`). En el repo no hay. */
-const ORIGINALES = process.env.SLOTH_SKILLS_ORIGINALES
+const ORIGINALES = process.env.VID_SKILLS_ORIGINALES ?? process.env.SLOTH_SKILLS_ORIGINALES
 
 /**
  * Las skills de una card que tienen original: la suya y las bases que nombra su SKILL.md (video-base, modelos-3d), que

@@ -5,7 +5,7 @@ import type { Card, VozStudio } from './types.ts'
  * mensaje de un video, cómo se leen las voces del panel de AI Studio y cuándo un WAV bajado está entero.
  */
 
-/** La guía que siguen las skills con la línea `Voz:` (en `SLOTH_SKILLS`). */
+/** La guía que siguen las skills con la línea `Voz:` (en `VID_SKILLS`). */
 const GUIA = 'video-base/VOZ.md'
 
 /**
@@ -64,7 +64,7 @@ export function segundosWav(b: Uint8Array): number | null {
 }
 
 /**
- * Lo que se narra de un guion en Markdown, como lo copia «Copiar» de Sloth: sin títulos, encabezados ni comentarios, y
+ * Lo que se narra de un guion en Markdown, como lo copia «Copiar» de v!d: sin títulos, encabezados ni comentarios, y
  * cada párrafo en un renglón.
  */
 export function textoParaVoz(md: string): string {

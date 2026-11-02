@@ -1,12 +1,12 @@
 /**
- * La app de escritorio de Sloth, con Electron. En la que se vende (`npm run compilar`) es Sloth.exe: levanta el servidor
+ * La app de escritorio de v!d, con Electron. En la que se vende (`npm run compilar`) es vid-koldgold.exe: levanta el servidor
  * con su propio Node (`node\node.exe app\scripts\start.mjs`) y lo enseña en su ventana; al cerrarla se cierra todo, sin
- * quedarse de fondo. vid.kold.gold no se actualiza sola (Fase 1): una versión nueva se instala encima. En el repo, `npm start` levanta el servidor y abre esta misma ventana con `SLOTH_VENTANA`, su
+ * quedarse de fondo. v!d no se actualiza sola (Fase 1): una versión nueva se instala encima. En el repo, `npm start` levanta el servidor y abre esta misma ventana con `VID_VENTANA`, su
  * dirección: entonces solo se pone la ventana.
  *
- * En Windows todo va junto a Sloth.exe, como hasta la 0.2: `app\` (el servidor, la interfaz, y tus videos y tus hilos en
+ * En Windows todo va junto a vid-koldgold.exe, como hasta la 0.2: `app\` (el servidor, la interfaz, y tus videos y tus hilos en
  * `app\trabajo` y `app\data`) y `node\`. Al actualizar, el instalador cambia lo demás y deja eso (scripts/instalador.nsh).
- * En Mac y Linux la app no se puede escribir (un .app firmado, un AppImage): el servidor viaja en resources/sloth y pasa a
+ * En Mac y Linux la app no se puede escribir (un .app firmado, un AppImage): el servidor viaja en resources/vid y pasa a
  * `DATOS` al estrenar cada versión, junto a tus videos y tus hilos (`prepararApp`); Node se queda en resources/node.
  * Lo de fuera (enlaces, autorizar cuentas) se abre en el navegador de cada quien; lo que abre el agente, en el de
  * cada hilo, dentro de esta ventana (navegador.ts). Lo compila scripts/electron.mjs.
@@ -22,19 +22,26 @@ import { guardar } from '../server/disco.ts'
 import { anclada, anclar } from './barra.ts'
 import { archivos, huella, huellas, nombreCopia, quitarViejos, respaldar } from '../server/originales.ts'
 import { MODELOS_VIEJOS } from './modelos-viejos.ts'
+import { migrarCarpeta, reescribirSesiones } from '../server/migrar.ts'
 import { iniciarNavegador, ventanaDelNavegador } from './navegador.ts'
 
 /** En el repo: la dirección del servidor que ya levantó `npm start`. */
-const SOLO_VENTANA = process.env.SLOTH_VENTANA
-const URL_SLOTH = SOLO_VENTANA ?? `http://localhost:${process.env.PORT ?? '4850'}`
+const SOLO_VENTANA = process.env.VID_VENTANA ?? process.env.SLOTH_VENTANA
+const URL_VID = SOLO_VENTANA ?? `http://localhost:${process.env.PORT ?? '4850'}`
 const WINDOWS = process.platform === 'win32'
 const MAC = process.platform === 'darwin'
-/** Fuera de Windows, dónde viven Sloth y lo tuyo: la app no se puede escribir. */
-const DATOS = MAC ? join(homedir(), 'Library', 'Application Support', 'TazSloth') : join(process.env.XDG_DATA_HOME || join(homedir(), '.local', 'share'), 'tazsloth')
-/** La carpeta de Sloth.exe. */
+/** Fuera de Windows, dónde viven v!d y lo tuyo: la app no se puede escribir. */
+const DATOS = MAC ? join(homedir(), 'Library', 'Application Support', 'vid-koldgold') : join(process.env.XDG_DATA_HOME || join(homedir(), '.local', 'share'), 'vid-koldgold')
+// Fase 2: la primera vez, lo de TazSloth se copia a la carpeta nueva (la vieja no se toca; server/migrar.ts). En Windows
+// lo hace el servidor: ahí todo vive junto al programa.
+if (!WINDOWS && !SOLO_VENTANA) {
+  const vieja = migrarCarpeta([join(dirname(DATOS), MAC ? 'TazSloth' : 'tazsloth')], DATOS)
+  if (vieja) reescribirSesiones(join(DATOS, 'data'), join(vieja, 'trabajo'), join(DATOS, 'trabajo'))
+}
+/** La carpeta de vid-koldgold.exe. */
 const RAIZ = dirname(process.execPath)
-const APP = SOLO_VENTANA ? (process.env.SLOTH_APP ?? process.cwd()) : WINDOWS ? join(RAIZ, 'app') : DATOS
-const REGISTRO = join(APP, 'data', 'sloth.log')
+const APP = SOLO_VENTANA ? (process.env.VID_APP ?? process.env.SLOTH_APP ?? process.cwd()) : WINDOWS ? join(RAIZ, 'app') : DATOS
+const REGISTRO = join(APP, 'data', 'vid.log')
 /** Dónde se dejó la ventana. */
 const LUGAR = join(APP, 'data', 'ventana.json')
 /** Existe si marcaste «No volver a mostrar» en el aviso al cerrar. */
@@ -44,11 +51,11 @@ const FONDO = '#0b0d12'
 let ventana: BrowserWindow | undefined
 let servidor: ChildProcess | undefined
 let registro: WriteStream | undefined
-/** El servidor ya dijo «Sloth en …»: la ventana puede cargar la interfaz. */
+/** El servidor ya dijo «v!d en …»: la ventana puede cargar la interfaz. */
 let listo = !!SOLO_VENTANA
 let cerrando = false
-// Su propio nombre ante Windows: la ventana se junta con el acceso anclado y los avisos salen a nombre de Sloth.
-app.setAppUserModelId(SOLO_VENTANA ? 'TazSloth.Dev' : 'TazSloth.App')
+// Su propio nombre ante Windows: la ventana se junta con el acceso anclado y los avisos salen a nombre de v!d.
+app.setAppUserModelId(SOLO_VENTANA ? 'Gold.Kold.Vid.Dev' : 'Gold.Kold.Vid')
 app.setPath('userData', join(APP, 'data', 'ventana'))
 nativeTheme.themeSource = 'dark'
 
@@ -57,7 +64,7 @@ else {
   mudarPerfil()
   app.on('second-instance', () => abrir())
   app.on('activate', () => abrir())
-  // Cerrar la ventana cierra Sloth entera, también en Mac: el servidor y lo que lanzó se detienen (`before-quit`).
+  // Cerrar la ventana cierra v!d entera, también en Mac: el servidor y lo que lanzó se detienen (`before-quit`).
   app.on('window-all-closed', () => app.quit())
   app.on('before-quit', () => {
     cerrando = true
@@ -82,7 +89,7 @@ async function iniciar() {
     if (!WINDOWS) await prepararApp()
     await prepararSkills()
   } catch (e) {
-    anotar(`No se pudo poner esta versión de Sloth: ${e instanceof Error ? e.message : e}`)
+    anotar(`No se pudo poner esta versión de v!d: ${e instanceof Error ? e.message : e}`)
   }
   arrancar()
 }
@@ -93,13 +100,13 @@ function abrir() {
   const { maximizada, ...medidas } = lugar()
   const v = new BrowserWindow({
     ...medidas,
-    title: 'vid.kold.gold',
+    title: 'v!d by Kold.Gold',
     show: false,
     backgroundColor: FONDO,
-    // En Windows 11, la barra de título y el borde del color de Sloth (Electron los vuelve a pintar al enfocarla). En
+    // En Windows 11, la barra de título y el borde del color de v!d (Electron los vuelve a pintar al enfocarla). En
     // Windows 10 solo se oscurecen.
     accentColor: FONDO,
-    // La compilada lleva el logo en Sloth.exe y en Sloth.app; en el repo es electron.exe, con el suyo. Linux lo pide siempre.
+    // La compilada lleva el logo en vid-koldgold.exe y en vid-koldgold.app; en el repo es electron.exe, con el suyo. Linux lo pide siempre.
     icon: MAC || (WINDOWS && app.isPackaged) ? undefined : app.isPackaged ? join(process.resourcesPath, 'icon.png') : join(APP, 'assets', WINDOWS ? 'icon.ico' : 'icon.png'),
     webPreferences: { preload: join(__dirname, 'preload.cjs'), sandbox: true, autoplayPolicy: 'no-user-gesture-required' }
   })
@@ -114,10 +121,10 @@ function abrir() {
     if (d.reason === 'clean-exit') return
     caidas = [...caidas.filter((t) => Date.now() - t < 60_000), Date.now()]
     if (caidas.length <= 3) v.reload()
-    else if (caidas.length === 4) dialog.showErrorBox('vid.kold.gold', 'La ventana se cerró varias veces seguidas. Recárgala con Ctrl+R: los agentes y tus archivos siguen trabajando.')
+    else if (caidas.length === 4) dialog.showErrorBox('v!d by Kold.Gold', 'La ventana se cerró varias veces seguidas. Recárgala con Ctrl+R: los agentes y tus archivos siguen trabajando.')
   })
   v.on('close', (e) => {
-    // Solo si el servidor es de esta ventana: si no (el repo, o Sloth ya abierta de otra forma), cerrarla no detiene nada.
+    // Solo si el servidor es de esta ventana: si no (el repo, o v!d ya abierta de otra forma), cerrarla no detiene nada.
     if (servidor && !cerrando && !existsSync(SIN_AVISO)) {
       e.preventDefault()
       void avisarAlCerrar(v)
@@ -126,7 +133,7 @@ function abrir() {
   v.on('closed', () => (ventana = undefined))
   if (maximizada) v.maximize()
   v.show()
-  if (listo) void conToken().then(() => v.loadURL(URL_SLOTH))
+  if (listo) void conToken().then(() => v.loadURL(URL_VID))
 }
 
 let avisando = false
@@ -137,10 +144,10 @@ async function avisarAlCerrar(v: BrowserWindow) {
   avisando = true
   const { response, checkboxChecked } = await dialog.showMessageBox(v, {
     type: 'question',
-    title: 'vid.kold.gold',
-    message: '¿Cerrar Sloth?',
+    title: 'v!d by Kold.Gold',
+    message: '¿Cerrar v!d?',
     detail: 'Se cierra por completo, sin quedarse de fondo: se detiene todo lo que esté haciendo, también los videos a medias.',
-    buttons: ['Cerrar vid.kold.gold', 'Cancelar'],
+    buttons: ['Cerrar v!d', 'Cancelar'],
     defaultId: 0,
     cancelId: 1,
     // Botones normales: si no, Windows los pinta como enlaces grandes con flecha.
@@ -189,7 +196,7 @@ function guardarLugar(v: BrowserWindow) {
   }
 }
 
-const propia = (url: string) => url === URL_SLOTH || url.startsWith(`${URL_SLOTH}/`)
+const propia = (url: string) => url === URL_VID || url.startsWith(`${URL_VID}/`)
 
 /** En el navegador predeterminado. Solo http y https: nada de rutas ni programas. */
 function fuera(url: string) {
@@ -227,7 +234,7 @@ function enlaces(wc: WebContents) {
   })
 }
 
-/** Lo que pide la interfaz (avisos, portapapeles, micrófono) se da sin preguntar: es Sloth. A nadie más. */
+/** Lo que pide la interfaz (avisos, portapapeles, micrófono) se da sin preguntar: es v!d. A nadie más. */
 function permisos() {
   session.defaultSession.setPermissionRequestHandler((_wc, _permiso, responder, d) => responder(propia(d.requestingUrl)))
   session.defaultSession.setPermissionCheckHandler((_wc, _permiso, origen) => propia(origen))
@@ -243,27 +250,27 @@ function menu() {
 }
 
 /**
- * Fuera de Windows, el servidor y la interfaz de esta versión (resources/sloth) pasan a `DATOS` al estrenarla: cada cosa
+ * Fuera de Windows, el servidor y la interfaz de esta versión (resources/vid) pasan a `DATOS` al estrenarla: cada cosa
  * reemplaza a la de antes, y lo tuyo (data, trabajo, skills) se queda. Los enlaces de node_modules/.bin van tal cual:
  * resueltos, apuntarían dentro de la app, que en un AppImage cambia de sitio cada vez que se abre.
  */
 async function prepararApp() {
   const marca = join(APP, 'data', 'skills.txt')
   if (existsSync(marca) && readFileSync(marca, 'utf8') === app.getVersion()) return
-  const de = join(process.resourcesPath, 'sloth')
+  const de = join(process.resourcesPath, 'vid')
   for (const cosa of readdirSync(de)) {
     rmSync(join(APP, cosa), { recursive: true, force: true })
     await cp(join(de, cosa), join(APP, cosa), { recursive: true, verbatimSymlinks: true })
   }
   // La copia hereda la marca de «bajado de internet» del .dmg, y macOS revisaría uno a uno los programas de los paquetes
-  // (Claude Code, Codex) al lanzarlos: ya se revisó Sloth al abrirla.
+  // (Claude Code, Codex) al lanzarlos: ya se revisó v!d al abrirla.
   if (MAC) spawnSync('xattr', ['-dr', 'com.apple.quarantine', join(APP, 'node_modules')])
 }
 
 /**
  * Las skills viajan en resources\skills y se ponen en app\skills al estrenar cada versión, como hacía el instalador de
  * antes: lo que cada skill guarda de los tuyos (las huellas, el banco de temas, la biblioteca 3D) se queda. Los modelos
- * 3D del dueño de Sloth que traían las versiones de antes (la moneda incluida) se van, menos los que cambiaste
+ * 3D del dueño de v!d que traían las versiones de antes (la moneda incluida) se van, menos los que cambiaste
  * (`MODELOS_VIEJOS`). Lo que cambiaste en las skills se pisa, pero antes se copia a `data/skills-tuyas`
  * (`respaldarCambios`). Lo que la versión de antes traía y esta ya no se va, si no lo cambiaste (`quitarViejos`).
  */
@@ -334,18 +341,18 @@ function mudarPerfil() {
   }
 }
 
-/** El servidor, sin consola. Lo que dice queda en app\data\sloth.log. */
+/** El servidor, sin consola. Lo que dice queda en app\data\vid.log. */
 function arrancar() {
   const node = WINDOWS ? join(RAIZ, 'node', 'node.exe') : join(process.resourcesPath, 'node', 'bin', 'node')
   // La ventana la pone este proceso, no start.mjs. Fuera de Windows, en su propio grupo, para cerrarlo con lo que lanzó.
   // Con las skills como las trae esta versión, para «Volver a la original» (server/originales.ts).
-  const env = { ...process.env, SLOTH_SKILLS_ORIGINALES: join(process.resourcesPath, 'skills') }
+  const env = { ...process.env, VID_SKILLS_ORIGINALES: join(process.resourcesPath, 'skills') }
   const s = spawn(node, ['scripts/start.mjs', '--no-open'], { cwd: APP, env, stdio: ['ignore', 'pipe', 'pipe'], windowsHide: true, detached: process.platform !== 'win32' })
   servidor = s
   s.stdout!.on('data', escribir)
   s.stderr!.on('data', escribir)
   s.on('error', (e) => {
-    dialog.showErrorBox('vid.kold.gold', `No se pudo abrir vid.kold.gold: ${e.message}`)
+    dialog.showErrorBox('v!d by Kold.Gold', `No se pudo abrir v!d: ${e.message}`)
     salir()
   })
   s.on('exit', termino)
@@ -354,12 +361,12 @@ function arrancar() {
 function escribir(d: Buffer) {
   registro?.write(d)
   // Lo que escribe el servidor al quedar escuchando (server/index.ts).
-  if (!listo && String(d).includes('Sloth en ')) marcarListo()
+  if (!listo && String(d).includes('v!d en ')) marcarListo()
 }
 
 function marcarListo() {
   listo = true
-  void conToken().then(() => ventana?.loadURL(URL_SLOTH))
+  void conToken().then(() => ventana?.loadURL(URL_VID))
 }
 
 /**
@@ -370,14 +377,14 @@ async function conToken() {
   try {
     const archivo = join(APP, 'data', 'servidor-token')
     const token = process.env.VID_TOKEN || (existsSync(archivo) ? readFileSync(archivo, 'utf8').trim() : '')
-    if (token) await session.defaultSession.cookies.set({ url: URL_SLOTH, name: 'vid_token', value: token, httpOnly: true, sameSite: 'strict', path: '/' })
+    if (token) await session.defaultSession.cookies.set({ url: URL_VID, name: 'vid_token', value: token, httpOnly: true, sameSite: 'strict', path: '/' })
   } catch {
     // Sin ella, la página la recibe del servidor al cargarse.
   }
 }
 
 /**
- * start.mjs terminó solo. Con 0, Sloth ya corría (abierta de otra forma): queda su ventana, y al cerrarla se sale. Si no,
+ * start.mjs terminó solo. Con 0, v!d ya corría (abierta de otra forma): queda su ventana, y al cerrarla se sale. Si no,
  * el servidor se cayó tres veces seguidas.
  */
 function termino(codigo: number | null) {
@@ -388,7 +395,7 @@ function termino(codigo: number | null) {
     if (!ventana) app.quit()
     return
   }
-  dialog.showMessageBoxSync({ type: 'warning', title: 'vid.kold.gold', message: 'vid.kold.gold se cerró.', detail: `Lo que pasó está en el registro:\n${REGISTRO}` })
+  dialog.showMessageBoxSync({ type: 'warning', title: 'v!d by Kold.Gold', message: 'v!d se cerró.', detail: `Lo que pasó está en el registro:\n${REGISTRO}` })
   salir()
 }
 
@@ -414,6 +421,6 @@ function salir() {
 }
 
 function anotar(texto: unknown) {
-  registro?.write(`[sloth] ${texto}\n`)
+  registro?.write(`[vid] ${texto}\n`)
 }
 

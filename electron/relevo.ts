@@ -35,8 +35,8 @@ interface Comando {
 const esComando = (v: unknown): v is Comando =>
   typeof v === 'object' && v !== null && typeof (v as Comando).id === 'number' && typeof (v as Comando).method === 'string'
 
-const CONTEXTO = 'sloth'
-const SESION_PAGINA = 'sloth-pagina'
+const CONTEXTO = 'vid'
+const SESION_PAGINA = 'vid-pagina'
 /** Lo que se contesta con un `{}`: en un navegador de una sola página no hay nada que hacer. */
 const SIN_EFECTO = new Set(['Target.setDiscoverTargets', 'Browser.grantPermissions', 'Browser.resetPermissions', 'Browser.cancelDownload'])
 /** Lo que se contesta y además anuncia la página (`Target.attachedToTarget`), después de la respuesta. */
@@ -50,7 +50,7 @@ export function crearRelevo(pagina: PaginaDelRelevo, escribir: (texto: string) =
   const sesiones = new Map<string, 'navegador' | 'pagina'>([[SESION_PAGINA, 'pagina']])
   let n = 0
   const nueva = (tipo: 'navegador' | 'pagina') => {
-    const id = `sloth-${tipo}-${++n}`
+    const id = `vid-${tipo}-${++n}`
     sesiones.set(id, tipo)
     return id
   }

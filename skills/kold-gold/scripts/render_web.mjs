@@ -199,7 +199,7 @@ try {
   await ffmpeg("-f", "concat", "-safe", "0", "-i", lista, "-i", voz, "-map", "0:v", "-map", "1:a", "-c", "copy",
     "-bsf:v", `setts=ts=N/(${FPS}*TB):duration=1/(${FPS}*TB),h264_metadata=colour_primaries=1:transfer_characteristics=1:matrix_coefficients=1:video_full_range_flag=0`,
     "-color_primaries", "bt709", "-color_trc", "bt709", "-colorspace", "bt709", "-color_range", "tv", "-video_track_timescale", "90000",
-    ...(PORTADA ? ["-metadata", "comment=sloth-portada"] : []),
+    ...(PORTADA ? ["-metadata", "comment=vid-portada"] : []),
     // El índice (moov) delante de los datos, en un hueco reservado al principio: con +faststart FFmpeg reescribía el
     // archivo entero al final (3-7 s de los 440 MB del video de nuevo-4). Ese índice ocupó ~100 KB: unos 11 bytes por
     // cuadro y por bloque de audio (1024 muestras); se reserva el doble y algo más.

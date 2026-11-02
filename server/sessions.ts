@@ -24,7 +24,7 @@ const LIBRE = 2e9
 /** Cuánto espera el hilo, con el segundo plano recién vacío, antes de decir que ya no queda nada (`avisarFondo`). */
 const CALMA = 4000
 /**
- * Cuántas veces seguidas, sin que escribas, Sloth le pide a un agente que siga: uno de Codex u OpenCode que acabó su turno
+ * Cuántas veces seguidas, sin que escribas, v!d le pide a un agente que siga: uno de Codex u OpenCode que acabó su turno
  * con algo en segundo plano (`avisarFondo`) o cualquiera que lo cerró con el video a medias (`sinAcabar`).
  */
 const DESPERTARES = 3
@@ -327,10 +327,10 @@ export class Sessions {
     let text = ''
     if (mensajes.length) {
       const varios = mensajes.length > 1
-      text = `(Sloth se cerró antes de que leyeras ${varios ? 'estos mensajes' : 'este mensaje'}. Te ${varios ? 'los' : 'lo'} vuelvo a mandar.)\n\n${mensajes.map((m) => m.text).join('\n\n')}`
+      text = `(v!d se cerró antes de que leyeras ${varios ? 'estos mensajes' : 'este mensaje'}. Te ${varios ? 'los' : 'lo'} vuelvo a mandar.)\n\n${mensajes.map((m) => m.text).join('\n\n')}`
     } else if (meta.lote && (cortado || tareas.length)) {
       const muerto = tareas.length ? `, y se cortó lo que corría en segundo plano (${tareas.join('; ')})` : ''
-      text = `(Sloth se cerró a mitad de tu trabajo${muerto}.) Continúa donde te quedaste. Antes, mira en tu carpeta qué quedó a medias: un render o un subagente cortado no terminó.`
+      text = `(v!d se cerró a mitad de tu trabajo${muerto}.) Continúa donde te quedaste. Antes, mira en tu carpeta qué quedó a medias: un render o un subagente cortado no terminó.`
     }
     if (!text) return
     const images = mensajes.flatMap((m) => m.images ?? [])
@@ -458,7 +458,7 @@ export class Sessions {
    * Cuando lo de segundo plano (subagentes, comandos, un Monitor) termina con el turno ya acabado, el hilo lo dice: el
    * agente suele cerrar su turno con «todo listo» mientras algo sigue, y sin esto había que preguntarle si ya acabó. Espera
    * `CALMA`: al terminar una tarea, Claude Code abre él solo un turno para leerla, y eso no es quedarse quieto. Solo con el
-   * proceso del agente vivo: si se cerró o se reinició Sloth, lo de fondo se cortó, no terminó.
+   * proceso del agente vivo: si se cerró o se reinició v!d, lo de fondo se cortó, no terminó.
    *
    * Codex y OpenCode no abren ese turno: un video de Codex cerraba el suyo con sus subagentes trabajando y se quedaba
    * parado cuando acababan (29 de octubre). A ellos se les despierta para que sigan (`DESPERTARES`).
@@ -478,7 +478,7 @@ export class Sessions {
       const veces = this.despertados.get(id) ?? 0
       if (programaDe(proveedorDe(meta.model)) !== 'claude' && meta.acaboBien && veces < DESPERTARES && this.runs.has(id)) {
         this.despertados.set(id, veces + 1)
-        this.emit(id, { t: 'info', text: 'Terminó lo que seguía en segundo plano: Sloth le pide al agente que siga.' })
+        this.emit(id, { t: 'info', text: 'Terminó lo que seguía en segundo plano: v!d le pide al agente que siga.' })
         return this.turno(meta, 'Terminó lo que tenías en segundo plano (tus subagentes o comandos). Si lo que pidió el usuario aún no está acabado, sigue con lo que falta sin preguntar; si ya lo está, no hagas nada más.')
       }
       this.emit(id, { t: 'info', text: 'Terminó lo que seguía en segundo plano: ya no queda nada trabajando en este hilo.' })
@@ -495,7 +495,7 @@ export class Sessions {
    * borrador sin pasar la comprobación de movimiento, dijo «el video aún no está terminado» y acabó (29 de octubre).
    * Pasados `CALMA`, si el turno acabó bien, trabajó (usó alguna herramienta), no acaba preguntándote algo, no deja nada
    * en segundo plano (de eso se ocupa `avisarFondo`) y a la carpeta le falta algo que no tienes que dar tú (`faltaDe`),
-   * Sloth le pide que siga. Vale para todos los estilos, también los tuyos: lo que falta sale de las etapas de su card.
+   * v!d le pide que siga. Vale para todos los estilos, también los tuyos: lo que falta sale de las etapas de su card.
    */
   private sinAcabar(id: string, meta: SessionMeta, event: AgentEvent) {
     if (event.t === 'turn_start' || event.t === 'user') {
@@ -520,10 +520,10 @@ export class Sessions {
       if (!falta.length) return
       const veces = this.despertados.get(id) ?? 0
       if (veces >= DESPERTARES) {
-        return this.emit(id, { t: 'info', text: `El video sigue sin acabar (falta: ${falta.join(', ')}) y Sloth ya le pidió ${veces} veces seguidas que siguiera. Dile tú cómo seguir.` })
+        return this.emit(id, { t: 'info', text: `El video sigue sin acabar (falta: ${falta.join(', ')}) y v!d ya le pidió ${veces} veces seguidas que siguiera. Dile tú cómo seguir.` })
       }
       this.despertados.set(id, veces + 1)
-      this.emit(id, { t: 'info', text: `El agente cerró su turno con el video sin acabar (falta: ${falta.join(', ')}): Sloth le pide que siga.` })
+      this.emit(id, { t: 'info', text: `El agente cerró su turno con el video sin acabar (falta: ${falta.join(', ')}): v!d le pide que siga.` })
       this.turno(
         meta,
         `Cerraste tu turno, pero el video aún no está terminado: en su carpeta falta ${falta.join(', ')}. Sigue sin preguntar hasta terminarlo. Si una comprobación falla, arregla lo que dice y vuelve a probar; no cierres el turno con un borrador. Para solo si necesitas algo que únicamente puede darte el usuario, y entonces pídeselo con una pregunta.`
@@ -564,7 +564,7 @@ export class Sessions {
     this.despertadores.clear()
     this.cerrarRegistros(true)
     for (const id of [...this.runs.keys()]) this.cerrar(id)
-    // Si Sloth no se reinicia después (una actualización que falló), el siguiente mensaje retoma la sesión.
+    // Si v!d no se reinicia después (una actualización que falló), el siguiente mensaje retoma la sesión.
     this.runs.clear()
   }
 
@@ -734,7 +734,7 @@ export class Sessions {
     }
   }
 
-  /** Los registros que llevan un rato sin eventos se cierran. Con `todos`, todos (al cerrar Sloth). */
+  /** Los registros que llevan un rato sin eventos se cierran. Con `todos`, todos (al cerrar v!d). */
   cerrarRegistros(todos = false) {
     const antes = Date.now() - QUIETO_REGISTRO
     for (const [id, r] of this.registros) if (todos || r.ultimo < antes) this.cerrarRegistro(id)

@@ -12,7 +12,7 @@ import { mcpVoz } from './voz/index.ts'
 import { costoCodex } from './precios.ts'
 import { SKILLS } from './skills.ts'
 
-/** Codex conserva los hilos en su almacén; Sloth conserva su id y traduce el protocolo al mismo AgentEvent de Claude. */
+/** Codex conserva los hilos en su almacén; v!d conserva su id y traduce el protocolo al mismo AgentEvent de Claude. */
 export function startCodex(opts: AgentOptions, connect: Conectar = (notify, exit, config, llave) => new CodexRpc(notify, exit, config, llave), precio = costoCodex): AgentRun {
   // Con la llave de API o con la cuenta de ChatGPT: un hilo retomado sigue con lo que empezó (`SessionMeta.conLlave`).
   const conLlave = opts.conLlave ?? !!llaveEnUso('codex')
@@ -219,7 +219,7 @@ export function startCodex(opts: AgentOptions, connect: Conectar = (notify, exit
     const r = await rpc.request<{ thread: { id: string } }>(opts.resume ? 'thread/resume' : 'thread/start', {
       ...(opts.resume ? { threadId: opts.resume } : {}), model: modelo, modelProvider: llave?.proveedor ?? 'openai', cwd: opts.cwd,
       approvalPolicy: 'never', sandbox: 'danger-full-access',
-      developerInstructions: `${OPCIONES}\nLa interfaz y tus respuestas van en español. Haz las preguntas en mensajes normales, sin herramientas de preguntas interactivas. Las skills de Sloth están en ${SKILLS}. La skill invocada es siempre la de esa carpeta: si ves otra con el mismo nombre (en ${join(homedir(), '.codex', 'skills')} u otra), es una copia vieja y no se usa. Respeta la skill invocada y lee sus referencias cuando hagan falta.
+      developerInstructions: `${OPCIONES}\nLa interfaz y tus respuestas van en español. Haz las preguntas en mensajes normales, sin herramientas de preguntas interactivas. Las skills de v!d están en ${SKILLS}. La skill invocada es siempre la de esa carpeta: si ves otra con el mismo nombre (en ${join(homedir(), '.codex', 'skills')} u otra), es una copia vieja y no se usa. Respeta la skill invocada y lee sus referencias cuando hagan falta.
 ${USA_EL_NAVEGADOR}`
     })
     threadId = r.thread.id
@@ -244,7 +244,7 @@ ${USA_EL_NAVEGADOR}`
     if (path && !existsSync(path)) throw new Error(`No se encontró la skill ${skill!.name}.`)
     return [
       ...images.map((path) => ({ type: 'localImage', path })),
-      { type: 'text', text: skill ? `Usa la skill ${skill.name} de Sloth, la de ${path} (no otra copia con ese nombre).
+      { type: 'text', text: skill ? `Usa la skill ${skill.name} de v!d, la de ${path} (no otra copia con ese nombre).
 
 ${text}` : text, text_elements: [] },
       ...(skill ? [{ type: 'skill', name: skill.name, path }] : [])
@@ -311,13 +311,13 @@ interface Notificacion {
 interface Uso { inputTokens: number; cachedInputTokens: number; outputTokens: number; totalTokens: number }
 
 const CERO: Tokens = { input: 0, output: 0, cacheRead: 0 }
-/** Los tokens que cuenta Sloth: la entrada sin la caché, aparte. */
+/** Los tokens que cuenta v!d: la entrada sin la caché, aparte. */
 const tokensDe = (u: Uso): Tokens => ({ input: u.inputTokens - u.cachedInputTokens, output: u.outputTokens, cacheRead: u.cachedInputTokens })
 const resta = (a: Tokens, b: Tokens): Tokens => ({ input: a.input - b.input, output: a.output - b.output, cacheRead: a.cacheRead - b.cacheRead })
 const suma = (a: Tokens, b: Tokens): Tokens => ({ input: a.input + b.input, output: a.output + b.output, cacheRead: a.cacheRead + b.cacheRead })
 type Conectar = (notify: (method: string, params: unknown) => void, exit: (error?: Error) => void, config: Record<string, unknown>, llave: CodexLlave | null) => Pick<CodexRpc, 'ready' | 'request' | 'close'>
 
-/** El catálogo viene de Codex, con sus esfuerzos: no se fija una lista de GPT en Sloth. */
+/** El catálogo viene de Codex, con sus esfuerzos: no se fija una lista de GPT en v!d. */
 export async function codexModels(): Promise<Model[]> {
   // Sin el programa de Codex (aún no se bajó) no hay catálogo: pedirlo no lo baja.
   if (!rutaAgente('codex')) return []

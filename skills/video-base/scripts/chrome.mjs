@@ -16,7 +16,7 @@ function masNuevo(raiz, sub) {
 
 /**
  * Dónde está Chrome. Primero `CHROME` si el usuario la puso; después el headless shell (el más rápido para capturar),
- * el de las piezas de Sloth, el de puppeteer o playwright, Chrome instalado y, al final, Edge. Nunca una ruta fija con
+ * el de las piezas de v!d, el de puppeteer o playwright, Chrome instalado y, al final, Edge. Nunca una ruta fija con
  * versión: se rompe en cuanto se actualiza.
  */
 export function buscarChrome() {
@@ -133,7 +133,7 @@ process.on('exit', () => {
 
 /** Espera un sitio y devuelve con qué soltarlo. Cada sitio es un archivo con el pid de su dueño en %TEMP%. */
 export async function turnoNavegador({ carpeta = tmpdir(), tope = NAVEGADORES, memoria = freemem, paciencia = PACIENCIA, pausa = 2000 } = {}) {
-  const rutas = Array.from({ length: tope }, (_, i) => join(carpeta, `sloth-navegador-${i}.lock`))
+  const rutas = Array.from({ length: tope }, (_, i) => join(carpeta, `vid-navegador-${i}.lock`))
   for (const limite = Date.now() + paciencia; Date.now() < limite; await new Promise((r) => setTimeout(r, pausa))) {
     const libres = rutas.filter((r) => !ocupado(r))
     if (!libres.length || (libres.length < tope && memoria() < LIBRE)) continue

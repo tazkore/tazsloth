@@ -16,8 +16,8 @@ export function Ritmos() {
   const ver = (base: string) => (si: boolean) => setHay((h) => ({ ...h, [base]: si }))
   return (
     <div className="ritmos">
-      <RitmoDe base="/api/redes" titulo="TikTok e Instagram" logos={['tiktok', 'instagram']} evento="sloth-redes" onConectada={ver('/api/redes')} />
-      <RitmoDe base="/api/youtube" titulo="YouTube" logos={['youtube']} evento="sloth-youtube" onConectada={ver('/api/youtube')} />
+      <RitmoDe base="/api/redes" titulo="TikTok e Instagram" logos={['tiktok', 'instagram']} evento="vid-redes" onConectada={ver('/api/redes')} />
+      <RitmoDe base="/api/youtube" titulo="YouTube" logos={['youtube']} evento="vid-youtube" onConectada={ver('/api/youtube')} />
       {Object.keys(hay).length === 2 && !hay['/api/redes'] && !hay['/api/youtube'] && (
         <p className="muted small">Conecta TikTok, Instagram o YouTube en Opciones → Redes para elegir a qué ritmo salen.</p>
       )}
@@ -123,7 +123,7 @@ function RitmoDe(props: { base: string; titulo: string; logos: string[]; evento:
       {!cambiado && estado.fijas > 0 && (
         <p className="muted small">
           {estado.fijas === 1 ? '1 ya está en TikTok y se queda' : `${estado.fijas} ya están en TikTok y se quedan`} a su hora: TikTok no deja cambiarla desde
-          Sloth. Las que aún esperan en la cola sí se mueven.
+          v!d. Las que aún esperan en la cola sí se mueven.
         </p>
       )}
       {hecho && <p className="ritmo-hecho small">{hecho}</p>}

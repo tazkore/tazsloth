@@ -2,7 +2,7 @@ import { marked, type Tokens } from 'marked'
 
 /**
  * Markdown a HTML, sin HTML crudo. Lo que se dibuja lo escribe un agente que lee páginas de fuera (y en Ideas cita
- * comentarios de YouTube): un `<img onerror>` copiado tal cual correría en esta página, que puede usar la API de Sloth.
+ * comentarios de YouTube): un `<img onerror>` copiado tal cual correría en esta página, que puede usar la API de v!d.
  * Por eso el HTML del texto sale escrito, salvo unas pocas etiquetas sin atributos, y los enlaces no pueden ejecutar nada.
  */
 const escapar = (t: string) => t.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')

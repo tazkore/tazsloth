@@ -71,7 +71,7 @@ function silenciar() {
 /** Lo abre como el de las redes, con su perfil y su puerto. Sin sonido: cada pestaña de la investigación reproduce videos. */
 async function lanzar(app: string) {
   const edge = EDGE.find((e) => existsSync(e))
-  if (!edge) throw new Error('No encontré Microsoft Edge, que es el navegador con el que Sloth investiga TikTok e Instagram.')
+  if (!edge) throw new Error('No encontré Microsoft Edge, que es el navegador con el que v!d investiga TikTok e Instagram.')
   const perfil = join(app, 'data', 'investigacion', 'perfil')
   mkdirSync(perfil, { recursive: true })
   // Sin sincronizar: es un perfil de trabajo, y no tiene por qué traerse tus ajustes ni tus pestañas de otros equipos.

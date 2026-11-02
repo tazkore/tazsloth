@@ -31,10 +31,10 @@ const entorno = {
     return ctx
   }
 }
-;(globalThis as any).__slothMotorPrueba = entorno
+;(globalThis as any).__vidMotorPrueba = entorno
 registerHooks({ resolve(specifier, context, next) {
   if (specifier === 'node:child_process' && /\/motor\.ts$/.test(context.parentURL ?? '')) {
-    return { url: 'data:text/javascript,export const spawn = (...args) => globalThis.__slothMotorPrueba.spawn(...args)', shortCircuit: true }
+    return { url: 'data:text/javascript,export const spawn = (...args) => globalThis.__vidMotorPrueba.spawn(...args)', shortCircuit: true }
   }
   return next(specifier, context)
 } })
@@ -42,7 +42,7 @@ const { motorDe, cerrarMotoresOciosos, servirMotor, servirOnda } = await import(
 const avanzar = async () => { for (let i = 0; i < 4; i++) await setImmediate() }
 
 function carpeta(t: test.TestContext) {
-  const dir = mkdtempSync(join(tmpdir(), 'sloth-motor-'))
+  const dir = mkdtempSync(join(tmpdir(), 'vid-motor-'))
   t.after(() => {
     assert.equal(dirname(resolve(dir)), resolve(tmpdir()))
     rmSync(dir, { recursive: true, force: true })
@@ -161,7 +161,7 @@ function proyecto(t: test.TestContext) {
   const dir = carpeta(t)
   for (const parte of ['src', 'node_modules/@remotion/player', 'node_modules/remotion', 'node_modules/esbuild/lib']) mkdirSync(join(dir, parte), { recursive: true })
   guardar(join(dir, 'src/index.ts'), 'registerRoot')
-  guardar(join(dir, 'node_modules/esbuild/lib/main.js'), 'module.exports = { context: async () => globalThis.__slothMotorPrueba.contexto() }')
+  guardar(join(dir, 'node_modules/esbuild/lib/main.js'), 'module.exports = { context: async () => globalThis.__vidMotorPrueba.contexto() }')
   t.after(() => {
     t.mock.timers.tick(600_000)
     cerrarMotoresOciosos([])

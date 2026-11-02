@@ -6,7 +6,7 @@ import { pathToFileURL } from 'node:url'
 
 /**
  * El motor en vivo: el video de un hilo reproducido en el navegador tal cual saldrá, sin renderizarlo, sea cual sea su
- * estilo, mientras esté hecho con Remotion. Sloth arma la página él solo, con el esbuild y el Player que ya trae el
+ * estilo, mientras esté hecho con Remotion. v!d arma la página él solo, con el esbuild y el Player que ya trae el
  * proyecto, y la vuelve a armar en cuanto cambia algo de lo que entra en el video: el agente escribe una escena y en un
  * segundo se puede ver y recorrer. Las skills no hacen nada para tenerlo. La página es `motor-pagina.jsx`; el monitor la
  * cambia por la nueva sin parpadear ni perder el segundo (`web/src/Monitor.tsx`). Los motores que ya no se ven se
@@ -138,9 +138,9 @@ function esbuildDe(folder: string): Promise<any> {
 const REMOTION = `
 export * from 'remotion'
 const g = globalThis
-export const registerRoot = (raiz) => { g.__slothRaiz = raiz }
-export const Composition = (props) => { (g.__slothComposiciones ??= []).push(props); return null }
-export const Still = (props) => { (g.__slothComposiciones ??= []).push({ ...props, durationInFrames: 1, fps: 30, still: true }); return null }
+export const registerRoot = (raiz) => { g.__vidRaiz = raiz }
+export const Composition = (props) => { (g.__vidComposiciones ??= []).push(props); return null }
+export const Still = (props) => { (g.__vidComposiciones ??= []).push({ ...props, durationInFrames: 1, fps: 30, still: true }); return null }
 export const Folder = ({ children }) => children
 `
 
@@ -148,19 +148,19 @@ export const Folder = ({ children }) => children
 async function contexto(m: Motor) {
   const esbuild = await esbuildDe(m.folder)
   const plugin = {
-    name: 'sloth-motor',
+    name: 'vid-motor',
     setup(b: any) {
-      b.onResolve({ filter: /^sloth:raiz$/ }, () => ({ path: m.entrada }))
+      b.onResolve({ filter: /^vid:raiz$/ }, () => ({ path: m.entrada }))
       // El `remotion` del proyecto pasa por la página; el de las librerías y el de la propia página, no.
       b.onResolve({ filter: /^remotion$/ }, (args: any) =>
-        args.namespace === 'sloth' || /[\\/]node_modules[\\/]/.test(args.importer) ? undefined : { path: 'remotion', namespace: 'sloth' }
+        args.namespace === 'vid' || /[\\/]node_modules[\\/]/.test(args.importer) ? undefined : { path: 'remotion', namespace: 'vid' }
       )
-      b.onLoad({ filter: /.*/, namespace: 'sloth' }, () => ({ contents: REMOTION, resolveDir: m.folder, loader: 'js' }))
+      b.onLoad({ filter: /.*/, namespace: 'vid' }, () => ({ contents: REMOTION, resolveDir: m.folder, loader: 'js' }))
     }
   }
   const imagenes = Object.fromEntries(['.png', '.jpg', '.jpeg', '.webp', '.gif', '.svg', '.woff', '.woff2', '.ttf', '.otf'].map((e) => [e, 'dataurl']))
   return esbuild.context({
-    stdin: { contents: readFileSync(PAGINA, 'utf8'), resolveDir: m.folder, sourcefile: 'sloth-motor.jsx', loader: 'jsx' },
+    stdin: { contents: readFileSync(PAGINA, 'utf8'), resolveDir: m.folder, sourcefile: 'vid-motor.jsx', loader: 'jsx' },
     absWorkingDir: m.folder,
     bundle: true,
     write: false,
@@ -226,7 +226,7 @@ export function servirMotor(res: ServerResponse, folder: string, sub: string | u
   const html = `<!doctype html>
 <html lang="es">
 <meta charset="utf-8" />
-<title>vid.kold.gold · en vivo</title>
+<title>v!d · en vivo</title>
 <style>html, body, #raiz { margin: 0; height: 100%; background: #000; overflow: hidden; }</style>
 <div id="raiz"></div>
 <script>

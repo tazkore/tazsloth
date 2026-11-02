@@ -291,7 +291,7 @@
   {
     "id": "nuevo-estilo",
     "title": "Nuevo estilo",
-    "description": "Cuéntale el video que quieres hacer, o pásale ejemplos, y vid.kold.gold arma tu propio estilo con su card, listo para usarlo como los demás.",
+    "description": "Cuéntale el video que quieres hacer, o pásale ejemplos, y v!d arma tu propio estilo con su card, listo para usarlo como los demás.",
     "skill": "crear-estilo",
     "icon": "mas",
     "cwd": "{app}/skills"

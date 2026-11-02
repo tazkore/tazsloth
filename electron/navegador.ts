@@ -1,5 +1,5 @@
 /**
- * El navegador integrado, como el de T3 Code: una página por hilo dentro de la ventana de Sloth, que la interfaz pone a
+ * El navegador integrado, como el de T3 Code: una página por hilo dentro de la ventana de v!d, que la interfaz pone a
  * la derecha del chat (o en el centro del estudio) con el botón del globo (`web/src/Navegador.tsx`). La usan tú y el
  * agente a la vez: Playwright MCP (`server/navegador-agente.ts`) se conecta a la del hilo por el relevo CDP de aquí
  * (`relevo.ts`), y lo que abre se ve sin otra ventana. Las pestañas de más son tuyas: páginas como cualquier otra, con
@@ -13,8 +13,8 @@
  * nada con una que corre timers), aunque el agente siga conectado: solo se despierta mientras una operación suya está en
  * curso, y unos segundos después (`actividad-navegador.ts`). Las de las redes y la voz nunca: trabajan escondidas. Una que
  * nadie ve ni usa en `OCIOSA` se cierra; al volver a verla, o si vuelve el agente, se abre en su última dirección. Todas comparten un perfil aparte del de la interfaz (`persist:navegador`): lo que inicies en una lo
- * tiene el agente en todas. La de las redes (`NAVEGADOR_REDES`), donde Sloth publica en TikTok, va con el suyo
- * (`persist:redes`): la sesión con la que publicas no la tiene ningún agente. La de la voz (`NAVEGADOR_VOZ`), donde Sloth
+ * tiene el agente en todas. La de las redes (`NAVEGADOR_REDES`), donde v!d publica en TikTok, va con el suyo
+ * (`persist:redes`): la sesión con la que publicas no la tiene ningún agente. La de la voz (`NAVEGADOR_VOZ`), donde v!d
  * genera las voces en AI Studio con tu cuenta de Google (`server/voz/`), también (`persist:voz`).
  *
  * El relevo escucha en 127.0.0.1, con un secreto en la ruta, y anota dónde en `data/navegador-integrado.json` (con el
@@ -132,7 +132,7 @@ function prepararPerfil(perfil: Session) {
   })
 }
 
-/** La ventana de Sloth, cada vez que se abre: las páginas van dentro de ella. */
+/** La ventana de v!d, cada vez que se abre: las páginas van dentro de ella. */
 export function ventanaDelNavegador(v: BrowserWindow) {
   ventana = v
   for (const h of hojas.values()) v.contentView.addChildView(h.vista)
@@ -194,7 +194,7 @@ function abrir(hilo: string): Hoja {
   // El «¿Salir del sitio?» de una página: la ventana no lo enseña, y sin esto cancelaría cada navegación (la del agente,
   // la de las redes y la tuya). Se sale sin preguntar.
   wc.on('will-prevent-unload', (e) => e.preventDefault())
-  // Con el foco en la página, Ctrl+R es suyo: el menú de Sloth recargaría la interfaz.
+  // Con el foco en la página, Ctrl+R es suyo: el menú de v!d recargaría la interfaz.
   wc.on('before-input-event', (e, t) => {
     if (t.type !== 'keyDown' || !(t.control || t.meta) || t.alt || t.key.toLowerCase() !== 'r') return
     e.preventDefault()
@@ -335,7 +335,7 @@ function colocar(h: Hoja) {
   const v = h.vista
   const e = estado(h)
   const visible = !!ventana && vista?.hilo === h.hilo && !!e.url && !e.error
-  // Con Sloth minimizada o escondida tampoco la ve nadie: la vista sigue puesta, pero la página puede descansar.
+  // Con v!d minimizada o escondida tampoco la ve nadie: la vista sigue puesta, pero la página puede descansar.
   h.actividad.ver(visible && ventana!.isVisible() && !ventana!.isMinimized())
   if (!visible || !ventana || !vista) return v.setVisible(false)
   // La caja llega en píxeles de la interfaz: con zoom, no son los de la ventana.

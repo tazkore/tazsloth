@@ -6,13 +6,13 @@ import { fileURLToPath } from 'node:url'
 import type { AgentEvent, CuentaClaude, Model, Tokens } from '../shared/types.ts'
 import { conRutas, IMAGE_TYPES, type AgentOptions, type AgentRun, type SkillRef } from './agent.ts'
 import { asegurarAgente, rutaAgente } from './agentes.ts'
-import { conSkill, INSTRUCCIONES, mcpSloth } from './instrucciones.ts'
+import { conSkill, INSTRUCCIONES, mcpVid } from './instrucciones.ts'
 import { matarArbol } from './rpc-lineas.ts'
 
 /**
  * Cursor con su SDK (`@cursor/sdk`), como en T3 Code: el agente de Cursor corre en la computadora, con la cuenta de Cursor
  * de cada quien (pide un plan de pago). El SDK no va dentro del servidor: corre en un puente (`cursor-puente.mjs`) con
- * el Node de Sloth, uno por hilo, desde la carpeta donde se bajó.
+ * el Node de v!d, uno por hilo, desde la carpeta donde se bajó.
  *
  * La cuenta se conecta en el navegador: el SDK da un enlace, se autoriza, y guarda una llave de 90 días en
  * `~/.cursor/sdk/auth.json` (la misma del SDK en la terminal).
@@ -28,7 +28,7 @@ function puente(): string {
 }
 
 function lanzar(modo: string, cwd: string) {
-  return spawn(process.execPath, [puente(), modo], { cwd, windowsHide: true, stdio: 'pipe', env: { ...entornoSinLlaves(), CURSOR_HOST_APP_NAME: 'Sloth' } })
+  return spawn(process.execPath, [puente(), modo], { cwd, windowsHide: true, stdio: 'pipe', env: { ...entornoSinLlaves(), CURSOR_HOST_APP_NAME: 'v!d' } })
 }
 
 /** Lee lo que escribe el puente, una línea JSON a la vez. */
@@ -193,14 +193,14 @@ export function startCursor(opts: AgentOptions): AgentRun {
     }
   }
 
-  // Los MCP de Sloth, como los pide el SDK, y la configuración del proyecto y del usuario (sus reglas, skills y MCP).
-  const mcpServers = Object.fromEntries(Object.entries(mcpSloth(opts.lote, opts.hilo)).map(([n, s]) => [n, { type: 'stdio', ...s }]))
+  // Los MCP de v!d, como los pide el SDK, y la configuración del proyecto y del usuario (sus reglas, skills y MCP).
+  const mcpServers = Object.fromEntries(Object.entries(mcpVid(opts.lote, opts.hilo)).map(([n, s]) => [n, { type: 'stdio', ...s }]))
   orden({
     type: 'abrir',
     resume: opts.resume,
     opciones: {
       model: seleccion(opts.model, opts.effort),
-      name: `Sloth ${opts.hilo ?? ''}`.trim(),
+      name: `v!d ${opts.hilo ?? ''}`.trim(),
       mode: 'agent',
       mcpServers,
       local: { cwd: opts.cwd, settingSources: ['project', 'user', 'team', 'mdm', 'plugins'], sandboxOptions: { enabled: false }, enableAgentRetries: true, autoReview: false }
@@ -212,7 +212,7 @@ export function startCursor(opts: AgentOptions): AgentRun {
     turno++
     parte = 0
     // Cursor no tiene instrucciones de sistema que el SDK deje poner: van al principio del primer mensaje.
-    const text = conRutas(primero ? `<sloth>\n${INSTRUCCIONES}\n</sloth>\n\n${texto}` : texto, images)
+    const text = conRutas(primero ? `<vid>\n${INSTRUCCIONES}\n</vid>\n\n${texto}` : texto, images)
     primero = false
     const mensaje = images.length ? { text, images: images.map((p) => ({ mimeType: IMAGE_TYPES[extname(p).toLowerCase()] ?? 'image/png', data: readFileSync(p).toString('base64') })) } : text
     orden({ type: 'mandar', mensaje, modelo: seleccion(opts.model, opts.effort) })
@@ -263,7 +263,7 @@ export function startCursor(opts: AgentOptions): AgentRun {
   }
 }
 
-/** Los errores de Cursor, en palabras de Sloth. */
+/** Los errores de Cursor, en palabras de v!d. */
 function errorDe(error = ''): string {
   if (/plan_required|paid plan/i.test(error)) return 'Cursor pide un plan de pago para usar su agente.'
   if (/unauthenticated|not logged in|AuthenticationError|api key/i.test(error)) return 'Conecta tu cuenta de Cursor en Opciones.'

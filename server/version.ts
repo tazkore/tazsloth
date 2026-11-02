@@ -7,7 +7,7 @@ import { rutaAgente, versionFija } from './agentes.ts'
 
 /**
  * La versión de cada agente, que Opciones enseña en su fila. Son paquetes de este repo y llegan al día con cada versión
- * de Sloth; aquí no se actualizan. Su programa se baja aparte, al elegirlos (`server/agentes.ts`): sin él, no está
+ * de v!d; aquí no se actualizan. Su programa se baja aparte, al elegirlos (`server/agentes.ts`): sin él, no está
  * instalado.
  */
 export type Agente = Proveedor

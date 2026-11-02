@@ -19,7 +19,7 @@ from pathlib import Path
 import numpy as np
 from PIL import Image, ImageFilter
 
-sys.path.insert(0, str(Path(os.environ.get("SLOTH_SKILLS") or Path.home() / ".claude" / "skills") / "video-base" / "scripts"))
+sys.path.insert(0, str(Path(os.environ.get("VID_SKILLS") or os.environ.get("SLOTH_SKILLS") or Path.home() / ".claude" / "skills") / "video-base" / "scripts"))
 from recorte import alfa  # noqa: E402
 
 BLANCO = (255, 255, 255)

@@ -81,7 +81,7 @@ test('acepta recomendaciones de varios videos, ejecuta dos a la vez y continúa 
   for (const i of [1, 2, 3]) assert.equal(servicio.estado(hs[i])?.resultado?.titulo.principal, `Título del video ${i}`)
 })
 
-test('retoma la cola guardada al abrir Sloth y rechaza versiones que cambiaron mientras esperaban', async (t) => {
+test('retoma la cola guardada al abrir v!d y rechaza versiones que cambiaron mientras esperaban', async (t) => {
   const base = resolve('data'); mkdirSync(base, { recursive: true })
   const app = mkdtempSync(join(base, 'prueba-youtube-retomar-'))
   t.after(() => { assert.ok(app.startsWith(base + sep)); rmSync(app, { recursive: true, force: true }) })

@@ -1,5 +1,5 @@
 // Mira y mueve la cola de las redes sin escribir otro script cada vez (ver docs/agents/redes.md). Lee `data/redes/redes.json` y
-// la nube de Instagram con las mismas variables que el servidor; lo que cambia algo pasa por la API de Sloth, que es la
+// la nube de Instagram con las mismas variables que el servidor; lo que cambia algo pasa por la API de v!d, que es la
 // que sabe quitarlo también de la red.
 //   npm run redes                                  la cola de cada red, de hoy en adelante, y lo que falló
 //   npm run redes -- estado --todo                 también lo ya publicado y lo descartado
@@ -43,9 +43,9 @@ if (orden === 'estado') {
       console.log(`  ${(p.cuando ?? '—').padEnd(16)} ${p.estado.padEnd(10)} ${(p.cardId ?? '').padEnd(17)} ${video(p.ruta)}  ref ${p.ref ?? '—'}${p.error ? `\n      ${p.error.slice(0, 200)}` : ''}`)
   }
 } else if (orden === 'nube') {
-  const url = leer('SLOTH_NUBE')
-  if (!url) fallar('Falta SLOTH_NUBE en las variables del usuario (ver nube/wrangler.jsonc).')
-  const res = await fetch(`${url}/publicaciones`, { headers: { authorization: `Bearer ${leer('SLOTH_NUBE_SECRETO')}` } })
+  const url = leer('VID_NUBE')
+  if (!url) fallar('Falta VID_NUBE en las variables del usuario (ver nube/wrangler.jsonc).')
+  const res = await fetch(`${url}/publicaciones`, { headers: { authorization: `Bearer ${leer('VID_NUBE_SECRETO')}` } })
   if (!res.ok) fallar(`La nube respondió ${res.status}: ${await res.text()}`)
   const items = (await res.json()) as { ref: string; cuando: number; estado: string; error?: string; caption: string }[]
   // Sin `--todo`, solo lo que aún no sale o falló.
@@ -54,7 +54,7 @@ if (orden === 'estado') {
 } else if (['quitar', 'reintentar', 'deshacer'].includes(orden)) {
   const [red, ref] = resto
   if (!red || !ref) fallar(`Uso: npm run redes -- ${orden} <tiktok|instagram> <ref>`)
-  const res = await fetch(`http://127.0.0.1:${PORT}/api/redes/${orden}`, { method: 'POST', headers: { 'x-vid-token': TOKEN }, body: JSON.stringify({ red, ref, ruta: '' }) }).catch(() => fallar(`Sloth no responde en el puerto ${PORT} (el de este servidor está en $PORT).`))
+  const res = await fetch(`http://127.0.0.1:${PORT}/api/redes/${orden}`, { method: 'POST', headers: { 'x-vid-token': TOKEN }, body: JSON.stringify({ red, ref, ruta: '' }) }).catch(() => fallar(`v!d no responde en el puerto ${PORT} (el de este servidor está en $PORT).`))
   console.log(res.status, await res.text())
   if (!res.ok) process.exitCode = 1
 } else {

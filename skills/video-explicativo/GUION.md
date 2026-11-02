@@ -169,7 +169,7 @@ junta las cifras como se ven y como se dicen (`$10=diez_dólares`, `96%=noventa_
 
 ## Los archivos
 
-- `guion.md`: el título, la línea del corte de datos y el texto que el usuario lee, en párrafos (el estudio de Sloth
+- `guion.md`: el título, la línea del corte de datos y el texto que el usuario lee, en párrafos (el estudio de v!d
   le pone «Copiar»).
 - `subtitulos.txt` y `terminos.txt`.
 - `fuentes/huella.json` (la huella y el enfoque), `fuentes/investigacion.md`, `fuentes/datos/`, `src/datos/` y

@@ -8,7 +8,7 @@ uno horizontal). Toma la página completa a escala 3 (a 1.5 desde 640 de ancho: 
 horizontal) y quita todo lo `position: fixed/sticky`, los iframes y los anuncios. Para
 recortar después, ubica las frases con el OCR de El Diff (lee imágenes de hasta unos 3000 px de alto; parte las más
 altas en tramos): `python <skills>/video-el-diff/plantilla/ubicar.py <png> ["frase"]`, con `<skills>` la carpeta de
-las skills (la de esta, `SLOTH_SKILLS`).
+las skills (la de esta, `VID_SKILLS`).
 
 Úsalo cuando `pagina.mjs` de El Diff se cuelga: pasa con las páginas que nunca terminan de cargar,
 como The Star. Ojo con los selectores: `[class*="ad"]` también atrapa "headline" y "header", y borró el titular.

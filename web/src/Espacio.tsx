@@ -8,8 +8,8 @@ const gb = (b: number) => (b >= 1e9 ? `${(b / 1e9).toFixed(1)} GB` : b >= 1e6 ? 
 const MINIMO = 20e6
 
 /**
- * Opciones → Espacio en disco (`server/espacio.ts`): cuánto queda libre y lo que Sloth y sus videos dejaron y ya no
- * hace falta. Lo seguro va junto en «Liberar» (y Sloth lo borra solo cada 6 horas); lo demás, cada uno con su botón.
+ * Opciones → Espacio en disco (`server/espacio.ts`): cuánto queda libre y lo que v!d y sus videos dejaron y ya no
+ * hace falta. Lo seguro va junto en «Liberar» (y v!d lo borra solo cada 6 horas); lo demás, cada uno con su botón.
  */
 export function EspacioDisco() {
   const [e, setE] = useState<Espacio>()
@@ -72,7 +72,7 @@ export function EspacioDisco() {
         )}
       </div>
       {e && error && <p className="bad small fila-extra">{error}</p>}
-      <p className="grupo-nota">Lo de «Liberar» vid.kold.gold también lo borra solo cada 6 horas, cuando nada trabaja. Lo que usa un hilo que está trabajando se queda para la próxima.</p>
+      <p className="grupo-nota">Lo de «Liberar» v!d también lo borra solo cada 6 horas, cuando nada trabaja. Lo que usa un hilo que está trabajando se queda para la próxima.</p>
     </section>
   )
 }

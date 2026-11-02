@@ -1,6 +1,6 @@
 # La voz: la línea `Voz:`
 
-El usuario elige en el compositor de Sloth si manda él la voz o si la generas tú con una voz de Google AI Studio
+El usuario elige en el compositor de v!d si manda él la voz o si la generas tú con una voz de Google AI Studio
 (Gemini 3.8 Flash TTS, en su cuenta de Google). Lo elegido llega en el primer mensaje:
 
 - `Voz: genérala tú en AI Studio con la voz <Nombre> …`: la generas tú, como se dice abajo. **No se la pidas.**

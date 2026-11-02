@@ -9,10 +9,10 @@ import { Inbox } from './agent.ts'
 import { asegurarAgente, programaClaude, rutaAgente } from './agentes.ts'
 
 /**
- * La cuenta de Claude con la que trabaja Sloth. Es la del Claude Code que trae el SDK, que la guarda en `~/.claude`: si ya
+ * La cuenta de Claude con la que trabaja v!d. Es la del Claude Code que trae el SDK, que la guarda en `~/.claude`: si ya
  * usas Claude Code en esta computadora, ya está conectada. Si no, «Conectar con Claude» abre `claude auth login` en su
  * propia ventana, que abre el navegador para autorizarla, como `/login` en la terminal. Si el navegador no se abre, esa
- * ventana da el enlace y pide ahí el código. Sloth no toca ni el código ni la sesión: Anthropic pide que el inicio de
+ * ventana da el enlace y pide ahí el código. v!d no toca ni el código ni la sesión: Anthropic pide que el inicio de
  * sesión se complete en su propio flujo, sin que una app lo maneje por el usuario.
  */
 
@@ -112,7 +112,7 @@ const ESPERA = 15 * 60_000
 /**
  * Un comando en su propia ventana, para iniciar sesión en un agente (`grok login`, `muse login`, `/login` de Pi): en
  * Windows con `start /wait`, que espera a que se cierre; en Mac y Linux, en una terminal (`enTerminal`). `env`, lo que se
- * le añade al entorno de Sloth, que va sin sus llaves (en Mac, la Terminal no lo hereda: va en el guion). `start` solo lee el título si va entre
+ * le añade al entorno de v!d, que va sin sus llaves (en Mac, la Terminal no lo hereda: va en el guion). `start` solo lee el título si va entre
  * comillas, y Node solo se las pone si lleva un espacio: «Pi» a secas lo intenta abrir como programa.
  */
 export function enVentana(titulo: string, comando: string[], env: Record<string, string> = {}): Promise<void> {
@@ -126,11 +126,11 @@ export function enVentana(titulo: string, comando: string[], env: Record<string,
 }
 
 function enTerminal(comando: string[], env: Record<string, string> = {}): Promise<void> {
-  const carpeta = mkdtempSync(join(tmpdir(), 'sloth-claude-'))
+  const carpeta = mkdtempSync(join(tmpdir(), 'vid-claude-'))
   const fin = join(carpeta, 'fin')
   const guion = join(carpeta, 'Claude Code.command')
   const q = (s: string) => `'${s.replaceAll("'", `'\\''`)}'`
-  // La Terminal de Mac no hereda el entorno de Sloth: la configuración de Claude de la copia del repo va en el guion.
+  // La Terminal de Mac no hereda el entorno de v!d: la configuración de Claude de la copia del repo va en el guion.
   const variables = { ...(process.env.CLAUDE_CONFIG_DIR ? { CLAUDE_CONFIG_DIR: process.env.CLAUDE_CONFIG_DIR } : {}), ...env }
   const config = Object.entries(variables).map(([k, v]) => `export ${k}=${q(v)}\n`).join('')
   writeFileSync(guion, `#!/bin/sh\ntrap 'touch ${q(fin)}' EXIT HUP INT TERM\n${config}${comando.map(q).join(' ')}\n`, { mode: 0o755 })

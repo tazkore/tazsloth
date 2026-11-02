@@ -82,7 +82,7 @@ test('un SendMessage que despierta a un subagente ocupa sitio hasta que acaba; u
 })
 
 test('un navegador espera sitio en toda la máquina, y recupera el de un proceso muerto', async (t) => {
-  const carpeta = mkdtempSync(join(tmpdir(), 'sloth-navegadores-'))
+  const carpeta = mkdtempSync(join(tmpdir(), 'vid-navegadores-'))
   t.after(() => rmSync(carpeta, { recursive: true, force: true }))
   const opciones = { carpeta, tope: 2, memoria: () => 8e9, pausa: 2 }
   const soltar = await turnoNavegador(opciones)
@@ -95,14 +95,14 @@ test('un navegador espera sitio en toda la máquina, y recupera el de un proceso
   await new Promise((r) => setTimeout(r, 30))
   assert.equal(tercero, true)
 
-  writeFileSync(join(carpeta, 'sloth-navegador-0.lock'), '999999')
-  rmSync(join(carpeta, 'sloth-navegador-1.lock'), { force: true })
+  writeFileSync(join(carpeta, 'vid-navegador-0.lock'), '999999')
+  rmSync(join(carpeta, 'vid-navegador-1.lock'), { force: true })
   await turnoNavegador({ ...opciones, tope: 1 })
-  assert.equal(existsSync(join(carpeta, 'sloth-navegador-0.lock')), true)
+  assert.equal(existsSync(join(carpeta, 'vid-navegador-0.lock')), true)
 })
 
 test('tras la paciencia abre igual: un navegador de más es mejor que un agente colgado', async (t) => {
-  const carpeta = mkdtempSync(join(tmpdir(), 'sloth-navegadores-'))
+  const carpeta = mkdtempSync(join(tmpdir(), 'vid-navegadores-'))
   t.after(() => rmSync(carpeta, { recursive: true, force: true }))
   const opciones = { carpeta, tope: 1, memoria: () => 8e9, pausa: 2, paciencia: 20 }
   await turnoNavegador(opciones)

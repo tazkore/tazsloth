@@ -1,12 +1,12 @@
 """
 La interfaz de todos los procesos de `python/procesos`, estrecha y estable.
 
-Los lanza `proceso()` (de `video-base/scripts/sloth.py` o de `video-el-diff/scripts/comun.py`) con el Python de Sloth,
+Los lanza `proceso()` (de `video-base/scripts/vid.py` o de `video-el-diff/scripts/comun.py`) con el Python de v!d,
 desde esta carpeta, y le pasa por la entrada un JSON con los archivos que tiene que mirar y sus opciones:
 `{"files": ["C:/...", ...], "options": {...}}`. El proceso contesta por la salida con un único JSON y sale con 0. Si
 falla, sale con 1 y la última línea de su salida de errores dice por qué. Todo lo demás que escriba (avisos de las
 bibliotecas) va a la salida de errores, así la salida solo lleva la respuesta. Cuánto lleva lo avisa con `progress`,
-en líneas propias de la salida de errores (`@progreso 0.4200`): `proceso()` de sloth.py las lee para decir cuánto falta.
+en líneas propias de la salida de errores (`@progreso 0.4200`): `proceso()` de vid.py las lee para decir cuánto falta.
 La voz viva (`video-base/scripts/voz_viva.py`) corre los mismos procesos sin lanzarlos y manda esas líneas por su
 conexión (`sink`).
 """

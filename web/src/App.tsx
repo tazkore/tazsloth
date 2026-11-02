@@ -167,10 +167,10 @@ export function App() {
           eventos.conexion(true)
           setFalloEstado('')
           // Mientras no hubo conexión no llegaron avisos: los paneles de etapas vuelven a leer su avance.
-          dispatchEvent(new CustomEvent('sloth-etapas')) // panel de etapas
+          dispatchEvent(new CustomEvent('vid-etapas')) // panel de etapas
         } catch (e) {
           // Sin el estado la app se queda vacía: se dice abajo en la barra y se vuelve a intentar al reconectar.
-          setFalloEstado(`No se pudo leer el estado de Sloth: ${e instanceof Error ? e.message : String(e)}`)
+          setFalloEstado(`No se pudo leer el estado de v!d: ${e instanceof Error ? e.message : String(e)}`)
           socket.close()
         }
       }
@@ -184,13 +184,13 @@ export function App() {
         if (push.type === 'cards') setCards(push.cards)
         if (push.type === 'models') setModels(push.models)
         // La sección Ideas escucha sus avisos (cada paso de la investigación, lo que escribe Claude) donde esté.
-        if (push.type === 'ideas') dispatchEvent(new CustomEvent('sloth-ideas', { detail: push })) // ideas
+        if (push.type === 'ideas') dispatchEvent(new CustomEvent('vid-ideas', { detail: push })) // ideas
         if (push.type === 'redes') {
-          dispatchEvent(new CustomEvent('sloth-redes', { detail: push.aviso }))
+          dispatchEvent(new CustomEvent('vid-redes', { detail: push.aviso }))
           if (push.acabo) avisarTanda(push.acabo)
         } // redes
         // Cambió la carpeta de un hilo: su panel de etapas vuelve a leer su avance.
-        if (push.type === 'etapas') dispatchEvent(new CustomEvent('sloth-etapas', { detail: push.sessionId })) // panel de etapas
+        if (push.type === 'etapas') dispatchEvent(new CustomEvent('vid-etapas', { detail: push.sessionId })) // panel de etapas
         if (push.type === 'avance') setAvances((all) => ({ ...all, [push.sessionId]: push.avance })) // avance
         if (push.type === 'session') {
           eventos.cambio(push.session.id)
@@ -239,7 +239,7 @@ export function App() {
   useAvisos({ sessions, cards, openId, sinVer: sessions.filter((s) => !s.archived && finished(s)).length, abrir: (id) => go({ kind: 'session', id }) })
 
   // Archivado automático: lo que hacías a mano con casi todos los hilos. Vive aquí y no en el servidor porque «ya lo
-  // viste» es de este navegador (`seen`). Un hilo se archiva solo si cumple todo: su card no tiene estudio (Sloth, Ideas:
+  // viste» es de este navegador (`seen`). Un hilo se archiva solo si cumple todo: su card no tiene estudio (v!d, Ideas:
   // los videos se siguen en su estudio), ya lo viste (sin el punto verde), no trabaja ni espera nada, su último turno
   // acabó bien (`acaboBien`, del servidor) y lleva 12 h quieto. Tampoco el que miras ni uno con una respuesta a medio
   // escribir. Se desarchiva como siempre y entonces se queda: `archivadosSolos` guarda el `updatedAt` con el que se
@@ -419,7 +419,7 @@ export function App() {
         {/* Plegada, cada botón es su icono y dice qué es al pasar el ratón; los textos se esconden en Barra.css. */}
         <div className="brand-fila">
           <button className="brand" onClick={newChat} title={plegada ? 'Nuevo chat' : undefined}>
-            <img src="/icon.svg" alt="" /> <span className="brand-nombre">vid.<b>kold</b>.gold</span>
+            <img src="/icon.svg" alt="" /> <span className="brand-nombre" aria-label="v!d by Kold.Gold" title="v!d by Kold.Gold">v<b>!</b>d</span>
           </button>
           <button className="plegar" title={plegada ? 'Desplegar la barra (Ctrl+B)' : 'Plegar la barra (Ctrl+B)'} aria-expanded={!plegada} onClick={() => plegar(!plegada)}>
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
@@ -796,7 +796,7 @@ function NewSession(props: {
         draft={props.draft}
         onDraft={props.onDraft}
         bloqueo={sinCuenta ? 'Primero conecta tu cuenta (arriba)' : undefined}
-        placeholder={card.skill ? `Qué quieres de /${card.skill}…` : 'Qué cambio quieres en Sloth…'}
+        placeholder={card.skill ? `Qué quieres de /${card.skill}…` : 'Qué cambio quieres en v!d…'}
         modelos={<Modelos conf={card.modelos} models={models} avanzado={avanzado} choice={choice} tareas={tareas} sinClaude={sinClaude} onAvanzado={cambiarModelos} />}
         extra={
           <>
@@ -971,7 +971,7 @@ const Carteles = memo(function Carteles({ cards, activa, previas, sessions, acci
               <span className="card-desc">{c.description}</span>
             </span>
           )}
-          {/* En la app que se vende, las cards de Sloth ni se duplican ni se borran; las de tus estilos se borran. */}
+          {/* En la app que se vende, las cards de v!d ni se duplican ni se borran; las de tus estilos se borran. */}
           {(!VENTA || c.tuya) && (
             <span className="card-actions">
               {!VENTA && (
@@ -1028,8 +1028,8 @@ function useTerminados(card: Card | null, hilos: SessionMeta[]) {
   const [vuelta, setVuelta] = useState(0)
   useEffect(() => {
     const refrescar = () => setVuelta((n) => n + 1)
-    addEventListener('sloth-videos', refrescar)
-    return () => removeEventListener('sloth-videos', refrescar)
+    addEventListener('vid-videos', refrescar)
+    return () => removeEventListener('vid-videos', refrescar)
   }, [])
   // Al cambiar de estilo se vacía; si solo avanzó un hilo, se ve lo de antes mientras se vuelve a mirar.
   useEffect(() => setVideos(null), [card?.id])

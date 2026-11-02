@@ -6,7 +6,7 @@ import { preguntarAlRegistro } from './registro.ts'
 
 /**
  * Las llaves de API no viven en la app: van a las variables de entorno del usuario de Windows, donde las leen los
- * scripts de las skills (también fuera de Sloth); en Mac y Linux, a `VARIABLES`. En otra computadora se escriben de nuevo
+ * scripts de las skills (también fuera de v!d); en Mac y Linux, a `VARIABLES`. En otra computadora se escriben de nuevo
  * en Opciones.
  */
 const YOUTUBE = 'YOUTUBE_API_KEY'
@@ -17,7 +17,7 @@ const GRAPH = 'https://graph.facebook.com/v25.0'
 /**
  * Lo leído del registro. Cada `reg query` es un proceso que para el servidor hasta que acaba, y se pedían en cada vista
  * de Ideas y en cada llamada a la nube: se lee una vez por arranque, y lo que se guarda desde Opciones se apunta aquí.
- * Una variable que cambies fuera de Sloth se ve al reiniciarlo.
+ * Una variable que cambies fuera de v!d se ve al reiniciarlo.
  */
 const leidas = new Map<string, string>()
 
@@ -27,7 +27,7 @@ let todas = false
 /** Las variables de una respuesta de `reg query HKCU\Environment`. Separa con cuatro espacios. */
 export const variablesDeReg = (salida: string) => [...salida.matchAll(/^ {4}(.+?) {4}REG_\w+ {4}(.*?)\s*$/gm)].map((m) => [m[1], m[2]] as const)
 
-/** Todas de una vez, sin detener el arranque: lo que corre al abrir Sloth espera a esto antes de `leer`. */
+/** Todas de una vez, sin detener el arranque: lo que corre al abrir v!d espera a esto antes de `leer`. */
 export const variablesListas: Promise<void> = process.platform !== 'win32'
   ? Promise.resolve()
   : preguntarAlRegistro(['query', 'HKCU\\Environment']).then(
@@ -43,7 +43,7 @@ export const variablesListas: Promise<void> = process.platform !== 'win32'
  * AES-256-GCM (`secretos.ts`), que el servidor pasa al entorno al arrancar (`cargarVariables`, y de ahí a los agentes y
  * a sus scripts). Uno en texto plano de antes se vuelve a guardar cifrado al leerlo.
  */
-const VARIABLES = join(process.env.APPDATA ?? '', 'tazsloth', 'variables.json')
+const VARIABLES = join(process.env.APPDATA ?? '', 'vid-koldgold', 'variables.json')
 const variables = (): Record<string, string> => {
   try {
     return leerSecreto<Record<string, string>>(VARIABLES) ?? {}
@@ -59,7 +59,15 @@ export function cargarVariables() {
   for (const [k, v] of Object.entries(variables())) process.env[k] ??= v
 }
 
+/**
+ * Una variable del usuario. Las de v!d se llaman `VID_*`; si no está, vale la de antes (`SLOTH_*`), que se guardaba
+ * con ese nombre hasta la Fase 2.
+ */
 export function leer(nombre: string): string {
+  return leerUna(nombre) || (nombre.startsWith('VID_') ? leerUna(`SLOTH_${nombre.slice(4)}`) : '')
+}
+
+function leerUna(nombre: string): string {
   let valor = leidas.get(nombre)
   if (valor !== undefined) return valor
   if (process.platform !== 'win32') {
@@ -86,11 +94,11 @@ export function escribir(nombre: string, valor: string | null) {
     // Cifrado y solo de quien la guardó (600): son llaves.
     guardarSecreto(VARIABLES, valor ? { ...resto, [nombre]: valor } : resto)
   } else
-    execFileSync('powershell.exe', ['-NoProfile', '-Command', `[Environment]::SetEnvironmentVariable('${nombre}', $env:SLOTH_VALOR, 'User')`], {
-      env: { ...process.env, SLOTH_VALOR: valor ?? '' }
+    execFileSync('powershell.exe', ['-NoProfile', '-Command', `[Environment]::SetEnvironmentVariable('${nombre}', $env:VID_VALOR, 'User')`], {
+      env: { ...process.env, VID_VALOR: valor ?? '' }
     })
   leidas.set(nombre, valor ?? '')
-  // Los agentes que se lancen desde ahora la heredan sin reiniciar Sloth.
+  // Los agentes que se lancen desde ahora la heredan sin reiniciar v!d.
   if (valor) process.env[nombre] = valor
   else delete process.env[nombre]
 }

@@ -1,11 +1,11 @@
-// Mide el arranque de una Sloth compilada (`npm run compilar -- --sin-instalador`), sin tocar la instalada: corre en otro
+// Mide el arranque de una v!d compilada (`npm run compilar -- --sin-instalador`), sin tocar la instalada: corre en otro
 // puerto, con su propia carpeta. Ver docs/agents/rendimiento.md.
 //
-//   node scripts/medir-arranque.mjs <carpeta de Sloth.exe> [veces] [carpeta de hilos que copiar]
+//   node scripts/medir-arranque.mjs <carpeta de vid-koldgold.exe> [veces] [carpeta de hilos que copiar]
 //
 // En Mac y Linux, la carpeta es la de su ejecutable (linux-unpacked, mac) y sus datos van a una `casa-de-medir` dentro de ella.
 // Con la variable ANTES, ese comando corre antes de cada arranque: en Linux, para vaciar la caché del disco y medir en frío.
-// Los hilos se copian sin nada que retome un agente. Por cada arranque dice, en ms desde que se lanzó Sloth.exe: cuándo
+// Los hilos se copian sin nada que retome un agente. Por cada arranque dice, en ms desde que se lanzó vid-koldgold.exe: cuándo
 // empezó a cargar la interfaz (`servidor`), cuándo se montó (`montada`) y cuándo llegaron los datos (`estado`). Luego
 // recarga la interfaz en esta máquina y frenada 4 y 6 veces, como en una computadora más lenta: `monta` es lo que tarda en
 // montarse y `script`, el JavaScript que corrió. Windows no pinta una ventana tapada: por eso no se usa el primer pintado.
@@ -14,7 +14,7 @@ import { cpSync, existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync
 import { join, resolve } from 'node:path'
 
 const [carpeta, veces = '6', hilos] = process.argv.slice(2)
-if (!carpeta) throw new Error('Falta la carpeta de Sloth.exe, por ejemplo dist/instalador/win-unpacked')
+if (!carpeta) throw new Error('Falta la carpeta de vid-koldgold.exe, por ejemplo dist/instalador/win-unpacked')
 const PUERTO = 4871
 const DEPURA = 9371
 const FRENOS = [1, 4, 6]
@@ -24,8 +24,8 @@ const dormir = (ms) => new Promise((r) => setTimeout(r, ms))
 const WINDOWS = process.platform === 'win32'
 const MAC = process.platform === 'darwin'
 const CASA = join(resolve(carpeta), 'casa-de-medir')
-const APP = WINDOWS ? join(carpeta, 'app') : MAC ? join(CASA, 'Library', 'Application Support', 'TazSloth') : join(CASA, '.local', 'share', 'tazsloth')
-const PROGRAMA = join(carpeta, WINDOWS ? 'TazSloth.exe' : MAC ? join('TazSloth.app', 'Contents', 'MacOS', 'TazSloth') : 'tazsloth')
+const APP = WINDOWS ? join(carpeta, 'app') : MAC ? join(CASA, 'Library', 'Application Support', 'vid-koldgold') : join(CASA, '.local', 'share', 'vid-koldgold')
+const PROGRAMA = join(carpeta, WINDOWS ? 'vid-koldgold.exe' : MAC ? join('v!d by Kold.Gold.app', 'Contents', 'MacOS', 'vid-koldgold') : 'vid-koldgold')
 
 const sesiones = join(APP, 'data', 'sessions')
 mkdirSync(sesiones, { recursive: true })

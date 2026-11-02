@@ -117,7 +117,7 @@ export function GenerarVoz({ onGenerar }: { onGenerar(texto: string): Promise<vo
   )
 }
 
-/** Opciones → Voz: la cuenta de Google con que Sloth genera las voces en AI Studio. */
+/** Opciones → Voz: la cuenta de Google con que v!d genera las voces en AI Studio. */
 export function VozOpciones() {
   const voz = useVoz()
   const e = voz.estado
@@ -151,7 +151,7 @@ export function VozOpciones() {
           )
         )}
       </div>
-      {e?.conectando && <p className="muted small fila-extra">Google no deja entrar desde una app. Al entrar en Edge, la ventana se cierra y la sesión pasa sola a Sloth.</p>}
+      {e?.conectando && <p className="muted small fila-extra">Google no deja entrar desde una app. Al entrar en Edge, la ventana se cierra y la sesión pasa sola a v!d.</p>}
       {voz.error && !e?.conectando && <p className="bad small fila-extra">{voz.error}</p>}
     </div>
   )

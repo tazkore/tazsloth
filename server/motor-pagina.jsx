@@ -1,8 +1,8 @@
 // La página del motor en vivo (server/motor.ts): el video del hilo en el Player de Remotion, tal cual saldrá, sin
-// renderizarlo. La arma el esbuild del proyecto: `react`, `@remotion/player` y `sloth:raiz` (su `src/index.ts`) salen de
-// la carpeta del video, no de Sloth. Es JavaScript a propósito: se arma con los paquetes del proyecto, que Sloth no trae.
+// renderizarlo. La arma el esbuild del proyecto: `react`, `@remotion/player` y `vid:raiz` (su `src/index.ts`) salen de
+// la carpeta del video, no de v!d. Es JavaScript a propósito: se arma con los paquetes del proyecto, que v!d no trae.
 //
-// El monitor de Sloth (web/src/Monitor.tsx) la mueve con mensajes:
+// El monitor de v!d (web/src/Monitor.tsx) la mueve con mensajes:
 //   { vivo: 'ir', t } · { vivo: 'play' } · { vivo: 'pausa' } · { vivo: 'velocidad', x } · { vivo: 'silencio', si }
 //   { vivo: 'bucle', si, desde?, hasta? } · { vivo: 'soltar' } (quita lo elegido)
 // y ella le avisa:
@@ -13,7 +13,7 @@ import { Player, PlayerInternals } from '@remotion/player'
 import { lazy, useCallback, useEffect, useRef, useState } from 'react'
 import { flushSync } from 'react-dom'
 import { createRoot } from 'react-dom/client'
-import 'sloth:raiz'
+import 'vid:raiz'
 
 const avisar = (m) => parent.postMessage(m, '*')
 // Los errores sueltos ya los avisa la página (server/motor.ts), desde antes de que cargue el proyecto; aquí, los de React.
@@ -24,13 +24,13 @@ const fallo = (e) => avisar({ vivo: 'error', mensaje: String(e?.message ?? e ?? 
  * primero que no es una imagen fija, con lo que diga su `calculateMetadata`.
  */
 async function composicion() {
-  const Raiz = globalThis.__slothRaiz
+  const Raiz = globalThis.__vidRaiz
   if (!Raiz) throw new Error('El proyecto no llama a registerRoot.')
-  globalThis.__slothComposiciones = []
+  globalThis.__vidComposiciones = []
   const r = createRoot(document.createElement('div'))
   flushSync(() => r.render(<Raiz />))
   r.unmount()
-  const todas = globalThis.__slothComposiciones
+  const todas = globalThis.__vidComposiciones
   const c = todas.find((x) => !x.still) ?? todas[0]
   if (!c) throw new Error('El proyecto no registra ningún video (<Composition>).')
   const props = c.defaultProps ?? {}

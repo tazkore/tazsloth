@@ -1,6 +1,6 @@
 """
-Crea el proyecto de un video en la carpeta `<nombre>`, tal cual (la de la línea `Carpeta:` de Sloth, o
-`explicado-<tema>` fuera de Sloth): copia la plantilla de Remotion, la marca (el personaje con sus poses en
+Crea el proyecto de un video en la carpeta `<nombre>`, tal cual (la de la línea `Carpeta:` de v!d, o
+`explicado-<tema>` fuera de v!d): copia la plantilla de Remotion, la marca (el personaje con sus poses en
 public/perro, la foto y la red del cierre: `marca.py aplicar`), enlaza node_modules al que comparten todos los videos
 explicativos (espacio.py de video-base: antes cada uno copiaba el suyo, ~1 GB) y,
 de skills/modelos-3d/plantilla, la moneda que la plantilla trae de protagonista. Al final empaqueta
@@ -9,7 +9,7 @@ así el primer borrador no los paga.
 
     python -B nuevo.py <nombre> [--formato vertical|horizontal]
 
-Va en el directorio actual (Sloth lanza la card en `trabajo/video-explicativo`, y su panel de etapas busca ahí la
+Va en el directorio actual (v!d lanza la card en `trabajo/video-explicativo`, y su panel de etapas busca ahí la
 carpeta del video); dentro de un proyecto, junto a él. Deja también una voz muda, para que la plantilla se vea en Remotion Studio antes de que llegue la del
 usuario.
 
@@ -49,7 +49,7 @@ def main() -> None:
     # El modelo de vectores de huellas.py, cargándose ya (~11 s) para cuando se busque si el tema ya se hizo.
     sys.path.insert(0, str(SKILL.parent / "video-base" / "scripts"))
     from espacio import enlazar_modulos
-    from sloth import calentar_vectores
+    from vid import calentar_vectores
 
     calentar_vectores()
     shutil.copytree(SKILL / "plantilla", destino, ignore=shutil.ignore_patterns("__pycache__"))

@@ -3,7 +3,7 @@
 // 5 de 1.15 GB. Esta la borra al acabar, aunque el proceso termine con un error o con Ctrl+C, y antes barre las que
 // dejaron otros procesos que se cortaron (las `remotion-*` de más de 6 horas, como `limpiar_temporales` de espacio.py).
 //
-//   const { empaquetar } = require(join(process.env.SLOTH_SKILLS || join(homedir(), ".claude", "skills"), "video-base", "scripts", "remotion.cjs"))
+//   const { empaquetar } = require(join(process.env.VID_SKILLS || process.env.SLOTH_SKILLS || join(homedir(), ".claude", "skills"), "video-base", "scripts", "remotion.cjs"))
 //   const { serveUrl, soltar } = await empaquetar(raiz, { entryPoint, publicDir })   // soltar() al terminar de renderizar
 //
 // Usa el @remotion/bundler del proyecto (`raiz`), el mismo que usa su renderer.
@@ -22,7 +22,7 @@ function borrar(dir) {
   vivas.delete(dir);
 }
 
-// Al salir (bien o con error) se borra lo que quedó; con Ctrl+C o al cerrarlo Sloth, también.
+// Al salir (bien o con error) se borra lo que quedó; con Ctrl+C o al cerrarlo v!d, también.
 process.on("exit", () => [...vivas].forEach(borrar));
 for (const senal of ["SIGINT", "SIGTERM", "SIGHUP"]) {
   process.once(senal, () => {

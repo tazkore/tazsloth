@@ -10,7 +10,7 @@ import { guardar } from './disco.ts'
  * - La ventana (Electron o el navegador en modo dev) lo recibe en una cookie HttpOnly y SameSite=Strict que el servidor
  *   pone al servir el HTML de la app a una navegación de confianza (`ponerCookie`); el JavaScript de la página no lo ve.
  * - Lo que llama al servidor desde fuera del navegador (el MCP de voz, los scripts de las skills, scripts/start.mjs)
- *   lo manda en la cabecera `x-vid-token`, y lo recibe en la variable `VID_TOKEN` junto a `SLOTH_URL`.
+ *   lo manda en la cabecera `x-vid-token`, y lo recibe en la variable `VID_TOKEN` junto a `VID_URL`.
  * Exentas (`exentaDeToken`): la vuelta de Google a YouTube OAuth, que llega de otro sitio (la cookie Strict no viaja) y
  * se comprueba con su state y PKCE; y la vista en vivo del estudio (motor/vivo), solo GET y solo cargada como marco o
  * recurso del navegador desde la otra dirección de esta computadora, que tampoco lleva la cookie.

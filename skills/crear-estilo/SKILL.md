@@ -1,27 +1,27 @@
 ---
 name: crear-estilo
-description: Crea un estilo de video nuevo dentro de Sloth, con su card, a partir de lo que el usuario cuenta o de videos de ejemplo, o cambia uno que ya hizo. Arma la skill del estilo junto a las de Sloth, reusando video-base y el estilo más parecido, y su card con sus etapas para que se vea en el estudio. La lanza la card «Nuevo estilo»; úsala también cuando pidan hacer su propio estilo, una card nueva o un formato de video que Sloth no trae.
+description: Crea un estilo de video nuevo dentro de v!d, con su card, a partir de lo que el usuario cuenta o de videos de ejemplo, o cambia uno que ya hizo. Arma la skill del estilo junto a las de v!d, reusando video-base y el estilo más parecido, y su card con sus etapas para que se vea en el estudio. La lanza la card «Nuevo estilo»; úsala también cuando pidan hacer su propio estilo, una card nueva o un formato de video que v!d no trae.
 ---
 
 # Nuevo estilo
 
-Trabajas en la carpeta de las skills de Sloth (`<skills>`, donde arrancas). Ahí hay una carpeta por estilo y `video-base`,
+Trabajas en la carpeta de las skills de v!d (`<skills>`, donde arrancas). Ahí hay una carpeta por estilo y `video-base`,
 lo que comparten. El estilo nuevo es otra carpeta ahí, `<skills>/<id>/`, y su card va en `<skills>/../data/tus-cards.json`.
-Sloth la enseña en el inicio en cuanto ese archivo cambia, y enlaza la skill donde la buscan Claude y Codex.
+v!d la enseña en el inicio en cuanto ese archivo cambia, y enlaza la skill donde la buscan Claude y Codex.
 
-**No cambies los estilos de Sloth** (`video-el-diff`, `video-explicativo`, `reel-collage`, `video-documental`,
-`video-base`, `modelos-3d` y esta): cada versión de Sloth los vuelve a poner como venían. Para partir de uno, cópialo.
+**No cambies los estilos de v!d** (`video-el-diff`, `video-explicativo`, `reel-collage`, `video-documental`,
+`video-base`, `modelos-3d` y esta): cada versión de v!d los vuelve a poner como venían. Para partir de uno, cópialo.
 
 ## Pasos
 
 1. **Entender el video.** Lo que hace falta saber, y nada más: de qué van los videos, cuánto duran, de dónde sale la voz
    (la graba el usuario, una voz de AI Studio o una de `edge-tts`), si sale una persona o un personaje y cómo se ve. El formato no se
    pregunta: todo estilo hace los dos, vertical (TikTok, Reels, Shorts) y horizontal (YouTube), y el usuario elige uno
-   en Sloth cada vez. Si sus ejemplos son de uno solo, el otro lo acomodas tú ([FORMATO.md](../video-base/FORMATO.md)). Si mandó ejemplos, bájalos fuera de las skills, a
+   en v!d cada vez. Si sus ejemplos son de uno solo, el otro lo acomodas tú ([FORMATO.md](../video-base/FORMATO.md)). Si mandó ejemplos, bájalos fuera de las skills, a
    `<skills>/../trabajo/<id>/referencias`, con `python <skills>/video-base/scripts/fuente.py <url> <carpeta>`, y míralos
    en una hoja (`node <skills>/video-base/scripts/hoja.mjs <video> <png> --cada 0.5`). Lo que no esté claro, pregúntalo en
    un solo mensaje. Listo cuando puedes describir el estilo en tres líneas y el usuario está de acuerdo.
-2. **Partir del más parecido.** Copia a `<skills>/<id>/` el estilo de Sloth que más se le parece, sin lo que juntó quien
+2. **Partir del más parecido.** Copia a `<skills>/<id>/` el estilo de v!d que más se le parece, sin lo que juntó quien
    lo usa (`huellas/`, `series/banco/` y, del reel, `personaje/`):
    - `video-explicativo`: explica algo, un mundo 3D que la cámara recorre, la voz del usuario.
    - `reel-collage`: sketch de comedia con recortes de la persona sobre fotos reales y voz de `edge-tts`.
@@ -32,10 +32,10 @@ Sloth la enseña en el inicio en cuanto ese archivo cambia, y enlaza la skill do
    algunos scripts se buscan a sí mismos por él, y si no, seguirían usando el original. `video-base` se queda igual.
 3. **Hacerlo suyo.** Reescribe `SKILL.md` para el estilo nuevo: arriba `name: <id>` y una `description` en español que
    diga qué hace y cuándo usarla. Pasos numerados, cada uno con su «Listo cuando…». El proyecto de cada video va en la
-   carpeta de la línea `Carpeta: <nombre>` del mensaje, con ese nombre exacto (la pone Sloth y su estudio la busca ahí).
+   carpeta de la línea `Carpeta: <nombre>` del mensaje, con ese nombre exacto (la pone v!d y su estudio la busca ahí).
    Cambia la plantilla de Remotion, los scripts y los textos de apoyo (guion, escenas) a lo que pide el estilo; quita lo
    que no use. Lo que ya resuelve `video-base` (bajar, transcribir, masterizar, comprobar, la portada) se usa desde ahí.
-   **Siempre los dos formatos:** Sloth manda `Formato: vertical` o `Formato: horizontal` en el mensaje, la plantilla
+   **Siempre los dos formatos:** v!d manda `Formato: vertical` o `Formato: horizontal` en el mensaje, la plantilla
    compone el que llegue (1080×1920 o 1920×1080) y `SKILL.md` lleva su sección «Formato», que dice qué hace con cada
    línea y cómo se acomoda en cada uno ([FORMATO.md](../video-base/FORMATO.md)).
    **La voz, como elija el usuario:** si el estilo lleva voz narrada, el mensaje puede traer la línea `Voz:` (mandarla
@@ -70,7 +70,7 @@ Sloth la enseña en el inicio en cuanto ese archivo cambia, y enlaza la skill do
      la voz (mandarla tú o una de AI Studio), también; si la voz es la grabación a cámara del usuario, `"voz": false`,
      y si el estilo hace la suya (edge-tts), `"voz": { "propia": "Voz de edge-tts" }`.
 
-   Listo cuando el archivo es JSON válido y la card sale en el inicio de Sloth.
+   Listo cuando el archivo es JSON válido y la card sale en el inicio de v!d.
 5. **Probar.** Haz dos videos de prueba cortos (de 10 a 15 s) siguiendo la skill nueva, uno vertical y uno horizontal,
    en `<skills>/../trabajo/<id>/prueba-vertical` y `prueba-horizontal`: si pide la voz del usuario, usa una de
    `edge-tts` solo para probar. Arregla lo que falle en la skill, no en el video. Listo cuando salen los dos MP4, los
@@ -80,7 +80,7 @@ Sloth la enseña en el inicio en cuanto ese archivo cambia, y enlaza la skill do
 
 ## Cambiar un estilo tuyo
 
-Si pide cambiar uno que ya hizo (está en `tus-cards.json`), cambia su carpeta y su card; los de Sloth, nunca (cópialo
+Si pide cambiar uno que ya hizo (está en `tus-cards.json`), cambia su carpeta y su card; los de v!d, nunca (cópialo
 con otro `id` si quiere uno parecido). Para borrarlo, que use la ✕ de su card: quita la card y guarda la skill en
 `<skills>/../data/skills-tuyas/<fecha> estilo borrado <id>/`, de donde se recupera si se arrepiente.
 

@@ -15,7 +15,7 @@ test('el nombre de un adjunto queda sin espacios, comillas, paréntesis ni acent
 })
 
 test('el agente recibe la ruta de cada imagen adjunta, y el hilo enseña el mensaje tal cual', (t) => {
-  const dir = mkdtempSync(join(tmpdir(), 'sloth-adjuntos-'))
+  const dir = mkdtempSync(join(tmpdir(), 'vid-adjuntos-'))
   const mandado: string[] = []
   const mostrado: string[] = []
   const sessions = new Sessions(dir, (_, __, events) => events.forEach((e) => e.t === 'user' && mostrado.push(e.text)), () => {}, () => {}, () => {}, () => ({
@@ -28,7 +28,7 @@ test('el agente recibe la ruta de cada imagen adjunta, y el hilo enseña el mens
     sessions.closeAll()
     rmSync(dir, { recursive: true, force: true })
   })
-  const meta = sessions.create({ cardId: 'sloth', cwd: dir, title: 'Prueba', model: 'codex:gpt-prueba' })
+  const meta = sessions.create({ cardId: 'vid', cwd: dir, title: 'Prueba', model: 'codex:gpt-prueba' })
   const imagen = join(dir, '1-foto.png')
   sessions.send(meta.id, 'Ponla en el video', undefined, [imagen])
   assert.equal(mandado[0], `Ponla en el video\n\nImagen adjunta: ${imagen}`)

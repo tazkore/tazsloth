@@ -56,11 +56,11 @@ const entorno = {
     return p
   }
 }
-;(globalThis as any).__slothOpenCodePrueba = entorno
+;(globalThis as any).__vidOpenCodePrueba = entorno
 const modulos: Record<string, string> = {
-  'node:child_process': 'export const spawn = (...args) => globalThis.__slothOpenCodePrueba.spawn(...args)',
+  'node:child_process': 'export const spawn = (...args) => globalThis.__vidOpenCodePrueba.spawn(...args)',
   'node:fs': 'export const existsSync = () => true; export const mkdirSync = () => {}',
-  '@opencode/client': 'export const OpenCode = { make: () => globalThis.__slothOpenCodePrueba.cliente }',
+  '@opencode/client': 'export const OpenCode = { make: () => globalThis.__vidOpenCodePrueba.cliente }',
   './agentes.ts': 'export const asegurarAgente = async () => "opencode"; export const rutaAgente = () => "opencode"',
   './instrucciones.ts': 'export const INSTRUCCIONES = "Prueba"',
   './navegador-agente.ts': 'export const navegadorAgente = () => ({playwright:{command:"node",args:[]}})',

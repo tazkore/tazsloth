@@ -2,7 +2,7 @@ import type { CuentaClaude, Model } from '../shared/types.ts'
 import { llaveDe, llaveGuardada } from './acceso.ts'
 
 /**
- * DeepSeek con el mismo Claude Code de Sloth: DeepSeek tiene una API compatible con la de Anthropic
+ * DeepSeek con el mismo Claude Code de v!d: DeepSeek tiene una API compatible con la de Anthropic
  * (`https://api.deepseek.com/anthropic`), y Claude Code trabaja con ella si se le cambia la dirección y la llave. Así un
  * hilo de DeepSeek tiene todo lo de uno de Claude (las skills con `/`, los subagentes, el navegador, la voz) sin otro
  * programa que bajar. Es lo que DeepSeek recomienda en su guía de Claude Code.
@@ -60,7 +60,7 @@ export function tarifaDeepSeek(cuando = new Date()) {
 }
 
 /**
- * Lo que cuesta en hora valle lo que Claude Code cuenta por modelo (`modelUsage`, con el `[1m]` que le pone Sloth). La
+ * Lo que cuesta en hora valle lo que Claude Code cuenta por modelo (`modelUsage`, con el `[1m]` que le pone v!d). La
  * escritura en caché DeepSeek la cobra como entrada sin caché. Un modelo sin precio conocido no suma.
  */
 export function dolaresDeepSeek(modelos: Record<string, { inputTokens: number; outputTokens: number; cacheReadInputTokens: number; cacheCreationInputTokens: number }>): number {

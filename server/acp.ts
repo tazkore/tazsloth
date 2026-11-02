@@ -3,16 +3,16 @@ import { tmpdir } from 'node:os'
 import { extname } from 'node:path'
 import type { AgentEvent, Tokens } from '../shared/types.ts'
 import { conRutas, IMAGE_TYPES, type AgentOptions, type AgentRun, type SkillRef } from './agent.ts'
-import { conSkill, INSTRUCCIONES, mcpSloth } from './instrucciones.ts'
+import { conSkill, INSTRUCCIONES, mcpVid } from './instrucciones.ts'
 import { RpcLineas } from './rpc-lineas.ts'
 
 /**
  * Los agentes que hablan ACP (Agent Client Protocol) por stdio: Grok (`grok agent stdio`) y Antigravity (el servidor ACP
- * de Google). Como lo hace T3 Code (`packages/provider-acp`), pero solo lo que usa Sloth: sin permisos (se acepta cada
- * herramienta, como con los demás agentes), sin terminal ni escritura de archivos del lado de Sloth (el agente las hace
+ * de Google). Como lo hace T3 Code (`packages/provider-acp`), pero solo lo que usa v!d: sin permisos (se acepta cada
+ * herramienta, como con los demás agentes), sin terminal ni escritura de archivos del lado de v!d (el agente las hace
  * él mismo) y un proceso por hilo, salvo los `compartido`: uno para todos sus hilos, cada uno en su sesión.
  *
- * ACP no tiene instrucciones de sistema: las de Sloth van al principio del primer mensaje de cada proceso. El modelo y su
+ * ACP no tiene instrucciones de sistema: las de v!d van al principio del primer mensaje de cada proceso. El modelo y su
  * esfuerzo se eligen con las opciones de la sesión (`configOptions`), o con `session/set_model` si no las trae.
  */
 
@@ -23,7 +23,7 @@ export interface SaborAcp {
   prefijo: string
   /** El programa con sus argumentos y su entorno. Puede fallar (falta la cuenta). */
   lanzar(opts: AgentOptions): { command: string; args: string[]; env: NodeJS.ProcessEnv; alCerrar?(): void }
-  /** Cómo se presenta Sloth: Antigravity solo ofrece los modelos que no son de Gemini a clientes que conoce (Zed). */
+  /** Cómo se presenta v!d: Antigravity solo ofrece los modelos que no son de Gemini a clientes que conoce (Zed). */
   clientInfo?: { name: string; version: string }
   /** Lee él mismo los archivos que le piden (Antigravity). */
   leeArchivos?: boolean
@@ -33,7 +33,7 @@ export interface SaborAcp {
   modo?: string
   /** Lo que lleva `session/cancel` (Grok: `ctrl_c`, que no deja que las tareas de fondo lo despierten). */
   cancelarMeta?: Record<string, unknown>
-  /** Un error que dice que falta iniciar sesión, en palabras de Sloth. */
+  /** Un error que dice que falta iniciar sesión, en palabras de v!d. */
   sinCuenta: string
   /** Los modelos que dio la sesión, para guardarlos (Antigravity no tiene otra forma de listarlos). */
   alVerModelos?(opciones: OpcionAcp[]): void
@@ -109,7 +109,7 @@ export function conectar(sabor: SaborAcp, opts: AgentOptions): Conexion {
     const ini = await c.rpc.request('initialize', {
       protocolVersion: 1,
       clientCapabilities: { fs: { readTextFile: !!sabor.leeArchivos, writeTextFile: false }, terminal: false },
-      clientInfo: sabor.clientInfo ?? { name: 'sloth', version: '1' }
+      clientInfo: sabor.clientInfo ?? { name: 'vid', version: '1' }
     }, 180_000)
     if (sabor.autenticar) await c.rpc.request('authenticate', { methodId: sabor.autenticar }, 300_000)
     c.lista = true
@@ -130,7 +130,7 @@ export function soltar(sabor: SaborAcp, c: Conexion) {
   c.reloj.unref()
 }
 
-/** Lo que el agente le pide a Sloth, de cualquier sesión. */
+/** Lo que el agente le pide a v!d, de cualquier sesión. */
 async function pedir(sabor: SaborAcp, method: string, params: any) {
   if (method === 'session/request_permission') {
     // Sin permisos, como con Claude y Codex: una vez (las de «siempre» se guardan en el proyecto).
@@ -145,7 +145,7 @@ async function pedir(sabor: SaborAcp, method: string, params: any) {
   }
   // Las preguntas con formulario: la interfaz no sabe contestarlas, y el turno se quedaría esperando.
   if (/ask_user_question|exit_plan_mode/.test(method)) return { outcome: 'cancelled' }
-  throw new Error('Sloth no admite esta petición. Pregunta al usuario con un mensaje normal.')
+  throw new Error('v!d no admite esta petición. Pregunta al usuario con un mensaje normal.')
 }
 
 /** El nombre y la entrada de una herramienta de ACP, como las de Claude que ya dibuja la interfaz. */
@@ -219,7 +219,7 @@ export function startAcp(sabor: SaborAcp, opts: AgentOptions): AgentRun {
     if (p?.sessionId !== sesion || cargando) return
     const u = p.update ?? {}
     if (u._meta?.isReplay) return
-    // Lo que manda solo, sin un mensaje de Sloth (termina algo de fondo y sigue): es un turno suyo.
+    // Lo que manda solo, sin un mensaje de v!d (termina algo de fondo y sigue): es un turno suyo.
     if (!busy && ['agent_message_chunk', 'agent_thought_chunk', 'tool_call'].includes(u.sessionUpdate)) {
       busy = true
       turno++
@@ -317,8 +317,8 @@ export function startAcp(sabor: SaborAcp, opts: AgentOptions): AgentRun {
     c.cierres.add(alCerrar)
     const r = c.rpc
     const ini = await c.ini
-    // Los MCP de Sloth, como los pide ACP 1: `env` es una lista.
-    const mcpServers = Object.entries(mcpSloth(opts.lote, opts.hilo)).map(([name, s]) => ({ name, command: s.command, args: s.args ?? [], env: Object.entries(s.env ?? {}).map(([n, value]) => ({ name: n, value })) }))
+    // Los MCP de v!d, como los pide ACP 1: `env` es una lista.
+    const mcpServers = Object.entries(mcpVid(opts.lote, opts.hilo)).map(([name, s]) => ({ name, command: s.command, args: s.args ?? [], env: Object.entries(s.env ?? {}).map(([n, value]) => ({ name: n, value })) }))
     let abierta: { sessionId?: string; configOptions?: OpcionAcp[]; models?: { availableModels?: { modelId: string; _meta?: any }[] } } | undefined
     if (opts.resume) {
       const cap = ini?.agentCapabilities ?? {}
@@ -362,7 +362,7 @@ export function startAcp(sabor: SaborAcp, opts: AgentOptions): AgentRun {
   void ready.catch(() => {})
 
   function bloques(text: string, images: string[]) {
-    const texto = conRutas(primero ? `<sloth>\n${INSTRUCCIONES}\n</sloth>\n\n${text}` : text, images)
+    const texto = conRutas(primero ? `<vid>\n${INSTRUCCIONES}\n</vid>\n\n${text}` : text, images)
     primero = false
     return [
       { type: 'text', text: texto },
@@ -420,7 +420,7 @@ export function startAcp(sabor: SaborAcp, opts: AgentOptions): AgentRun {
       }
       void mandar(texto, images)
     },
-    // ACP no mete mensajes en un turno en curso: va en cuanto acabe, dentro del mismo turno de Sloth.
+    // ACP no mete mensajes en un turno en curso: va en cuanto acabe, dentro del mismo turno de v!d.
     steer(text, images = []) {
       if (busy) pendiente.push({ text, images })
       else void mandar(text, images)

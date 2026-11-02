@@ -27,14 +27,14 @@ import { homedir, tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
 
-const { buscarChrome } = await import(pathToFileURL(join(process.env.SLOTH_SKILLS || join(homedir(), '.claude', 'skills'), 'video-base', 'scripts', 'chrome.mjs')).href);
+const { buscarChrome } = await import(pathToFileURL(join(process.env.VID_SKILLS || process.env.SLOTH_SKILLS || join(homedir(), '.claude', 'skills'), 'video-base', 'scripts', 'chrome.mjs')).href);
 
 const [jobsPath, outDir] = process.argv.slice(2);
 if (!jobsPath || !outDir) { console.error('usage: node capture.mjs <jobs.json> <outdir>'); process.exit(1); }
 const jobs = JSON.parse(readFileSync(jobsPath, 'utf8'));
 mkdirSync(outDir, { recursive: true });
 
-// Chrome: el que encuentra video-base (CHROME si se puso, el headless shell, el de Sloth, Chrome instalado o Edge).
+// Chrome: el que encuentra video-base (CHROME si se puso, el headless shell, el de v!d, Chrome instalado o Edge).
 // Nunca una ruta fija: se rompe con la siguiente actualización.
 const CHROME = buscarChrome();
 if (!CHROME) { console.error('capture.mjs: no encontré Chrome ni Edge. Pon su ruta en CHROME.'); process.exit(1); }

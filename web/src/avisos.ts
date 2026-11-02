@@ -3,7 +3,7 @@ import type { Card, SessionMeta } from '../../shared/types'
 
 /**
  * Los avisos: cuando un hilo termina, te espera o se detiene con un error mientras miras otra cosa, una notificación de
- * Windows y un tono corto; y en el título de la ventana, cuántos terminaron sin que los abrieras: «(2) Sloth». Un video
+ * Windows y un tono corto; y en el título de la ventana, cuántos terminaron sin que los abrieras: «(2) v!d». Un video
  * tarda minutos y nadie se queda mirando.
  *
  * No avisa del hilo que tienes abierto con la ventana al frente, ni dos veces por lo mismo (solo cuando un hilo pasa de
@@ -14,7 +14,7 @@ import type { Card, SessionMeta } from '../../shared/types'
 type Aviso = 'notificaciones' | 'sonido'
 /**
  * Los interruptores de Opciones, encendidos de entrada. Las notificaciones, además, necesitan el permiso del navegador;
- * en la ventana de Sloth (electron/main.ts) se da solo, y salen como avisos de Windows a nombre de Sloth.
+ * en la ventana de v!d (electron/main.ts) se da solo, y salen como avisos de Windows a nombre de v!d.
  */
 export const encendido = (a: Aviso) => localStorage.getItem(`avisos:${a}`) !== '0'
 export const encender = (a: Aviso, si: boolean) => localStorage.setItem(`avisos:${a}`, si ? '1' : '0')
@@ -68,7 +68,7 @@ export function useAvisos(p: { sessions: SessionMeta[]; cards: Card[]; openId: s
   }, [p.openId])
 
   useEffect(() => {
-    document.title = p.sinVer ? `(${p.sinVer}) vid.kold.gold` : 'vid.kold.gold'
+    document.title = p.sinVer ? `(${p.sinVer}) v!d` : 'v!d'
   }, [p.sinVer])
 }
 
@@ -130,13 +130,13 @@ function repasar(claves: string[], { sessions, cards, openId, abrir }: { session
 /** Las notificaciones que siguen en la esquina de Windows, por cada hilo que nombran. */
 const abiertas = new Map<string, Notification>()
 
-/** Al pulsarla, Sloth pasa al frente y abre el hilo. Sin sonido de Windows: el de Sloth tiene su interruptor. */
+/** Al pulsarla, v!d pasa al frente y abre el hilo. Sin sonido de Windows: el de v!d tiene su interruptor. */
 export async function notificar({ titulo, cuerpo, abre, ids }: Nota, abrir?: (id: string) => void) {
   if (!encendido('notificaciones') || !('Notification' in window) || Notification.permission !== 'granted') return
   const n = new Notification(titulo, { body: cuerpo, icon: await icono(), silent: true })
   n.onclick = () => {
-    // Una ventana que no está al frente no puede traerse sola: se lo pide a la ventana de Sloth.
-    if (window.sloth) window.sloth.traer()
+    // Una ventana que no está al frente no puede traerse sola: se lo pide a la ventana de v!d.
+    if (window.vid) window.vid.traer()
     else window.focus()
     if (abre) abrir?.(abre)
     n.close()
@@ -165,7 +165,7 @@ function icono() {
 }
 
 /**
- * Dos notas suaves que suben, hechas con Web Audio: sin archivos de sonido. La ventana de Sloth deja sonar siempre; un
+ * Dos notas suaves que suben, hechas con Web Audio: sin archivos de sonido. La ventana de v!d deja sonar siempre; un
  * navegador, solo a una página que ya pulsaste desde que cargó: tras una recarga, el primero puede no oírse.
  */
 export function sonar() {
@@ -190,8 +190,8 @@ export function sonar() {
 }
 
 /**
- * El permiso de notificaciones que el navegador le da a Sloth, al día: se vuelve a leer al volver a la ventana, que es
- * cuando lo pudiste cambiar en sus ajustes. En la ventana de Sloth siempre está dado.
+ * El permiso de notificaciones que el navegador le da a v!d, al día: se vuelve a leer al volver a la ventana, que es
+ * cuando lo pudiste cambiar en sus ajustes. En la ventana de v!d siempre está dado.
  */
 export function usePermiso() {
   const leer = () => ('Notification' in window ? Notification.permission : 'sin-api')

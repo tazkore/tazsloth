@@ -3,7 +3,7 @@ import { readFileSync } from 'node:fs'
 import { connect } from 'node:net'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { BANDERAS, motorSloth, rutaPythonSloth } from './requisitos.ts'
+import { BANDERAS, motorVid, rutaPythonVid } from './requisitos.ts'
 
 /** Lo más que se espera la respuesta: si está transcribiendo, contesta al acabar, y conectar ya dice que está vivo. */
 const PACIENCIA = 5 * 60_000
@@ -15,14 +15,14 @@ let mirando = false
  * Con cada ping él cuenta otros 10 min; al acabar los videos deja de oírlos y se cierra. Solo donde transcribe Whisper.
  */
 export async function mantenerVoz(skills: string) {
-  if (mirando || motorSloth() !== 'whisper') return
-  const python = rutaPythonSloth()
+  if (mirando || motorVid() !== 'whisper') return
+  const python = rutaPythonVid()
   if (!python) return
   mirando = true
   try {
     if (await vozResponde()) return
     await new Promise((fin) => {
-      const script = join(skills, 'video-base', 'scripts', 'sloth.py')
+      const script = join(skills, 'video-base', 'scripts', 'vid.py')
       spawn(python, [...BANDERAS, script, 'calentar-voz'], { stdio: 'ignore', windowsHide: true }).once('error', fin).once('exit', fin)
     })
   } finally {
@@ -30,11 +30,11 @@ export async function mantenerVoz(skills: string) {
   }
 }
 
-/** El mismo ping que `_pedir_voz` de sloth.py. */
+/** El mismo ping que `_pedir_voz` de vid.py. */
 function vozResponde(): Promise<boolean> {
   let puerto: number
   try {
-    puerto = JSON.parse(readFileSync(join(tmpdir(), 'sloth-voz.json'), 'utf8')).puerto
+    puerto = JSON.parse(readFileSync(join(tmpdir(), 'vid-voz.json'), 'utf8')).puerto
   } catch {
     return Promise.resolve(false)
   }

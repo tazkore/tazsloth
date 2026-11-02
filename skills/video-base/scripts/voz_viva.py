@@ -4,9 +4,9 @@ python/procesos) no lo cargue otra vez. Con el proceso de siempre, importar torc
 36 s con la máquina tranquila y de 3 a 10 min con varios videos a la vez (torch/lib son 4 GB que, con la memoria llena,
 se vuelven a leer cada vez); transcribir y alinear 6 min de voz ya cargado, 20 s. Aquí se carga una vez (ADR 0008).
 
-Lo arranca Sloth cuando un video empieza a trabajar (`calentar_voz()` de sloth.py, ADR 0011) o, si no estaba, `proceso()`
-la primera vez que hace falta, ya con el turno de la GPU, y lo espera. Corre con el Python de Sloth, escucha en un puerto
-local que anota en %TEMP%/sloth-voz.json y se cierra solo tras 10 min sin pedidos; Sloth le manda un ping cada minuto
+Lo arranca v!d cuando un video empieza a trabajar (`calentar_voz()` de vid.py, ADR 0011) o, si no estaba, `proceso()`
+la primera vez que hace falta, ya con el turno de la GPU, y lo espera. Corre con el Python de v!d, escucha en un puerto
+local que anota en %TEMP%/vid-voz.json y se cierra solo tras 10 min sin pedidos; v!d le manda un ping cada minuto
 mientras trabaja un video (ocupa unos 2,6 GB de la tarjeta). Cada pedido es una línea JSON, `{"proceso": "transcribir.py", "files", "options"}`;
 contesta con las líneas de avance (`@progreso 0.42`) y al final una línea con `{"ok": respuesta}` o `{"error": "..."}`.
 `{"salir": true}` lo cierra: lo manda `transcribir-lote.py`, que carga su propio Whisper y con los dos no caben en 6 GB.
@@ -25,9 +25,9 @@ import time
 import traceback
 from pathlib import Path
 
-# Como en sloth.py: los de SLOTH_PROCESOS o, sin ella, los de la app donde vive esta skill.
-PROCESOS = Path(os.environ.get("SLOTH_PROCESOS") or Path(__file__).resolve().parents[3] / "python" / "procesos")
-PUERTO = Path(tempfile.gettempdir()) / "sloth-voz.json"
+# Como en vid.py: los de VID_PROCESOS o, sin ella, los de la app donde vive esta skill.
+PROCESOS = Path(os.environ.get("VID_PROCESOS") or os.environ.get("SLOTH_PROCESOS") or Path(__file__).resolve().parents[3] / "python" / "procesos")
+PUERTO = Path(tempfile.gettempdir()) / "vid-voz.json"
 INACTIVO = 10 * 60
 PROCESOS_VIVOS = ("transcribir.py", "transcribir-ajeno.py")
 
@@ -68,7 +68,7 @@ def main() -> None:
     servidor.listen(8)
     servidor.settimeout(60)
     # Carga Whisper y el alineador antes de anunciarse: el primer pedido ya no espera.
-    from sloth import MODELOS as modelos
+    from vid import MODELOS as modelos
     transcribir.load_whisper(modelos, "cuda", [])
     transcribir.load_aligner(modelos, "voxpopuli-es", "cuda")
     temporal = PUERTO.with_suffix(".tmp")

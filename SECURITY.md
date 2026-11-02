@@ -5,9 +5,9 @@
 Si encuentras una vulnerabilidad en v!d by Kold.Gold, **no abras un issue público**: escríbenos a
 [tazkore@gmail.com](mailto:tazkore@gmail.com) con los pasos para reproducirla.
 
-## Lo que debes saber antes de usar Sloth
+## Lo que debes saber antes de usar v!d
 
-**Los agentes de Sloth trabajan con todos los permisos en tu computadora.** Para hacer un video sin pedirte permiso a
+**Los agentes de v!d trabajan con todos los permisos en tu computadora.** Para hacer un video sin pedirte permiso a
 cada paso, corren con `bypassPermissions` (`server/claude.ts`): pueden leer, escribir y borrar archivos, y ejecutar
 programas, con tu usuario.
 
@@ -15,10 +15,10 @@ programas, con tu usuario.
   hace lo que digan. Uno malicioso puede ejecutar lo que quiera en tu computadora. Revisa su carpeta antes de usarlo.
 - **Cuidado con lo que le pides que lea.** Una página web o un archivo con instrucciones escondidas puede intentar
   desviar al agente. Revisa lo que hace en el hilo, que se ve paso a paso.
-- **Tus cuentas son tuyas.** Sloth entra con tu cuenta de Claude (y, si quieres, de ChatGPT) en el flujo oficial de
+- **Tus cuentas son tuyas.** v!d entra con tu cuenta de Claude (y, si quieres, de ChatGPT) en el flujo oficial de
   cada una, y no guarda tus contraseñas.
 
-## Lo que sí cuida Sloth
+## Lo que sí cuida v!d
 
 - El servidor escucha solo en tu computadora (`localhost`), valida `Host`/`Origin` (`server/origen.ts`) y exige un
   token (`data/servidor-token`) en `/api` y `/ws`: la ventana lo recibe en una cookie HttpOnly y los procesos locales

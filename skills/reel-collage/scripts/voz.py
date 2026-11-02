@@ -9,7 +9,7 @@ Lee `guion.json` de la raíz del proyecto:
     {"voz": "es-MX-JorgeNeural", "rate": "+25%", "antes": 1.5,
      "frases": [{"texto": "lo que dice el guion", "dicho": "como lo pronuncia el TTS", "pausa": 0.6}, ...]}
 
-Con `"studio": "Fola"`, cada frase la genera Sloth en Google AI Studio con esa voz (VOZ.md de video-base) en vez de
+Con `"studio": "Fola"`, cada frase la genera v!d en Google AI Studio con esa voz (VOZ.md de video-base) en vez de
 edge-tts: AI Studio no da el tiempo de cada palabra, así que se reparte por letras dentro de su frase. Cada frase se
 pide aparte y queda en fuentes/voz/fNN.wav: al cambiar el guion, solo se vuelven a pedir las que cambiaron.
 `antes` son los segundos en que el clip del gancho suena solo, antes de la primera palabra. `dicho` es opcional (si
@@ -50,8 +50,8 @@ async def sintetizar(texto: str, voz: str, rate: str, destino: Path) -> list[dic
 
 
 def pedir(ruta: str, datos: dict | None = None) -> dict:
-    url = os.environ.get("SLOTH_URL", "http://127.0.0.1:4850") + ruta
-    # El token del servidor local (VID_TOKEN, que el agente hereda de Sloth junto a SLOTH_URL).
+    url = (os.environ.get("VID_URL") or os.environ.get("SLOTH_URL", "http://127.0.0.1:4850")) + ruta
+    # El token del servidor local (VID_TOKEN, que el agente hereda de v!d junto a VID_URL).
     cabeceras = {"content-type": "application/json", "x-vid-token": os.environ.get("VID_TOKEN", "")}
     pedido = urllib.request.Request(url, data=json.dumps(datos).encode() if datos else None, headers=cabeceras)
     try:
@@ -62,7 +62,7 @@ def pedir(ruta: str, datos: dict | None = None) -> dict:
 
 
 def studio(texto: str, voz: str, destino: Path) -> None:
-    """La frase con una voz de AI Studio, que genera Sloth en la cuenta de Google del usuario."""
+    """La frase con una voz de AI Studio, que genera v!d en la cuenta de Google del usuario."""
     t = pedir("/api/voz/generar", {"texto": texto, "voz": voz, "salida": str(destino.resolve())})
     while t["estado"] in ("en-fila", "generando"):
         t = pedir(f"/api/voz/trabajos/{t['id']}?esperar=40")
@@ -134,7 +134,7 @@ def comprimir(x: np.ndarray, maximo=0.07):
 
 
 def oir(wav: Path) -> None:
-    from sloth import transcribir  # el Python de Sloth y WhisperX, de video-base
+    from vid import transcribir  # el Python de v!d y WhisperX, de video-base
     d = transcribir(wav)
     print("\nlo que se oye:\n" + " ".join(s["text"].strip() for s in d["segmentos"]))
 

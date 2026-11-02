@@ -22,7 +22,7 @@ from pathlib import Path
 
 BASE = Path(__file__).resolve().parent
 sys.path.insert(0, str(BASE))
-from sloth import turno  # noqa: E402
+from vid import turno  # noqa: E402
 
 
 def serie_md(skill: Path, serie: str) -> Path:

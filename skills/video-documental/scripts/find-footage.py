@@ -17,7 +17,7 @@ Sources (no keys, no logins):
            a company's own launch film used in commentary = flag it in PLAN.md; movie clips =
            flag, and only when the film is the subject or the metaphor is the point.
 Cut the pick straight from its media URL with ev1_clip.py (ffmpeg reads the URL; 30fps CFR, -g 30). From YouTube,
-first the section with the Sloth Python: sloth('-m', 'yt_dlp', '--download-sections', '*12-20', ...) (video-base sloth.py).
+first the section with the v!d Python: con_python('-m', 'yt_dlp', '--download-sections', '*12-20', ...) (video-base vid.py).
 """
 import argparse, json, os, re, subprocess, sys, urllib.parse, urllib.request
 from io import BytesIO
@@ -92,10 +92,10 @@ def mixkit(q, n):
 
 
 def yt(q, n):
-    # yt-dlp es el del Python de Sloth, como módulo (el .exe no arranca).
-    sys.path.insert(0, os.path.join(os.environ.get('SLOTH_SKILLS') or os.path.join(os.path.expanduser('~'), '.claude', 'skills'), 'video-base', 'scripts'))
-    from sloth import sloth
-    r = sloth('-m', 'yt_dlp', '--flat-playlist', '-J', f'ytsearch{n}:{q}', capture_output=True, text=True, encoding='utf-8')
+    # yt-dlp es el del Python de v!d, como módulo (el .exe no arranca).
+    sys.path.insert(0, os.path.join(os.environ.get('VID_SKILLS') or os.environ.get('SLOTH_SKILLS') or os.path.join(os.path.expanduser('~'), '.claude', 'skills'), 'video-base', 'scripts'))
+    from vid import vid
+    r = con_python('-m', 'yt_dlp', '--flat-playlist', '-J', f'ytsearch{n}:{q}', capture_output=True, text=True, encoding='utf-8')
     try:
         es = json.loads(r.stdout).get('entries', [])
     except Exception:

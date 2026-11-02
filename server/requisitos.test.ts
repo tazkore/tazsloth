@@ -6,7 +6,7 @@ import { test } from 'node:test'
 import { aguantaCuda, elegirPython, motorDe, moverPython, pasoDePip } from './requisitos.ts'
 
 function carpetas() {
-  const raiz = mkdtempSync(join(tmpdir(), 'sloth-mover-'))
+  const raiz = mkdtempSync(join(tmpdir(), 'vid-mover-'))
   const de = join(raiz, 'bajando', 'python')
   mkdirSync(join(de, 'Lib'), { recursive: true })
   writeFileSync(join(de, 'python.exe'), 'exe')
@@ -52,14 +52,14 @@ test('el torch de CUDA solo con una NVIDIA, un controlador y una memoria que lo 
   assert.ok(!aguantaCuda(''))
 })
 
-test('el motor de la voz sale de la carpeta del Python de Sloth', () => {
+test('el motor de la voz sale de la carpeta del Python de v!d', () => {
   assert.equal(motorDe('3.12.15-cu128-sloth'), 'whisper')
   assert.equal(motorDe('3.12.14-cu128-2e23ffa6'), 'whisper') // el de la app de YouTube archivada
   assert.equal(motorDe('3.12.15-cpu-sloth'), 'parakeet')
   assert.equal(motorDe('3.12.15-onnx-sloth'), 'parakeet-solo')
 })
 
-test('de varios Python de Sloth se usa el suyo y, entre iguales, el más nuevo', () => {
+test('de varios Python de v!d se usa el suyo y, entre iguales, el más nuevo', () => {
   const fechas: Record<string, number> = { '3.12.14-cu128-2e23ffa6': 3, '3.12.15-cpu-sloth': 1, '3.12.15-cu128-sloth': 2 }
   assert.equal(elegirPython(Object.keys(fechas), (id) => fechas[id]), '3.12.15-cu128-sloth')
   assert.equal(elegirPython(['3.12.14-cu128-2e23ffa6'], () => 0), '3.12.14-cu128-2e23ffa6')

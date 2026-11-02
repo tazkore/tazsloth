@@ -32,16 +32,16 @@ export async function aLaPapelera(rutas: string[]): Promise<string[]> {
     return rutas.filter((r) => existsSync(r))
   }
   const ps =
-    "Add-Type -AssemblyName Microsoft.VisualBasic; foreach ($r in ($env:SLOTH_PAPELERA | ConvertFrom-Json)) { try { [Microsoft.VisualBasic.FileIO.FileSystem]::DeleteFile($r, 'OnlyErrorDialogs', 'SendToRecycleBin') } catch { [Console]::Error.WriteLine($_.Exception.Message) } }; exit 0"
+    "Add-Type -AssemblyName Microsoft.VisualBasic; foreach ($r in ($env:VID_PAPELERA | ConvertFrom-Json)) { try { [Microsoft.VisualBasic.FileIO.FileSystem]::DeleteFile($r, 'OnlyErrorDialogs', 'SendToRecycleBin') } catch { [Console]::Error.WriteLine($_.Exception.Message) } }; exit 0"
   for (let i = 0; i < rutas.length; i += 100) {
-    const { stderr } = await execFileP('powershell.exe', ['-NoProfile', '-NonInteractive', '-Command', ps], { env: { ...process.env, SLOTH_PAPELERA: JSON.stringify(rutas.slice(i, i + 100)) } })
+    const { stderr } = await execFileP('powershell.exe', ['-NoProfile', '-NonInteractive', '-Command', ps], { env: { ...process.env, VID_PAPELERA: JSON.stringify(rutas.slice(i, i + 100)) } })
     if (stderr.trim()) console.error('papelera:', stderr.trim())
   }
   return rutas.filter((r) => existsSync(r))
 }
 
 /**
- * En Mac, a la Papelera por el Finder, que deja «Devolver» (la primera vez, macOS pregunta si Sloth puede usar el
+ * En Mac, a la Papelera por el Finder, que deja «Devolver» (la primera vez, macOS pregunta si v!d puede usar el
  * Finder); en Linux, con `gio trash`, la de GNOME y casi todos los escritorios. Las rutas van como argumentos.
  */
 const PAPELERA_MAC = [

@@ -46,7 +46,7 @@
 .logo.chico img { width: 18px; height: 18px; }
 .logos { flex: none; display: flex; padding-right: 4px; }
 .logos .logo + .logo { margin-left: -5px; }
-/* Los colores de cada marca, solo en su logo. Los demás van sobre el fondo de Sloth. */
+/* Los colores de cada marca, solo en su logo. Los demás van sobre el fondo de v!d. */
 .logo-claude { background: #d97757; box-shadow: none; }
 .logo-codex { background: #000; box-shadow: none; }
 .logo-opencode { background: #f1ecec; box-shadow: none; }

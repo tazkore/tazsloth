@@ -1,4 +1,4 @@
-# Rendimiento de Sloth
+# Rendimiento de v!d
 
 Mide antes de cambiar y después de cambiar, en la app compilada: la de desarrollo corre Vite y tsx, y sus tiempos no dicen
 nada de lo que recibe la gente. Varias ideas razonables de abajo no sirvieron: por eso están apuntadas.
@@ -15,7 +15,7 @@ nada de lo que recibe la gente. Varias ideas razonables de abajo no sirvieron: p
   HTTP al montarse. Límites reales: `--cpus`, `--memory`, y `--device-read-bps`/`--device-read-iops` al crear el contenedor
   (escribir `io.max` desde dentro da error). En frío: `echo 3 > /proc/sys/vm/drop_caches` antes de cada arranque.
 - **Dónde se va el tiempo del servidor:** `node --cpu-prof` sobre `app/server/index.mjs`, con un `--require` que llame a
-  `process.exit` al ver «Sloth en». Lo que bloquea es lo que no suelta el hilo; suma por función, no por paquete.
+  `process.exit` al ver «v!d en». Lo que bloquea es lo que no suelta el hilo; suma por función, no por paquete.
 - **Si se congela después de arrancar:** pregúntale al servidor cada 50 ms y apunta lo que pase de 100 ms. Para saber quién
   fue, envuelve `ChildProcess.prototype.spawn` y los `*Sync` de `fs` y `child_process` (con `syncBuiltinESMExports`) en un
   gancho al principio de `app/server/index.mjs`, y mide un `setInterval` de 10 ms. Electron no deja pasar `NODE_OPTIONS`.
@@ -29,9 +29,9 @@ nada de lo que recibe la gente. Varias ideas razonables de abajo no sirvieron: p
 
 | Qué                                        | Antes     | Después   |
 | ------------------------------------------ | --------- | --------- |
-| Sloth.exe hasta el servidor listo          | 1.230 ms  | 651 ms    |
-| Sloth.exe hasta la interfaz montada        | 1.470 ms  | 867 ms    |
-| Sloth.exe hasta tener los datos            | 1.765 ms  | 964 ms    |
+| vid-koldgold.exe hasta el servidor listo          | 1.230 ms  | 651 ms    |
+| vid-koldgold.exe hasta la interfaz montada        | 1.470 ms  | 867 ms    |
+| vid-koldgold.exe hasta tener los datos            | 1.765 ms  | 964 ms    |
 | El servidor solo                           | 890 ms    | 520 ms    |
 | Lo que baja el hilo mayor (13,1 MB)        | 9,71 MB   | 1,12 MB   |
 | Abrirlo, en una máquina 4× más lenta       | 300 ms    | 105 ms    |
@@ -53,7 +53,7 @@ nada de lo que recibe la gente. Varias ideas razonables de abajo no sirvieron: p
 - `/api/cards/:id/cambios` leía 370 archivos en cada vista de una card, y todo lo demás esperaba. Ahora va sin detener el
   servidor, y lo que no cambió no se relee (`cambiosDe`). Si varias rutas tardan lo mismo a la vez, busca qué las detiene.
 - Importar `playwright-core` costaba casi 400 ms de cada arranque: se carga al usarlo (`server/playwright.ts`). No importes
-  nada pesado arriba de un módulo del servidor: todos se evalúan al abrir Sloth.
+  nada pesado arriba de un módulo del servidor: todos se evalúan al abrir v!d.
 - El 76 % de lo que se bajaba al abrir un hilo eran salidas de herramientas, que solo se ven al abrir su fila: se piden
   entonces (`sinSalidasLargas`). Lo que sigue trabajando va entero.
 - Con Playwright a demanda (`server/navegador-mcp.mjs`), el hilo que sí usa el navegador paga 1,1 s la primera vez.
@@ -64,7 +64,7 @@ nada de lo que recibe la gente. Varias ideas razonables de abajo no sirvieron: p
 - Liberar lo que ya nadie usa (1 de noviembre; probado con simulaciones, sin medida de RAM ni CPU en la app real):
   `opencode serve` se cierra a un minuto de quedarse sin hilos ni consultas, también cuando solo se abrió para listar
   modelos; los motores y los `fs.watch` de carpetas, a los cinco minutos; las ondas de audio van a un máximo de 32 archivos
-  en bytes, con FFmpeg de uno en uno. Una página a la vista también descansa con Sloth minimizada o escondida.
+  en bytes, con FFmpeg de uno en uno. Una página a la vista también descansa con v!d minimizada o escondida.
 - Para comparar: la memoria y la CPU de todo el árbol de procesos al abrir, tras acabar varios hilos y diez minutos después,
   con las mismas cuentas, videos y pestañas. Los bytes de una compilación no sustituyen esa medida.
 
@@ -80,7 +80,7 @@ En Linux (Docker, xvfb, 42 hilos reales, hasta la interfaz montada):
 - En frío con un disco tan lento, lo ganado no se nota: las dos versiones varían de 25 a 39 s, con arranques sueltos de
   100 a 170 s. Node vacío ya tarda 4,8 s y el servidor solo unos 10 s; lo demás es Electron con Chromium.
 
-Lo que el agente abre en una página: Codex solo usaba el navegador de Sloth 1 de 6 veces (curl o `cua_repl`, igual antes de
+Lo que el agente abre en una página: Codex solo usaba el navegador de v!d 1 de 6 veces (curl o `cua_repl`, igual antes de
 estos cambios); con `USA_EL_NAVEGADOR`, 6 de 6. La prueba es una página cuyo código pone JavaScript, con cada dirección distinta.
 
 ## Lo que se midió y no vale la pena

@@ -35,8 +35,8 @@ export class CodexRpc {
       let m: { id?: number | string; method?: string; params?: unknown; result?: unknown; error?: { message: string } }
       try { m = JSON.parse(line) } catch { return this.finalizar(new Error('Codex envió una respuesta que no se pudo leer.')) }
       if (m.method && m.id !== undefined) {
-        // Sloth pregunta con mensajes y botones. Una herramienta interactiva desconocida no queda esperando para siempre.
-        this.proc.stdin.write(JSON.stringify({ id: m.id, error: { code: -32601, message: 'Sloth no admite esta petición interactiva. Pregunta al usuario con un mensaje.' } }) + '\n')
+        // v!d pregunta con mensajes y botones. Una herramienta interactiva desconocida no queda esperando para siempre.
+        this.proc.stdin.write(JSON.stringify({ id: m.id, error: { code: -32601, message: 'v!d no admite esta petición interactiva. Pregunta al usuario con un mensaje.' } }) + '\n')
       } else if (m.method) this.onNotification(m.method, m.params)
       else if (typeof m.id === 'number') {
         const p = this.pendientes.get(m.id)
@@ -50,7 +50,7 @@ export class CodexRpc {
     this.proc.on('error', (e) => this.finalizar(e))
     this.proc.on('exit', (code) => this.finalizar(new Error(`El proceso de Codex se cerró (código ${code}).`), false))
     this.proc.stdin.on('error', (e) => this.finalizar(e))
-    this.ready = this.request('initialize', { clientInfo: { name: 'sloth', title: 'Sloth', version: '0.1.0' } })
+    this.ready = this.request('initialize', { clientInfo: { name: 'vid', title: 'v!d', version: '0.1.0' } })
       .then(() => { this.proc.stdin.write(JSON.stringify({ method: 'initialized' }) + '\n') })
     // Puede fallar antes de que el llamador llegue a esperar la inicialización.
     void this.ready.catch(() => {})

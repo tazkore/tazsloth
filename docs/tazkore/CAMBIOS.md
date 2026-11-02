@@ -65,3 +65,35 @@ Se quita todo lo que hablaba con los servidores del creador original y se endure
 | Documentos | Instrucciones de cobro, anuncios, cuenta Vancci-sloth | Actualizados; `docs/agents/anuncios.md` quitado | `AGENTS.md`, `SECURITY.md`, `README.md`, `CONTRIBUTING.md`, `docs/agents/mapa.md`, `docs/agents/publicacion.md` |
 
 Se conserva `__VENTA__` (`shared/venta.ts`): ya no implica red, solo marca la app compilada (interfaz estática, skills enlazadas).
+
+## Fase 2 — branding total (v!d by Kold.Gold) (2 nov 2026)
+
+El producto se llama **v!d by Kold.Gold** (corto: **v!d**). El «!» solo va en texto visible; todo nombre de archivo,
+carpeta o identificador técnico usa `vid-koldgold`.
+
+| Qué | Antes | Ahora | Archivos |
+| --- | --- | --- | --- |
+| Texto visible | Sloth / TazSloth / vid.kold.gold | v!d; «v!d by Kold.Gold» en bienvenida, título de ventana, diálogos e instalador | `web/src/*.tsx`, `avisos.ts`, `Redes.tsx`, `server/*`, `electron/*`, `cards.json`, skills, docs |
+| Barra lateral | `vid.kold.gold` | wordmark `v!d`: la «!» en cobre (`--metal`), el resto plata | `web/src/App.tsx`, `web/src/styles.css` |
+| Pestaña | vid.kold.gold | v!d (y «(N) v!d» con hilos sin ver) | `web/index.html`, `web/src/avisos.ts`, `server/motor.ts` |
+| Icono y wordmark | Sello anterior | `assets/icon.svg/png/ico`, `web/public/icon.svg`, `assets/wordmark.svg/png` | `assets/`, `docs/tazkore/icono-preview.png` |
+| package.json | `tazsloth` 0.3.0 | `vid-koldgold` 1.0.0 | `package.json`, `package-lock.json` |
+| appId / AppUserModelID | TazSloth.App / TazSloth.Dev | `Gold.Kold.Vid` / `Gold.Kold.Vid.Dev` | `scripts/compilar.mjs`, `electron/main.ts` |
+| Instalador | productName TazSloth, `TazSloth-Setup-*.exe` | productName, acceso y «Aplicaciones instaladas»: «v!d by Kold.Gold»; ejecutable `vid-koldgold.exe`, instalador `vid-koldgold-Setup-*.exe`, carpeta `Programs\vid-koldgold`, `vid-koldgold.desktop` | `scripts/compilar.mjs`, `scripts/ayudante/Accesos.cs`, `scripts/medir-arranque.mjs` |
+| NSIS | Textos con el nombre; borraba la entrada de desinstalar de la Sloth 0.2 | Sin «!» en el .nsh (usa `${PRODUCT_NAME}`); ya no toca la entrada de la Sloth original | `scripts/instalador.nsh` |
+| Copyright | Tazkore. Basado en Sloth de Vancci | Kold Gold SAPI · basado en Sloth de Vancci (Apache-2.0) | `scripts/compilar.mjs` |
+| Datos | `%APPDATA%\tazsloth`, `%LOCALAPPDATA%\tazsloth-dev`, `Programs\tazsloth`, Mac `TazSloth`, Linux `tazsloth` | `vid-koldgold` (dev: `vid-koldgold-dev`). El repo sigue en `C:\tazkore-sloth\data` | `server/*`, `electron/main.ts`, `scripts/*` |
+| Migrador | — | Al primer arranque COPIA la carpeta vieja a la nueva si la nueva no existe, deja `migrado-de-tazsloth.txt` y nunca borra la vieja; reescribe el `cwd` de los hilos que apuntaban al trabajo viejo (respaldo en `data/respaldo-migracion`) y copia su proyecto de Claude Code | `server/migrar.ts` (+test), `server/migrar-arranque.ts`, `server/index.ts`, `electron/main.ts` |
+| Temporales y registro | `sloth-voz.json`, `sloth-gpu.lock`, `sloth-navegador-N.lock`, `sloth.log`… | `vid-*`, `vid.log` | `skills/video-base/scripts/*`, `python/procesos/*`, `server/*`, `electron/main.ts` |
+| localStorage | `sloth-navegador*` | `vid-navegador*`, con lectura de respaldo de la clave vieja | `web/src/Navegador.tsx` |
+| Puente de la ventana | `window.sloth` (`PuenteSloth`) | `window.vid` (`PuenteVid`); `window.sloth` queda como alias del mismo puente | `electron/preload.ts`, `shared/types.ts`, `web/src/vite-env.d.ts` |
+| Eventos y nombres internos | `sloth-*`, `mcpSloth`, `rutaPythonSloth`… | `vid-*`, `mcpVid`, `rutaPythonVid`… | `web/src/*`, `server/*` |
+| Variables de entorno | `SLOTH_*` | `VID_*`; se sigue leyendo `SLOTH_*` como respaldo y el servidor exporta ambas (`VID_SKILLS`/`SLOTH_SKILLS`, `VID_URL`/`SLOTH_URL`, `VID_PROCESOS`/`SLOTH_PROCESOS`). Las del usuario (`VID_NUBE`…) caen a la `SLOTH_*` guardada | `server/index.ts`, `server/opciones.ts` (`leer`), skills Python/JS, `electron/main.ts`, `scripts/*`, `.github/workflows/comprobar.yml` |
+| Módulo de Python | `video-base/scripts/sloth.py` (`sloth()`, `python_sloth()`) | `vid.py` (`con_python()`, `python_vid()`); `sloth.py` queda como alias del módulo y `sloth`/`python_sloth` como alias de las funciones | `skills/video-base/scripts/vid.py`, `sloth.py`, todos los `from vid import` |
+| Marcas en archivos | `sloth-portada`, `sloth-pagina` | `vid-portada`, `vid-pagina`; se reconocen también las viejas | `portada.mjs`, `render_web.mjs`, `pagina.mjs`, `reglas.mjs`, `ubicar.py` |
+| Nube | Worker `sloth-redes` | `vid-redes` (sin desplegar) | `nube/wrangler.jsonc`, `server/redes/cloudflare.ts` |
+
+Se quedan a propósito: el Python compartido con la Sloth original (`%APPDATA%\youtube\piezas\python\*-sloth`), los
+módulos compartidos `%LOCALAPPDATA%\sloth-modulos`, las carpetas de la Sloth original que mira Espacio en disco, el
+referrer de Grok, el nombre del repo en GitHub (`tazkore/tazsloth`), la carpeta del repo (`C:\tazkore-sloth`), NOTICE,
+LICENSE, los créditos y los ADR.

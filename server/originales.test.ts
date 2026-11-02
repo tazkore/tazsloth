@@ -6,13 +6,13 @@ import { test } from 'node:test'
 import type { Card } from '../shared/types.ts'
 
 // skills.ts fija ~/.claude/skills y la original al cargarse: van a una carpeta de prueba antes de importarlo. Como en la
-// app que se vende, los agentes leen las skills de ~/.claude/skills (`SLOTH_SKILLS`).
-const casa = mkdtempSync(join(tmpdir(), 'sloth-originales-'))
+// app que se vende, los agentes leen las skills de ~/.claude/skills (`VID_SKILLS`).
+const casa = mkdtempSync(join(tmpdir(), 'vid-originales-'))
 process.env.HOME = casa
 process.env.USERPROFILE = casa
-process.env.SLOTH_SKILLS = join(casa, '.claude', 'skills')
+process.env.VID_SKILLS = join(casa, '.claude', 'skills')
 const originales = join(casa, 'resources', 'skills')
-process.env.SLOTH_SKILLS_ORIGINALES = originales
+process.env.VID_SKILLS_ORIGINALES = originales
 const { cambiosDeCard, volverAOriginal } = await import('./skills.ts')
 const { cambiosDe, huellas, quitarViejos } = await import('./originales.ts')
 
@@ -66,7 +66,7 @@ test('la card dice qué cambiaste en su skill y en video-base, y vuelve a la ori
 })
 
 test('ver qué cambió no detiene el servidor, y ve lo que cambia después aunque mida lo mismo', async (t) => {
-  const raiz = mkdtempSync(join(tmpdir(), 'sloth-huellas-'))
+  const raiz = mkdtempSync(join(tmpdir(), 'vid-huellas-'))
   t.after(() => rmSync(raiz, { recursive: true, force: true }))
   for (const base of ['original', 'actual']) for (let i = 0; i < 200; i++) escribir(join(raiz, base, `${i}.md`), `texto ${i}\n`)
   const ver = async () => {
@@ -94,7 +94,7 @@ test('ver qué cambió no detiene el servidor, y ve lo que cambia después aunqu
 })
 
 test('al estrenar una versión se va lo que ya no trae, pero no lo que cambiaste ni lo tuyo', (t) => {
-  const raiz = mkdtempSync(join(tmpdir(), 'sloth-viejos-'))
+  const raiz = mkdtempSync(join(tmpdir(), 'vid-viejos-'))
   t.after(() => rmSync(raiz, { recursive: true, force: true }))
   const vieja = join(raiz, 'vieja')
   const nueva = join(raiz, 'nueva')
@@ -119,6 +119,6 @@ test('al estrenar una versión se va lo que ya no trae, pero no lo que cambiaste
   assert.equal(readFileSync(join(actual, 'video-el-diff', 'scripts', 'voz.py'), 'utf8'), 'print(3)\n')
   assert.ok(existsSync(join(actual, 'video-el-diff', 'huellas', 'registro.jsonl')))
   assert.ok(existsSync(join(actual, 'video-el-diff', 'SKILL.md')))
-  // Sin la lista de la versión de antes, no se sabe qué era de Sloth: no se quita nada.
+  // Sin la lista de la versión de antes, no se sabe qué era de v!d: no se quita nada.
   assert.deepEqual(quitarViejos({}, nueva, actual), [])
 })

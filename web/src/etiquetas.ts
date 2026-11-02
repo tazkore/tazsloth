@@ -2,9 +2,10 @@
 
 /** La referencia a otro hilo que copia el menú de la barra lateral. Al agente le llega tal cual; a la vista, como etiqueta. */
 export function threadRef(title: string, id: string, app: string): string {
-  return `Hilo de Sloth «${title}» (id ${id}), su historial está en ${app}\\data\\sessions\\${id}.jsonl`
+  return `Hilo de v!d «${title}» (id ${id}), su historial está en ${app}\\data\\sessions\\${id}.jsonl`
 }
-export const THREAD = /Hilo de Sloth «(.*?)» \(id \w+\), su historial está en [^\n]*?\.jsonl/
+// Acepta también las de antes de la Fase 2 («Hilo de Sloth»), que siguen en historiales viejos.
+export const THREAD = /Hilo de (?:v!d|Sloth) «(.*?)» \(id \w+\), su historial está en [^\n]*?\.jsonl/
 
 /** El globo de diálogo que distingue la etiqueta de un hilo cuando ya no se sabe de qué card es (hilo borrado). */
 export const THREAD_ICON = 'M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z'
@@ -35,7 +36,7 @@ export const QUOTE_ICON =
   'M16 3a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2 1 1 0 0 1 1 1v1a2 2 0 0 1-2 2 1 1 0 0 0-1 1v2a1 1 0 0 0 1 1 6 6 0 0 0 6-6V5a2 2 0 0 0-2-2zM5 3a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2 1 1 0 0 1 1 1v1a2 2 0 0 1-2 2 1 1 0 0 0-1 1v2a1 1 0 0 0 1 1 6 6 0 0 0 6-6V5a2 2 0 0 0-2-2z'
 
 /** El aviso con el que la conversación le pasa una cita al compositor. */
-export const QUOTE_EVENT = 'sloth:cita'
+export const QUOTE_EVENT = 'vid:cita'
 
 
 /** Lo que enseña la etiqueta de un enlace: el sitio, y el resto en gris. */

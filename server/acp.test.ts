@@ -21,7 +21,7 @@ process.stdin.on('data', (d) => {
   while ((i = resto.indexOf('\\n')) >= 0) {
     const m = JSON.parse(resto.slice(0, i))
     resto = resto.slice(i + 1)
-    // La respuesta de Sloth al permiso: con ella acaba el turno.
+    // La respuesta de v!d al permiso: con ella acaba el turno.
     if (m.id === 900 && !m.method) {
       pedidos.push('permiso ' + m.result.outcome.optionId)
       const u = (update) => decir({ method: 'session/update', params: { sessionId: 's1', update } })
@@ -50,7 +50,7 @@ process.stdin.on('data', (d) => {
       const texto = m.params.prompt[0].text
       const u = (update) => decir({ method: 'session/update', params: { sessionId: 's1', update } })
       u({ sessionUpdate: 'agent_thought_chunk', content: { type: 'text', text: 'pienso' } })
-      u({ sessionUpdate: 'agent_message_chunk', content: { type: 'text', text: texto.includes('<sloth>') ? 'con instrucciones' : 'sin instrucciones' } })
+      u({ sessionUpdate: 'agent_message_chunk', content: { type: 'text', text: texto.includes('<vid>') ? 'con instrucciones' : 'sin instrucciones' } })
       u({ sessionUpdate: 'tool_call', toolCallId: 't1', title: 'Run echo', kind: 'execute', status: 'pending', rawInput: { command: 'echo hola' } })
       decir({ id: 900, method: 'session/request_permission', params: { sessionId: 's1', options: [{ optionId: 'always-allow', kind: 'allow_always' }, { optionId: 'allow-once', kind: 'allow_once' }] } })
     }
@@ -58,7 +58,7 @@ process.stdin.on('data', (d) => {
 })
 `
 
-const SCRIPT = join(mkdtempSync(join(tmpdir(), 'sloth-acp-')), 'agente.mjs')
+const SCRIPT = join(mkdtempSync(join(tmpdir(), 'vid-acp-')), 'agente.mjs')
 writeFileSync(SCRIPT, AGENTE)
 
 function correr(env: Record<string, string> = {}) {

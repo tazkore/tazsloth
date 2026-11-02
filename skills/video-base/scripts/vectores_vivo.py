@@ -1,11 +1,11 @@
 """
-El modelo de vectores de Sloth (multilingual-e5, `python/procesos/vectores.py`) cargado y esperando, para que cada
+El modelo de vectores de v!d (multilingual-e5, `python/procesos/vectores.py`) cargado y esperando, para que cada
 `huellas.py` no lo cargue otra vez: con el proceso de siempre, buscar o revisar un texto nuevo tarda ~18 s (importar
 torch y leer el modelo); aquí, menos de un segundo.
 
-Lo arranca `vectorizar()` de sloth.py la primera vez que hace falta (y `nuevo.py`, al crear un video, para que ya esté
-listo). Corre con el Python de Sloth, escucha en un puerto local que anota en %TEMP%/sloth-vectores.json y se cierra
-solo tras 10 min sin pedidos. Cada pedido es una línea JSON como la entrada de un proceso de Sloth
+Lo arranca `vectorizar()` de vid.py la primera vez que hace falta (y `nuevo.py`, al crear un video, para que ya esté
+listo). Corre con el Python de v!d, escucha en un puerto local que anota en %TEMP%/vid-vectores.json y se cierra
+solo tras 10 min sin pedidos. Cada pedido es una línea JSON como la entrada de un proceso de v!d
 (`{"files": [...], "options": {...}}`) y contesta otra con la respuesta de `vectores.process`, o `{"error": "..."}`.
 
 Siempre en el procesador: los pedidos de huellas son pocos textos (vectores.py usa la tarjeta desde 64), y así no
@@ -20,9 +20,9 @@ import tempfile
 import time
 from pathlib import Path
 
-# Como en sloth.py: los de SLOTH_PROCESOS o, sin ella, los de la app donde vive esta skill.
-PROCESOS = Path(os.environ.get("SLOTH_PROCESOS") or Path(__file__).resolve().parents[3] / "python" / "procesos")
-PUERTO = Path(tempfile.gettempdir()) / "sloth-vectores.json"
+# Como en vid.py: los de VID_PROCESOS o, sin ella, los de la app donde vive esta skill.
+PROCESOS = Path(os.environ.get("VID_PROCESOS") or os.environ.get("SLOTH_PROCESOS") or Path(__file__).resolve().parents[3] / "python" / "procesos")
+PUERTO = Path(tempfile.gettempdir()) / "vid-vectores.json"
 # Ocupa ~1 GB: se va antes de los renders (las búsquedas de un video caen en sus primeros minutos).
 INACTIVO = 10 * 60
 
@@ -56,7 +56,7 @@ def main() -> None:
     servidor.listen(8)
     servidor.settimeout(60)
     # Carga el modelo antes de anunciarse: el primer pedido ya no espera.
-    from sloth import MODELOS as modelos
+    from vid import MODELOS as modelos
     if vectores.E5.installed(modelos):
         vectores.encode(["query: hola"], vectores.E5.folder(modelos), "cpu")
     temporal = PUERTO.with_suffix(".tmp")

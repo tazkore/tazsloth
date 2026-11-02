@@ -71,7 +71,7 @@ test('los eventos de la página llegan a cada sesión de página, y no antes de 
   assert.deepEqual(
     salida.map((m) => [m.method, m.sessionId]),
     [
-      ['Page.loadEventFired', 'sloth-pagina'],
+      ['Page.loadEventFired', 'vid-pagina'],
       ['Page.loadEventFired', otra],
       ['Runtime.consoleAPICalled', 'MARCO-1'],
       ['Browser.downloadWillBegin', undefined]

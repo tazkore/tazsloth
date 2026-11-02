@@ -27,9 +27,9 @@ queda fuera.
 Primero el SMP y luego el material: investigar y capturar todo el video antes de elegir era lo que más tardaba, y casi
 todo se quedaba fuera del short.
 
-1. **Proyecto.** `python <skill>/scripts/nuevo.py <Carpeta>` si el mensaje trae la línea `Carpeta:` (la pone Sloth);
+1. **Proyecto.** `python <skill>/scripts/nuevo.py <Carpeta>` si el mensaje trae la línea `Carpeta:` (la pone v!d);
    si no, `python <skill>/scripts/nuevo.py <tema-corto>`. No escribas `shorts.md`: este hilo es el short, y así
-   el panel de Sloth enseña sus etapas (Guion, Tu voz, Escenas…). Listo cuando la carpeta existe.
+   el panel de v!d enseña sus etapas (Guion, Tu voz, Escenas…). Listo cuando la carpeta existe.
 2. **Fuentes, sin el agente de pantalla.** Del paso 2 de la fase 1 de [`SKILL.md`](SKILL.md), `fuente.py` y la
    transcripción completa. El agente de pantalla todavía no: aún no sabes qué minutos vas a contar. Listo cuando tienes
    la transcripción.
@@ -45,10 +45,10 @@ todo se quedaba fuera del short.
 
 ## El plan
 
-1. **Proyecto.** Con la línea `Carpeta:` (la pone Sloth, también en un lote), `python <skill>/scripts/nuevo.py
+1. **Proyecto.** Con la línea `Carpeta:` (la pone v!d, también en un lote), `python <skill>/scripts/nuevo.py
    <Carpeta>`. Si no, `python <skill>/scripts/nuevo.py <tema-corto>` (por ejemplo `mistral-large-4`). Esa carpeta es el
    plan: la de cada short será `<plan>-s1`, `<plan>-s2`... Escribe ya `shorts.md` con el tema en un renglón: así el
-   panel de Sloth sabe que este hilo es un plan y enseña sus etapas. Listo cuando la carpeta y `shorts.md` existen.
+   panel de v!d sabe que este hilo es un plan y enseña sus etapas. Listo cuando la carpeta y `shorts.md` existen.
 2. **Fuentes.** El paso 2 de la fase 1 de [`SKILL.md`](SKILL.md): `fuente.py`, la transcripción completa y el agente de
    pantalla. Listo cuando sabes en qué segundo pasa cada cosa que vale la pena contar.
 3. **Investigación y material.** El paso 3 de la fase 1, con las capturas para el celular de
@@ -62,12 +62,12 @@ todo se quedaba fuera del short.
    por minuto): si no cabe, pártelo o quítale puntos. Cada short se entiende solo, sin haber visto los otros. Escribe:
    - `shorts.md`, para el usuario. Por cada short: su SMP, sus cinco puntos con su fuente, el gancho del primer segundo
      y por qué es un short aparte. Al final, lo que dejaste fuera y por qué.
-   - `shorts.json`, para Sloth: `{"shorts": [{"id": "s1", "titulo": "...", "smp": "...", "puntos": ["...", "..."],
+   - `shorts.json`, para v!d: `{"shorts": [{"id": "s1", "titulo": "...", "smp": "...", "puntos": ["...", "..."],
      "gancho": "..."}]}`. El `titulo` es como se ve en la lista del panel: seis palabras como mucho.
 
    Listo cuando cada dato de `material.md` está en un punto de algún SMP o en lo que dejaste fuera.
 5. **Entrega.** Di cuántos shorts propones y por qué ese número, y termina. El usuario los aprueba en la etapa «Shorts»
-   del panel, todos o los que elija, y Sloth abre un hilo por cada uno. En un lote también terminas aquí: es la única
+   del panel, todos o los que elija, y v!d abre un hilo por cada uno. En un lote también terminas aquí: es la única
    vez que el lote espera al usuario.
 
 ## Un short

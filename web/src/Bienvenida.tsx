@@ -5,7 +5,7 @@ import { CuentaChatGPT, CuentaClaude, CuentaOpenCode, Requisitos } from './Opcio
 import './Bienvenida.css'
 
 const VISTA = 'bienvenida'
-const EVENTO = 'sloth-bienvenida'
+const EVENTO = 'vid-bienvenida'
 
 /** Todos los agentes, según haya que pagar para usarlos. Los del rango gratis no son gratis: su uso gratis tiene límites. */
 const OPCIONES = [
@@ -35,7 +35,7 @@ const OPCIONES = [
 export const abrirBienvenida = () => dispatchEvent(new Event(EVENTO))
 
 /**
- * La bienvenida: sale la primera vez que se abre Sloth y luego desde Opciones. Dice qué hace, qué hace falta (con lo
+ * La bienvenida: sale la primera vez que se abre v!d y luego desde Opciones. Dice qué hace, qué hace falta (con lo
  * que falta a la vista, para hacerlo ahí mismo), cómo va un video, cuánto tarda y qué cuesta.
  */
 export function Bienvenida() {
@@ -44,7 +44,7 @@ export function Bienvenida() {
   const [chatgpt, setChatgpt] = useState<boolean>()
   const [opencode, setOpencode] = useState<boolean>()
   const [listo, setListo] = useState<boolean>()
-  // En la app instalada en Windows: si Sloth está anclada a la barra de tareas. `null`, aquí no se ofrece.
+  // En la app instalada en Windows: si v!d está anclada a la barra de tareas. `null`, aquí no se ofrece.
   const [anclada, setAnclada] = useState<boolean | null>(null)
   const [anclando, setAnclando] = useState(false)
   const [sinPermiso, setSinPermiso] = useState(false)
@@ -55,7 +55,7 @@ export function Bienvenida() {
     return () => removeEventListener(EVENTO, abrir)
   }, [])
   useEffect(() => {
-    if (abierta) void window.sloth?.anclada().then(setAnclada, () => {})
+    if (abierta) void window.vid?.anclada().then(setAnclada, () => {})
   }, [abierta])
   useEffect(() => {
     if (!abierta) return
@@ -67,7 +67,7 @@ export function Bienvenida() {
   /** Windows pregunta en su ventana; si no deja pedirlo, se dice cómo hacerlo a mano. */
   async function anclar() {
     setAnclando(true)
-    const r = await window.sloth!.anclar().catch(() => 'windows' as const)
+    const r = await window.vid!.anclar().catch(() => 'windows' as const)
     setAnclando(false)
     if (r === 'anclada') setAnclada(true)
     setSinPermiso(r === 'windows')
@@ -85,9 +85,9 @@ export function Bienvenida() {
         <header>
           <img src="/icon.svg" alt="" />
           <div>
-            <h2>Te damos la bienvenida a vid.kold.gold</h2>
+            <h2>Te damos la bienvenida a v!d by Kold.Gold</h2>
             <p>
-              vid.kold.gold hace videos con Claude, con ChatGPT, con OpenCode y otros agentes. Eliges un estilo, le das un tema o un enlace, y
+              v!d hace videos con Claude, con ChatGPT, con OpenCode y otros agentes. Eliges un estilo, le das un tema o un enlace, y
               lo ves trabajar paso a paso: investiga, escribe el guion, te pide tu voz y arma el video.
             </p>
           </div>
@@ -95,7 +95,7 @@ export function Bienvenida() {
 
         {/* Con uno basta. Con ChatGPT, además, hace las imágenes de los videos. */}
         <Paso n={1} titulo="Elige con qué trabaja" hecho={claude || chatgpt || opencode}>
-          Con uno basta, y vid.kold.gold no te cobra aparte. Todos se conectan en Opciones → Agentes; Pi usa el plan o la llave que le
+          Con uno basta, y v!d no te cobra aparte. Todos se conectan en Opciones → Agentes; Pi usa el plan o la llave que le
           conectes.
           {OPCIONES.map(({ titulo, nota, agentes }) => (
             <div className="opcion" key={titulo}>
@@ -123,8 +123,8 @@ export function Bienvenida() {
           <Requisitos onListo={setListo} />
         </Paso>
         {anclada !== null && (
-          <Paso n={3} titulo="Ten vid.kold.gold a mano (opcional)" hecho={anclada}>
-            {anclada ? 'vid.kold.gold está anclada a la barra de tareas.' : 'Ánclala a la barra de tareas para abrirla con un clic.'}
+          <Paso n={3} titulo="Ten v!d a mano (opcional)" hecho={anclada}>
+            {anclada ? 'v!d está anclada a la barra de tareas.' : 'Ánclala a la barra de tareas para abrirla con un clic.'}
             {!anclada && (
               <div className="anclar">
                 <button className="boton" disabled={anclando} onClick={() => void anclar()}>
@@ -132,7 +132,7 @@ export function Bienvenida() {
                 </button>
                 {sinPermiso && (
                   <p className="small">
-                    Windows no dejó anclarla desde aquí. Haz clic derecho en el icono de vid.kold.gold en la barra de tareas y elige
+                    Windows no dejó anclarla desde aquí. Haz clic derecho en el icono de v!d en la barra de tareas y elige
                     «Anclar a la barra de tareas».
                   </p>
                 )}
@@ -141,7 +141,7 @@ export function Bienvenida() {
           </Paso>
         )}
         <Paso n={anclada === null ? 3 : 4} titulo="Haz tu primer video">
-          Elige un estilo, escribe el tema o pega un enlace y pulsa <b>↑</b>. Cuando el guion está listo, vid.kold.gold te pide tu voz:
+          Elige un estilo, escribe el tema o pega un enlace y pulsa <b>↑</b>. Cuando el guion está listo, v!d te pide tu voz:
           grábalo con el celular y súbelo en la etapa «Tu voz». Luego arma el video y lo revisa. El Diff tarda de una a dos
           horas; el Video explicativo, unos 40 minutos. Cuando acaba, lo descargas desde el video o en «Mis videos».
         </Paso>

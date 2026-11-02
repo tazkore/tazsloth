@@ -11,7 +11,7 @@ import { guardarSecreto, leerSecreto } from './secretos.ts'
  *
  * Las llaves van en `data/agentes.json`, cifradas con AES-256-GCM (`secretos.ts`), no en las variables del usuario: ahí las leerían también su Claude Code y su
  * Codex de la terminal, que dejarían de usar su suscripción.
- * - Claude: Claude Code usa `ANTHROPIC_API_KEY` antes que la cuenta. Va en el entorno de Sloth, que heredan todos sus
+ * - Claude: Claude Code usa `ANTHROPIC_API_KEY` antes que la cuenta. Va en el entorno de v!d, que heredan todos sus
  *   `query` y `claude auth status`; con la cuenta se quita, también si venía de fuera.
  * - Codex: el app-server usa un proveedor propio que la lee de su entorno (`codexConLlave`), así el inicio de sesión de
  *   ChatGPT queda como estaba. `codex exec` de las skills (las imágenes) la lee de `CODEX_API_KEY`. Cada hilo sigue con
@@ -24,8 +24,8 @@ import { guardarSecreto, leerSecreto } from './secretos.ts'
 const ARCHIVO = join(resolve(dirname(fileURLToPath(import.meta.url)), '..'), 'data', 'agentes.json')
 const ENTORNO = { claude: 'ANTHROPIC_API_KEY', codex: 'CODEX_API_KEY' } as const
 /** El proveedor de Codex con la llave, y la variable de donde la lee. */
-const CODEX_API = 'sloth-api'
-const CODEX_ENV = 'SLOTH_OPENAI_API_KEY'
+const CODEX_API = 'vid-api'
+const CODEX_ENV = 'VID_OPENAI_API_KEY'
 
 /** `prestar`: el agente (Pi) usa las llaves que guardaste para los demás (`entornoAgente`). */
 type Guardado = Partial<Record<Proveedor, { llave?: string; api?: boolean; prestar?: boolean }>>
@@ -57,7 +57,7 @@ export function llaveEnUso(p: Proveedor) {
 }
 
 /**
- * El entorno de Sloth sin las llaves que puso él (`aplicar`): las de Claude y Codex son para ellos. Pi, por ejemplo, usa
+ * El entorno de v!d sin las llaves que puso él (`aplicar`): las de Claude y Codex son para ellos. Pi, por ejemplo, usa
  * `ANTHROPIC_API_KEY` si la ve, y cobraría en tu llave de Anthropic sin que lo eligieras.
  */
 export function entornoSinLlaves(): NodeJS.ProcessEnv {
@@ -80,7 +80,7 @@ export function llavesPrestadas(p: Proveedor) {
   return env
 }
 
-/** El entorno de un agente nuevo: sin las llaves de Sloth (`entornoSinLlaves`), salvo las que le prestaste. */
+/** El entorno de un agente nuevo: sin las llaves de v!d (`entornoSinLlaves`), salvo las que le prestaste. */
 export const entornoAgente = (p: Proveedor): NodeJS.ProcessEnv => ({ ...entornoSinLlaves(), ...llavesPrestadas(p) })
 
 /** Lo que Opciones enseña de las llaves que se le pueden prestar a `p`: si se le prestan y de quién son. */

@@ -7,7 +7,7 @@ import { fileURLToPath } from 'node:url'
 import { esOutlier, idiomaDe } from '../../shared/ideas.ts'
 import type { Temas, Transcripcion, VideoYT } from '../../shared/types.ts'
 import { guardar } from '../disco.ts'
-import { rutaPythonSloth } from '../requisitos.ts'
+import { rutaPythonVid } from '../requisitos.ts'
 import type { Ctx } from './investigar.ts'
 import { enLineas } from './resumen.ts'
 import { Detenido } from './youtube.ts'
@@ -22,7 +22,7 @@ import { Detenido } from './youtube.ts'
  *   que cambia, porque llegó su transcripción, se vuelve a vectorizar; los demás no);
  * - `temas.json`: los temas (`Temas`).
  *
- * Son un extra: sin el Python de Sloth, o si el modelo no se puede bajar (la primera vez, unos 490 MB), un paso lo dice y
+ * Son un extra: sin el Python de v!d, o si el modelo no se puede bajar (la primera vez, unos 490 MB), un paso lo dice y
  * la investigación sigue.
  */
 
@@ -98,8 +98,8 @@ function leerVectores(carpeta: string): { indice: Indice; filas: Float32Array } 
  * estaba y no lanza nada; solo `Detenido`, si se detiene la investigación.
  */
 export async function vectorizar(carpeta: string, videos: VideoYT[], ctx: Pick<Ctx, 'paso' | 'avance' | 'signal'>): Promise<void> {
-  const python = rutaPythonSloth()
-  if (!python) return void ctx.paso('temas', 'Sin el Python de Sloth no agrupo los videos por tema.', 'Instálalo en Opciones, en lo que necesitan los estilos.')
+  const python = rutaPythonVid()
+  if (!python) return void ctx.paso('temas', 'Sin el Python de v!d no agrupo los videos por tema.', 'Instálalo en Opciones, en lo que necesitan los estilos.')
   ctx.avance(0, 1, 'Temas · lo que dice cada video')
   const textos = videos.map((v) => ({ v, ...dicho(carpeta, v) })).filter((t) => t.texto)
   let { indice, filas } = leerVectores(carpeta)
@@ -109,7 +109,7 @@ export async function vectorizar(carpeta: string, videos: VideoYT[], ctx: Pick<C
     const i = fila.get(t.v.id)
     return i === undefined || indice.huellas[i] !== h ? [{ ...t, huella: h }] : []
   })
-  const tmp = mkdtempSync(join(tmpdir(), 'sloth-vectores-'))
+  const tmp = mkdtempSync(join(tmpdir(), 'vid-vectores-'))
   try {
     if (faltan.length) {
       const fase = `Temas · vectorizando ${num(faltan.length)} videos`
@@ -208,9 +208,9 @@ export async function parecidos(
     if (i < 0) throw new Error(`El video ${consulta.id} aún no tiene vector: se hace al investigar.`)
     q = filas.subarray(i * dim, (i + 1) * dim)
   } else if (consulta.texto?.trim()) {
-    const python = rutaPythonSloth()
-    if (!python) throw new Error('Sin el Python de Sloth no puedo vectorizar el texto: busca con el id de un video.')
-    const tmp = mkdtempSync(join(tmpdir(), 'sloth-vectores-'))
+    const python = rutaPythonVid()
+    if (!python) throw new Error('Sin el Python de v!d no puedo vectorizar el texto: busca con el id de un video.')
+    const tmp = mkdtempSync(join(tmpdir(), 'vid-vectores-'))
     try {
       const entrada = join(tmp, 'consulta.jsonl')
       const salida = join(tmp, 'consulta.bin')
@@ -233,7 +233,7 @@ export async function parecidos(
 }
 
 /**
- * Corre `vectores.py` con el Python de Sloth y sus banderas, y devuelve su respuesta. `avance` recibe lo que lleva, de 0 a
+ * Corre `vectores.py` con el Python de v!d y sus banderas, y devuelve su respuesta. `avance` recibe lo que lleva, de 0 a
  * 1, y `linea`, cada línea que no es de avance (avisos). Si falla, con su última línea de error; si se detiene la
  * investigación, lo mata.
  */

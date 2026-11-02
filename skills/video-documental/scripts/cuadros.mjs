@@ -48,7 +48,7 @@ if (!cuadros.length) {
 const desdeProyecto = createRequire(join(raiz, 'package.json'))
 const { openBrowser, renderStill, selectComposition } = desdeProyecto('@remotion/renderer')
 // Empaqueta en una carpeta de %TEMP% que se borra al terminar (video-base): cada revisión dejaba una de 1.15 GB.
-const { empaquetar } = createRequire(import.meta.url)(join(process.env.SLOTH_SKILLS || join(homedir(), '.claude', 'skills'), 'video-base', 'scripts', 'remotion.cjs'))
+const { empaquetar } = createRequire(import.meta.url)(join(process.env.VID_SKILLS || process.env.SLOTH_SKILLS || join(homedir(), '.claude', 'skills'), 'video-base', 'scripts', 'remotion.cjs'))
 
 const salida = join(raiz, 'revision', 'cuadros')
 rmSync(salida, { recursive: true, force: true })
@@ -66,7 +66,7 @@ await navegador.close({ silent: true })
 soltar()
 
 // Las hojas, de 16 en 16, con hoja.mjs de video-base.
-const hoja = join(process.env.SLOTH_SKILLS || join(homedir(), '.claude', 'skills'), 'video-base', 'scripts', 'hoja.mjs')
+const hoja = join(process.env.VID_SKILLS || process.env.SLOTH_SKILLS || join(homedir(), '.claude', 'skills'), 'video-base', 'scripts', 'hoja.mjs')
 for (const h of ['01', '02', '03', '04', '05', '06', '07', '08', '09'].map((n) => join(raiz, 'revision', `hoja-${n}.png`))) rmSync(h, { force: true })
 for (let i = 0; i * 16 < cuadros.length; i++) {
   const tanda = cuadros.slice(i * 16, i * 16 + 16)

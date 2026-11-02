@@ -139,7 +139,7 @@ export const eventos = {
 
   /**
    * Con el WebSocket cerrado no llega nada: al volver, todo lo guardado puede ir atrasado y se vuelve a pedir. El abierto
-   * se sigue viendo como estaba hasta que llega (`viejas`). `true` se dice cuando ya se leyó el estado de Sloth.
+   * se sigue viendo como estaba hasta que llega (`viejas`). `true` se dice cuando ya se leyó el estado de v!d.
    */
   conexion(si: boolean) {
     conectado = si

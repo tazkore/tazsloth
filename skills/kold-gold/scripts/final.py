@@ -15,7 +15,7 @@ Borrador (~1.5 min), en dos mitades para mirar la primera mientras se hace la se
 
 Final (~2 min):
 1. Renderiza con Remotion (render.cjs, que codifica mientras dibuja) directo a out/<carpeta>.mp4, que es lo que busca
-   la etapa «Video» de Sloth: H.264 crf 14 (preset veryfast), yuv420p y bt709. El 3D va con la tarjeta de video
+   la etapa «Video» de v!d: H.264 crf 14 (preset veryfast), yuv420p y bt709. El 3D va con la tarjeta de video
    (ANGLE); si va por software, render.cjs lo avisa. Antes iba con slow y crf 16: con 300 cuadros del de Ledger (27 de
    octubre), veryfast con crf 14 se ve igual (SSIM 0,9935 contra 0,9931, contra uno casi sin pérdida), tarda un 30 %
    menos con 6 Chrome y con 2 (el codificador deja de quitarle procesador al dibujo) y pesa un 33 % más.

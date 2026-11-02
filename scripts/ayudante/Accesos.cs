@@ -1,4 +1,4 @@
-// El ancla de Sloth en la barra de tareas (Ayudante.cs), por lo que usan Edge y Firefox en los Windows de antes de
+// El ancla de v!d en la barra de tareas (Ayudante.cs), por lo que usan Edge y Firefox en los Windows de antes de
 // TaskbarManager (electron/barra.ts).
 // C# 5 para el csc de .NET Framework 4: sin $"" ni ?.
 using System;
@@ -10,12 +10,12 @@ using System.Text;
 static class Accesos
 {
     /** El acceso del menú Inicio (`shortcutName` en scripts/compilar.mjs). */
-    public static string Inicio { get { return Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Programs), "TazSloth.lnk"); } }
+    public static string Inicio { get { return Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Programs), "v!d by Kold.Gold.lnk"); } }
 
     /** Lo anclado a la barra de tareas es un acceso en esta carpeta (Windows la crea con el primero). */
     static string Anclados { get { return Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), @"Microsoft\Internet Explorer\Quick Launch\User Pinned\TaskBar"); } }
 
-    /** El acceso anclado a la barra de tareas que abre `exe`, o `null` si Sloth no está anclada. */
+    /** El acceso anclado a la barra de tareas que abre `exe`, o `null` si v!d no está anclada. */
     public static string Anclado(string exe)
     {
         if (!Directory.Exists(Anclados)) return null;
@@ -35,7 +35,7 @@ static class Accesos
     }
 
     /**
-     * Ancla Sloth sin preguntar (lo pidió su botón), con IPinnedList3: sirve en Windows 10 y en 11 hasta 23H2. Después
+     * Ancla v!d sin preguntar (lo pidió su botón), con IPinnedList3: sirve en Windows 10 y en 11 hasta 23H2. Después
      * Windows lo ignora sin decir nada: si quedó anclada se sabe con `Anclado`.
      */
     public static void Anclar()
@@ -43,7 +43,7 @@ static class Accesos
         Modificar(null, Inicio);
     }
 
-    /** Quita a Sloth de la barra de tareas, si estaba: al desinstalar quedaría un ancla rota. */
+    /** Quita a v!d de la barra de tareas, si estaba: al desinstalar quedaría un ancla rota. */
     public static void Desanclar(string exe)
     {
         string anclado = Anclado(exe);

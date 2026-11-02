@@ -25,7 +25,7 @@ import { integrado } from '../navegador-agente.ts'
  * sesión de Google no la tiene ningún agente. Google no deja iniciar sesión dentro de una app, así que se entra en Edge
  * (Chrome en Mac y Linux) con su perfil, `data/voz/perfil`, y las cookies de Google pasan a la página (`copiarSesion`).
  * Si la página la pierde, se vuelven a pasar de Edge sin preguntar; solo si Edge también la perdió hay que volver a
- * entrar. Sin la ventana de Sloth (Sloth en Edge), se genera en ese Edge, sin ventana. Probado el 29 de octubre de 2026:
+ * entrar. Sin la ventana de v!d (v!d en Edge), se genera en ese Edge, sin ventana. Probado el 29 de octubre de 2026:
  * Google acepta en la app la sesión copiada, y una frase sale en unos 4 s; un guion de 6 minutos, en unos 100 s.
  *
  * Una voz a la vez, en fila: los videos de un lote no se pisan la página. El WAV (24 kHz, mono) lo baja el botón
@@ -58,7 +58,7 @@ export function voz(app: string) {
   const carpeta = join(app, 'data', 'voz')
   const descargas = join(carpeta, 'descargas')
   // El perfil del Edge donde se entra con Google. El del script viejo de El Diff ya tiene la sesión: se usa mientras no
-  // haya uno de Sloth.
+  // haya uno de v!d.
   const nuevo = join(carpeta, 'perfil')
   const viejo = join(process.env.LOCALAPPDATA ?? join(homedir(), '.cache'), 'video-el-diff', 'aistudio')
   const perfil = () => (existsSync(nuevo) || !existsSync(viejo) ? nuevo : viejo)
@@ -123,7 +123,7 @@ export function voz(app: string) {
   }
 
   /**
-   * Pasa la sesión de Google del Edge a la página de la app (sin la ventana de Sloth, se queda en Edge, que es donde se
+   * Pasa la sesión de Google del Edge a la página de la app (sin la ventana de v!d, se queda en Edge, que es donde se
    * genera). `false` si Edge no la tiene. Antes abre AI Studio en Edge, para que Google renueve lo que haga falta.
    */
   async function copiarSesion(): Promise<boolean> {
@@ -164,7 +164,7 @@ export function voz(app: string) {
   // ── La página de AI Studio ──────────────────────────────────────────────────────────────────────────────────────
 
   /**
-   * La página donde se trabaja: la del navegador integrado o, sin la ventana de Sloth, una pestaña del Edge sin ventana.
+   * La página donde se trabaja: la del navegador integrado o, sin la ventana de v!d, una pestaña del Edge sin ventana.
    * `bajarA` pone la carpeta de lo que baje; `soltar` la deja.
    */
   async function pagina(): Promise<{ page: Page; bajarA(carpeta: string): Promise<void>; soltar(): Promise<void> }> {
@@ -220,7 +220,7 @@ export function voz(app: string) {
         if (correo !== cuenta) (cuenta = correo), guardarCuenta()
         break
       }
-      // Sin la ventana de Sloth la página ya es la de Edge: no hay de dónde pasarla.
+      // Sin la ventana de v!d la página ya es la de Edge: no hay de dónde pasarla.
       if (intento === 0 && integrado()?.voz && (await copiarSesion().catch(() => false))) continue
       cuenta = null
       guardarCuenta()
@@ -459,7 +459,7 @@ export function voz(app: string) {
     const t = /^\/api\/voz\/trabajos\/(\w+)$/.exec(path)
     if (t && metodo === 'GET') {
       const trabajo = trabajos.get(t[1])
-      if (!trabajo) return enviar(404, { error: 'No conozco esa voz: Sloth se reinició. Vuelve a pedirla (si ya estaba hecha, sale al momento).' }), true
+      if (!trabajo) return enviar(404, { error: 'No conozco esa voz: v!d se reinició. Vuelve a pedirla (si ya estaba hecha, sale al momento).' }), true
       const hasta = Date.now() + Math.min(ESPERA_MAXIMA, Number(new URL(req.url ?? '', 'http://x').searchParams.get('esperar') ?? 0) * 1000)
       while ((trabajo.estado === 'en-fila' || trabajo.estado === 'generando') && Date.now() < hasta) await espera(500)
       return enviar(200, publico(trabajo)), true
@@ -470,17 +470,17 @@ export function voz(app: string) {
   return {
     api,
     /** Por qué no se puede reiniciar el servidor: cortaría una voz a medias. */
-    ocupado: () => (trabajando ? 'Sloth está generando una voz en AI Studio. Espera a que termine.' : null)
+    ocupado: () => (trabajando ? 'v!d está generando una voz en AI Studio. Espera a que termine.' : null)
   }
 }
 
-/** El MCP `voz` para los agentes (`mcp.mjs`): lo corre el Node de Sloth y habla con la API de este servidor. */
+/** El MCP `voz` para los agentes (`mcp.mjs`): lo corre el Node de v!d y habla con la API de este servidor. */
 export function mcpVoz(): Record<string, McpStdioServerConfig> {
   const aqui = dirname(fileURLToPath(import.meta.url))
   // Compilada (`scripts/compilar.mjs`), el servidor va en un solo archivo, server/index.mjs, y el MCP a su lado.
   const script = VENTA ? join(aqui, 'voz', 'mcp.mjs') : join(aqui, 'mcp.mjs')
-  if (!existsSync(script) || !process.env.SLOTH_URL) return {}
-  return { voz: { type: 'stdio', command: process.execPath, args: [script], env: { SLOTH_URL: process.env.SLOTH_URL, VID_TOKEN: process.env.VID_TOKEN ?? '' } } }
+  if (!existsSync(script) || !process.env.VID_URL) return {}
+  return { voz: { type: 'stdio', command: process.execPath, args: [script], env: { VID_URL: process.env.VID_URL, VID_TOKEN: process.env.VID_TOKEN ?? '' } } }
 }
 
 /** Los avisos que la página enseña, para decir por qué no generó. */

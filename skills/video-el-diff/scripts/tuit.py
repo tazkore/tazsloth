@@ -13,7 +13,7 @@ import sys
 import urllib.request
 from pathlib import Path
 
-from comun import sloth
+from comun import vid
 
 sys.stdout.reconfigure(encoding="utf-8")
 
@@ -49,7 +49,7 @@ def main() -> None:
         except Exception:
             bajar(f["url"], carpeta / f"{nombre}-foto{i}.jpg")
     if media.get("videos"):
-        sloth("-m", "yt_dlp", "-o", str((carpeta / f"{nombre}.%(ext)s").resolve()), "--no-progress", url, check=False)
+        con_python("-m", "yt_dlp", "-o", str((carpeta / f"{nombre}.%(ext)s").resolve()), "--no-progress", url, check=False)
     print("guardado en", carpeta)
 
 

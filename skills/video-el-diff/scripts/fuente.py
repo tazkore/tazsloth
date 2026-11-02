@@ -1,5 +1,5 @@
 """
-Baja un video de YouTube (o X) y lo transcribe con WhisperX, con los procesos de Sloth.
+Baja un video de YouTube (o X) y lo transcribe con WhisperX, con los procesos de v!d.
 
     python fuente.py <url> <carpeta>          p. ej. fuentes/tema  o  fuentes/estilo
 
@@ -22,7 +22,7 @@ import shutil
 import sys
 from pathlib import Path
 
-from comun import MODELOS, proceso, sloth, turno_youtube, wav16k
+from comun import MODELOS, proceso, vid, turno_youtube, wav16k
 
 YOUTUBE = re.compile(r"(?:youtube\.com/(?:watch\?(?:.*&)?v=|shorts/|live/|embed/)|youtu\.be/)([\w-]{11})")
 # Donde dejan sus fuentes los episodios: los vecinos de este (la carpeta de trabajo de la card; se corre en la raíz del
@@ -82,8 +82,8 @@ def bajar(url: str, carpeta: Path, yt: bool) -> None:
             tmp.mkdir()
             if i:
                 print("\n-- reintento con el cliente web_embedded de YouTube --")
-            # yt-dlp como módulo: el .exe de uv del Python de Sloth no arranca.
-            sloth("-m", "yt_dlp", *extra, "-f", "bv*[height<=1080][ext=mp4]+ba[ext=m4a]/b[ext=mp4]/b",
+            # yt-dlp como módulo: el .exe de uv del Python de v!d no arranca.
+            con_python("-m", "yt_dlp", *extra, "-f", "bv*[height<=1080][ext=mp4]+ba[ext=m4a]/b[ext=mp4]/b",
                   "--merge-output-format", "mp4", "-o", "video.mp4", "--write-info-json", "--no-progress", url, cwd=tmp)
             if (tmp / "video.mp4").exists() and (not yt or altura(tmp) >= MINIMO):
                 break

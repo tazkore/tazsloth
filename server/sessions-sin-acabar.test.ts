@@ -11,7 +11,7 @@ import { Sessions } from './sessions.ts'
 /** Un hilo con un agente de mentira, el reloj a mano y lo que le falta a su video en `falta`. */
 function preparar(t: test.TestContext, model = 'codex:gpt-prueba') {
   t.mock.timers.enable({ apis: ['setTimeout'] })
-  const dir = mkdtempSync(join(tmpdir(), 'sloth-sin-acabar-'))
+  const dir = mkdtempSync(join(tmpdir(), 'vid-sin-acabar-'))
   const eventos: AgentEvent[] = []
   const mandados: string[] = []
   const h = { falta: ['Video', 'Portada'] }
@@ -38,7 +38,7 @@ function preparar(t: test.TestContext, model = 'codex:gpt-prueba') {
     sessions,
     meta,
     emit,
-    /** Las veces que Sloth le pidió que siguiera. */
+    /** Las veces que v!d le pidió que siguiera. */
     pedidos: () => mandados.filter((m) => m.startsWith('Cerraste tu turno')),
     avisos: () => eventos.flatMap((e) => (e.t === 'info' ? [e.text] : [])),
     /** Un turno que trabaja y acaba (`ok`) con `texto` como último mensaje; luego pasa el rato de calma. */
@@ -51,13 +51,13 @@ function preparar(t: test.TestContext, model = 'codex:gpt-prueba') {
   })
 }
 
-test('si el agente cierra su turno con el video a medias, Sloth le pide que siga con lo que falta', (t) => {
+test('si el agente cierra su turno con el video a medias, v!d le pide que siga con lo que falta', (t) => {
   const h = preparar(t)
   h.sessions.send(h.meta.id, 'Hazme el video')
   h.turno()
   assert.equal(h.pedidos().length, 1)
   assert.match(h.pedidos()[0], /falta Video, Portada/)
-  assert.ok(h.avisos().some((a) => a.includes('Sloth le pide que siga')))
+  assert.ok(h.avisos().some((a) => a.includes('v!d le pide que siga')))
   assert.equal(h.sessions.meta(h.meta.id)?.running, true)
 })
 
@@ -108,7 +108,7 @@ test('se le pide como mucho tres veces seguidas; luego te toca a ti, y un mensaj
 })
 
 test('queFalta lee lo que falta de las etapas de la card, salvo lo que espera al usuario', (t) => {
-  const dir = mkdtempSync(join(tmpdir(), 'sloth-que-falta-'))
+  const dir = mkdtempSync(join(tmpdir(), 'vid-que-falta-'))
   t.after(() => rmSync(dir, { recursive: true, force: true }))
   const card = {
     id: 'estilo',

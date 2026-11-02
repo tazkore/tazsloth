@@ -39,7 +39,7 @@ export interface Sesion {
 
 /**
  * Lo que sabe hacer cada red. Para sumar YouTube: otro archivo como `tiktok.ts` (por su página) o `instagram.ts` (por la
- * nube de Sloth), y añadirlo a `REDES`.
+ * nube de v!d), y añadirlo a `REDES`.
  */
 export interface ModuloRed {
   id: RedId
@@ -49,7 +49,7 @@ export interface ModuloRed {
   /** Hasta cuántos días antes deja programar la red. Lo que cae más lejos espera en la cola, sin error, hasta que entre. */
   horizonteDias?: number
   /**
-   * El video se queda fuera de esta computadora desde el primer intento (Instagram, en la nube de Sloth): reintentarlo o
+   * El video se queda fuera de esta computadora desde el primer intento (Instagram, en la nube de v!d): reintentarlo o
    * quitarlo no necesita el archivo, y lo que falla se sigue viendo aunque ya lo hayas borrado del disco.
    */
   enLaNube?: boolean
@@ -57,17 +57,17 @@ export interface ModuloRed {
   token?(token: string | null): Promise<string | null>
   cuenta(nav: Navegador): Promise<Sesion>
   /**
-   * Sube el video y lo deja programado para `cuando` (`'2026-10-12 16:00'`): de ahí sale solo, con Sloth cerrado. Lanza un
-   * error si algo no quedó (`SinSesion` si la red cerró la sesión). `ref` es el nombre de esta publicación, que Sloth
+   * Sube el video y lo deja programado para `cuando` (`'2026-10-12 16:00'`): de ahí sale solo, con v!d cerrado. Lanza un
+   * error si algo no quedó (`SinSesion` si la red cerró la sesión). `ref` es el nombre de esta publicación, que v!d
    * guarda antes de subir: si la subida se corta o se pierde la respuesta, el reintento lleva la misma, y la red que la
    * usa (Instagram, en la nube) ve que ya lo tenía en vez de programarlo dos veces. `reintento`: ya hubo un intento con
-   * esa `ref`, y pudo llegar a la red aunque Sloth no se enterara. `huella`, la del video que se puso en la cola: en una
-   * red `enLaNube`, Sloth no mira el archivo antes de un reintento, y si hay que subirlo otra vez tiene que ser ese. Un
+   * esa `ref`, y pudo llegar a la red aunque v!d no se enterara. `huella`, la del video que se puso en la cola: en una
+   * red `enLaNube`, v!d no mira el archivo antes de un reintento, y si hay que subirlo otra vez tiene que ser ese. Un
    * error con `captura` (un PNG) guarda lo que se veía en la página al fallar. Si en un reintento ve que ya estaba (en
    * TikTok, con otra hora), devuelve la hora con la que quedó.
    */
   programar(nav: Navegador, p: { ruta: string; huella: string; texto: string; tags: string[]; cuando: string; ref: string; reintento: boolean }): Promise<void | { cuando: string }>
-  /** Quita de la red lo que se dejó con esa `ref`. Si falla, Sloth no la olvida: se puede volver a intentar. */
+  /** Quita de la red lo que se dejó con esa `ref`. Si falla, v!d no la olvida: se puede volver a intentar. */
   quitar?(ref: string): Promise<void>
   /**
    * Lo ya programado cambia de hora volviéndolo a programar con su `ref` (`reintento`), sin subir el video otra vez: «Pasar
@@ -75,8 +75,8 @@ export interface ModuloRed {
    */
   mueve?: boolean
   /**
-   * Lo que pasó después de programarlo, por `ref`: si ya salió o si falló (con su error). La red lo publica sin Sloth, y
-   * Sloth se entera al mirar.
+   * Lo que pasó después de programarlo, por `ref`: si ya salió o si falló (con su error). La red lo publica sin v!d, y
+   * v!d se entera al mirar.
    */
   estados?(): Promise<Record<string, { estado: 'publicado' } | { estado: 'error'; error: string }>>
 }
@@ -386,7 +386,7 @@ export function redes(app: string, sessions: Sessions, cards: () => Card[], avis
     const primero = ['short.json', 'shorts.json', 'redes.json', 'guion.md', 'shorts.md']
     const rango = (f: string) => (primero.includes(f) ? primero.indexOf(f) : primero.length)
     const textos = readdirSync(carpeta)
-      .filter((f) => /\.(md|json|txt)$/.test(f) && !/^(package|package-lock|tsconfig|sloth)\.json$/.test(f))
+      .filter((f) => /\.(md|json|txt)$/.test(f) && !/^(package|package-lock|tsconfig|vid)\.json$/.test(f))
       .map((f) => ({ f, n: tamano(join(carpeta, f)) }))
       .sort((x, y) => rango(x.f) - rango(y.f) || x.n - y.n)
     let contexto = ''

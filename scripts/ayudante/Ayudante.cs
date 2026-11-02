@@ -1,5 +1,5 @@
-// ayudante.exe: el ancla de Sloth en la barra de tareas en los Windows de antes de TaskbarManager (en los de ahora la pide
-// Sloth.exe, electron/barra.ts), y quitarla al desinstalar (scripts/instalador.nsh). Lo compila scripts/compilar.mjs y
+// ayudante.exe: el ancla de v!d en la barra de tareas en los Windows de antes de TaskbarManager (en los de ahora la pide
+// vid-koldgold.exe, electron/barra.ts), y quitarla al desinstalar (scripts/instalador.nsh). Lo compila scripts/compilar.mjs y
 // viaja en resources. Cada orden hace una cosa y sale:
 //   --anclar <exe>      la ancla; sale con 0 si quedó anclada y con 3 si Windows no dejó
 //   --desanclar <exe>   la quita

@@ -10,7 +10,7 @@ import type { Sessions } from './sessions.ts'
 import { TRABAJO_DEV } from './trabajo.ts'
 
 /**
- * Opciones → Espacio en disco: lo que Sloth y sus estilos de video dejan y ya no hace falta, y borrarlo. Lo seguro (los
+ * Opciones → Espacio en disco: lo que v!d y sus estilos de video dejan y ya no hace falta, y borrarlo. Lo seguro (los
  * temporales de Remotion, los pedazos de render de los videos terminados, las dependencias repetidas, las cachés viejas)
  * lo borra solo cada 6 horas cuando nada trabaja; lo demás (los videos bajados de internet, otro Python, los adjuntos
  * sueltos) solo con su botón. Nunca toca un video terminado, una grabación ni la carpeta de un hilo que trabaja.
@@ -33,7 +33,7 @@ const GRUPOS: Record<IdEspacio, Omit<GrupoEspacio, 'id' | 'bytes' | 'cuantos'>> 
   caches: { nombre: 'Cachés viejas del empaquetado', detalle: 'Remotion guarda una nueva cada vez que cambia algo y nunca borra las viejas. Quedan las dos más nuevas.', seguro: true },
   perfiles: { nombre: 'Perfiles viejos del navegador', detalle: 'Copias de respaldo de perfiles del navegador que ya se cambiaron.', seguro: true },
   fuentes: { nombre: 'Videos bajados de internet', detalle: 'Los originales de videos que terminaste hace más de una semana. El video final no los usa; si lo rehaces, se vuelven a bajar.', seguro: false },
-  python: { nombre: 'Otra copia del Python de Sloth', detalle: 'Una instalación vieja de la IA local (torch, Whisper) que Sloth ya no usa.', seguro: false },
+  python: { nombre: 'Otra copia del Python de v!d', detalle: 'Una instalación vieja de la IA local (torch, Whisper) que v!d ya no usa.', seguro: false },
   adjuntos: { nombre: 'Adjuntos de hilos borrados', detalle: 'Imágenes y audios que pegaste en hilos que ya no existen, de hace más de una semana.', seguro: false }
 }
 
@@ -51,7 +51,7 @@ export interface OpcionesEspacio {
   cards: () => Card[]
   /** Por qué ahora no conviene tocar nada (un agente trabajando, una subida); `null` si nada trabaja. */
   ocupado: () => string | null
-  /** La carpeta del Python de Sloth que se usa (`<piezas>/python/<id>`), si está entero; si no, null. */
+  /** La carpeta del Python de v!d que se usa (`<piezas>/python/<id>`), si está entero; si no, null. */
   python: () => Promise<string | null>
 }
 
@@ -118,7 +118,7 @@ export function espacio(o: OpcionesEspacio) {
 
     // Las carpetas compartidas: las de un package-lock que ya no es el de ninguna plantilla ni enlaza ningún video
     // (las de antes de una actualización) sobran; de las demás, solo sobran sus cachés viejas. Las que sobran, solo con el
-    // botón: otra copia de Sloth en la misma computadora (la de desarrollo y la instalada) puede tener videos enlazados ahí.
+    // botón: otra copia de v!d en la misma computadora (la de desarrollo y la instalada) puede tener videos enlazados ahí.
     const vigentes = new Set(o.cards().filter((c) => c.skill).map((c) => casaDe(c.skill!, join(o.app, 'skills', c.skill!, 'plantilla'))).filter(Boolean).map((c) => clave(c!)))
     for (const e of enlacesDeOtrasCopias()) enlazadas.add(e)
     for (const casa of casasCompartidas()) {
@@ -132,7 +132,7 @@ export function espacio(o: OpcionesEspacio) {
     for (const d of listar(datos)) for (const p of listar(join(datos, d))) if (p.startsWith('perfil-viejo')) await poner('perfiles', join(datos, d, p))
 
     if (!auto) {
-      // Otro Python de Sloth: solo si el que se usa está entero.
+      // Otro Python de v!d: solo si el que se usa está entero.
       const elegido = await o.python()
       if (elegido) {
         const pythones = dirname(elegido)
@@ -323,12 +323,13 @@ export function casaDe(skill: string, plantilla: string): string | undefined {
 }
 
 /**
- * Adónde enlazan los node_modules de los videos de las otras copias de Sloth que puede haber en la computadora (la
+ * Adónde enlazan los node_modules de los videos de las otras copias de v!d que puede haber en la computadora (la
  * instalada y la del repo, que trabaja en `TRABAJO_DEV`), que no salen en las cards de esta.
  */
 function enlacesDeOtrasCopias(): string[] {
-  // TazSloth: también la Sloth original instalada y su copia del repo, que comparten sloth-modulos.
-  return [join(LOCAL, 'Programs', 'tazsloth', 'app', 'trabajo'), join(LOCAL, 'Programs', 'sloth', 'app', 'trabajo'), join(LOCAL, 'sloth-dev', 'trabajo'), TRABAJO_DEV]
+  // v!d: también la Sloth original instalada y su copia del repo, que comparten sloth-modulos, y las carpetas de TazSloth
+  // (antes de la Fase 2), que se copiaron pero no se borran.
+  return [join(LOCAL, 'Programs', 'vid-koldgold', 'app', 'trabajo'), join(LOCAL, 'Programs', 'tazsloth', 'app', 'trabajo'), join(LOCAL, 'tazsloth-dev', 'trabajo'), join(LOCAL, 'Programs', 'sloth', 'app', 'trabajo'), join(LOCAL, 'sloth-dev', 'trabajo'), TRABAJO_DEV]
     .flatMap((raiz) => listar(raiz).flatMap((card) => listar(join(raiz, card)).map((v) => join(raiz, card, v, 'node_modules'))))
     .map(enlace)
     .filter((e): e is string => !!e)

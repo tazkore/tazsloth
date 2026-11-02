@@ -1,3 +1,5 @@
+// Primero: copia los datos de TazSloth a las carpetas de v!d, antes de que los demás módulos creen las suyas.
+import './migrar-arranque.ts'
 import { spawn } from 'node:child_process'
 import { createReadStream, createWriteStream, existsSync, mkdirSync, readdirSync, statSync, watch } from 'node:fs'
 import { createServer, type IncomingMessage, type ServerResponse } from 'node:http'
@@ -34,7 +36,7 @@ import { redes } from './redes/index.ts' // redes
 import { voz } from './voz/index.ts' // voz de AI Studio
 import { youtube } from './youtube.ts'
 import { peticionDeConfianza } from './origen.ts'
-import { asegurarYtDlp, instalandoAlgo, instalar, pythonSlothEntero, requisitos } from './requisitos.ts'
+import { asegurarYtDlp, instalandoAlgo, instalar, pythonVidEntero, requisitos } from './requisitos.ts'
 import { espacio } from './espacio.ts' // espacio en disco
 import { equipo } from './equipo.ts' // tu equipo
 import { Sessions } from './sessions.ts'
@@ -60,12 +62,16 @@ const ATTACHMENTS = join(APP, 'data', 'attachments')
 const ATTACHMENT_TYPES: Record<string, string> = { ...IMAGE_TYPES, '.wav': 'audio/wav', '.mp3': 'audio/mpeg', '.mp4': 'video/mp4', '.webm': 'video/webm' }
 /** Código de salida que le pide a `scripts/start.mjs` que vuelva a levantar el servidor. */
 const RESTART = 75
-// Los scripts de las skills buscan aquí los procesos del Python de Sloth (`sloth.py`); sin esto, los de la app de la skill.
-process.env.SLOTH_PROCESOS ??= join(APP, 'python', 'procesos')
+// Los scripts de las skills buscan aquí los procesos del Python de v!d (`vid.py`); sin esto, los de la app de la skill.
+process.env.VID_PROCESOS ??= process.env.SLOTH_PROCESOS ?? join(APP, 'python', 'procesos')
 // Y aquí las skills (`video-base`, la suya): sin esto, en ~/.claude/skills, que en la app que se vende es lo mismo.
-process.env.SLOTH_SKILLS ??= SKILLS
-// Y aquí, este servidor: el MCP de la voz (`server/voz/mcp.mjs`) y los scripts que piden algo a Sloth.
-process.env.SLOTH_URL = `http://127.0.0.1:${PORT}`
+process.env.VID_SKILLS ??= SKILLS
+// Y aquí, este servidor: el MCP de la voz (`server/voz/mcp.mjs`) y los scripts que piden algo a v!d.
+process.env.VID_URL = `http://127.0.0.1:${PORT}`
+// Los mismos con su nombre de antes (`SLOTH_*`), para las skills que aún los leen así.
+process.env.SLOTH_PROCESOS = process.env.VID_PROCESOS
+process.env.SLOTH_SKILLS = process.env.VID_SKILLS
+process.env.SLOTH_URL = process.env.VID_URL
 // Y con qué token (`server/token.ts`): sin él, el servidor no atiende `/api` ni `/ws`. Lo heredan los agentes, sus MCP y
 // los scripts de las skills.
 const TOKEN = tokenDelServidor(join(APP, 'data', 'servidor-token'))
@@ -79,7 +85,7 @@ if (VENTA) {
   enlazarSkillsCodex(APP)
 } else {
   // Desde el repo, Claude usa su propia configuración con las skills del repo (`SKILLS`), y ~/.claude queda para la
-  // Sloth instalada en esta computadora. A Codex se le pasa siempre la ruta de la skill.
+  // v!d instalada en esta computadora. A Codex se le pasa siempre la ruta de la skill.
   process.env.CLAUDE_CONFIG_DIR ??= configClaudeDev(APP)
 }
 
@@ -105,7 +111,7 @@ const sessions = new Sessions(
   // Lo que va escribiendo un `Write` solo lo pintan el estudio y el panel de etapas: a los demás hilos no se les manda.
   (sessionId, draft) => conEtapas(sessionId) && broadcast({ type: 'draft', sessionId, draft }),
   undefined,
-  // Si el agente cierra su turno con el video a medias, Sloth le pide que siga (`sinAcabar`).
+  // Si el agente cierra su turno con el video a medias, v!d le pide que siga (`sinAcabar`).
   (meta) => {
     const card = cards().find((c) => c.id === meta.cardId)
     return card ? queFalta(meta, card) : []
@@ -127,9 +133,9 @@ setInterval(() => {
 }, 60_000).unref()
 
 /**
- * Las cards de cards.json, más las tuyas (`CARDS_TUYAS`) si hay; una tuya sin `id` o con el de una de Sloth no cuenta.
+ * Las cards de cards.json, más las tuyas (`CARDS_TUYAS`) si hay; una tuya sin `id` o con el de una de v!d no cuenta.
  * Se releen solo si alguno cambió. Si quedó a medio escribir o con un error, siguen las últimas buenas: una coma de más no
- * puede dejarte sin «Detener» ni «Reiniciar backend», que pasan por aquí. Un error en las tuyas no se lleva las de Sloth.
+ * puede dejarte sin «Detener» ni «Reiniciar backend», que pasan por aquí. Un error en las tuyas no se lleva las de v!d.
  */
 let leidas: { mtime: number; cards: Card[] } | undefined
 let mala = 0 // la fecha del archivo que falló, para avisar una sola vez
@@ -139,15 +145,15 @@ function cards(): Card[] {
     const tuyas = existsSync(CARDS_TUYAS)
     mtime = statSync(CARDS).mtimeMs + (tuyas ? statSync(CARDS_TUYAS).mtimeMs : 0)
     if (leidas?.mtime !== mtime && mala !== mtime) {
-      const deSloth = readCards(CARDS, APP)
-      const ids = new Set(deSloth.map((c) => c.id))
+      const deVid = readCards(CARDS, APP)
+      const ids = new Set(deVid.map((c) => c.id))
       let suyas: Card[] = []
       try {
         if (tuyas) suyas = readCards(CARDS_TUYAS, APP).filter((c) => !ids.has(c.id)).map((c) => ({ ...c, tuya: true }))
       } catch (error) {
-        console.error(`${CARDS_TUYAS} tiene un error; van solo las cards de Sloth. ${error instanceof Error ? error.message : error}`)
+        console.error(`${CARDS_TUYAS} tiene un error; van solo las cards de v!d. ${error instanceof Error ? error.message : error}`)
       }
-      leidas = { mtime, cards: [...deSloth, ...suyas] }
+      leidas = { mtime, cards: [...deVid, ...suyas] }
     }
   } catch (error) {
     if (mala !== mtime) console.error(`cards.json tiene un error; siguen las cards de antes. ${error instanceof Error ? error.message : error}`)
@@ -174,10 +180,10 @@ const noticias = radar(APP) // radar
 // En qué fase va cada video y cuántas etapas lleva, para la barra lateral.
 avance = avances(sessions, cards, broadcast)
 // Opciones → Espacio en disco: lo que dejan los videos y ya no hace falta. Lo seguro lo borra solo, cada 6 horas.
-const disco = espacio({ app: APP, sessions, cards, ocupado, python: () => pythonSlothEntero(APP) }) // espacio en disco
+const disco = espacio({ app: APP, sessions, cards, ocupado, python: () => pythonVidEntero(APP) }) // espacio en disco
 // Opciones → Tu equipo: con qué transcribe la voz y cuánto tarda cada cosa en esta computadora.
 const maquina = equipo({ app: APP, ocupado }) // tu equipo
-// La voz de los videos, que los agentes piden a Sloth y Sloth genera en AI Studio con la cuenta de Google del usuario.
+// La voz de los videos, que los agentes piden a v!d y v!d genera en AI Studio con la cuenta de Google del usuario.
 const narrar = voz(APP) // voz de AI Studio
 
 // Si el agente (o tú) edita cards.json, las cards se actualizan solas.
@@ -211,7 +217,7 @@ function reiniciar() {
  * y, si fallaron, otra vez cuando alguien abre la app.
  *
  * Lanzar un programa suele detener el servidor unos 200 ms (docs/agents/rendimiento.md). Con todos los agentes de
- * golpe al abrir Sloth, la interfaz se quedaba sin sus datos: primero la interfaz (`TRAS_ABRIR`) y luego uno por uno.
+ * golpe al abrir v!d, la interfaz se quedaba sin sus datos: primero la interfaz (`TRAS_ABRIR`) y luego uno por uno.
  */
 const TRAS_ABRIR = 1000
 const ENTRE_AGENTES = 150
@@ -246,7 +252,7 @@ function pedirModelos() {
   })
 }
 // Al bajarse un agente, desde donde sea (Opciones, el primer mensaje de un hilo, conectar su cuenta), llegan sus modelos:
-// si no, quien actualizaba desde una versión que traía Claude Code veía el menú de modelos vacío hasta reabrir Sloth.
+// si no, quien actualizaba desde una versión que traía Claude Code veía el menú de modelos vacío hasta reabrir v!d.
 alBajarAgente(pedirModelos)
 // Codex no da dólares: sus precios de la API se bajan con cada versión de Codex (server/precios.ts).
 void cargarPreciosCodex(APP)
@@ -357,7 +363,7 @@ async function api(req: IncomingMessage, res: ServerResponse, url: URL): Promise
   }
 
   // La cuenta de los demás agentes (`server/proveedores.ts`): mirarla (`?fresco` vuelve a mirar), conectarla, dejar de
-  // esperarla, quitarla o darle las llaves de Sloth (`{usar}`). Sus modelos dependen de la cuenta: cada cambio los vuelve a pedir.
+  // esperarla, quitarla o darle las llaves de v!d (`{usar}`). Sus modelos dependen de la cuenta: cada cambio los vuelve a pedir.
   const otro = /^\/api\/(\w+)\/(cuenta|conectar|cancelar|salir|llaves)$/.exec(path)
   const o = otro && OTROS[otro[1] as Proveedor]
   if (otro && o && method === (otro[2] === 'cuenta' ? 'GET' : 'POST')) {
@@ -477,7 +483,7 @@ async function api(req: IncomingMessage, res: ServerResponse, url: URL): Promise
     const todas = cards()
     const card = todas.find((t) => t.id === id)
     if (!card) return send(res, 404, { error: 'No existe esa card' }), true
-    if (VENTA && !card.tuya) return send(res, 403, { error: 'Las cards de Sloth no se duplican ni se borran.' }), true
+    if (VENTA && !card.tuya) return send(res, 403, { error: 'Las cards de v!d no se duplican ni se borran.' }), true
     const archivo = card.tuya ? CARDS_TUYAS : CARDS
     if (action === 'duplicate') return send(res, 200, { id: duplicateCard(archivo, id) }), true
     if (card.tuya) {
@@ -717,7 +723,7 @@ function deConfianza(req: IncomingMessage): boolean {
 }
 
 server.on('request', async (req, res) => {
-  if (!deConfianza(req)) return send(res, 403, { error: 'Sloth solo atiende a su propia ventana.' })
+  if (!deConfianza(req)) return send(res, 403, { error: 'v!d solo atiende a su propia ventana.' })
   const url = new URL(req.url ?? '/', `http://${req.headers.host}`)
   try {
     if (url.pathname.startsWith('/api/')) {
@@ -756,7 +762,7 @@ const v6 = servidorTcp((socket) => server.emit('connection', socket))
 v6.on('error', () => {})
 v6.listen(PORT, '::1')
 server.listen(PORT, '127.0.0.1', () => {
-  console.log(`Sloth en http://localhost:${PORT}`)
+  console.log(`v!d en http://localhost:${PORT}`)
   setTimeout(() => {
     cargandoModelos = false
     pedirModelos()

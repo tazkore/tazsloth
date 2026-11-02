@@ -10,7 +10,7 @@ import { Sessions } from './sessions.ts'
 /** El aviso de que terminó lo de segundo plano, con un agente de mentira y el reloj a mano. */
 function preparar(t: test.TestContext, model = 'codex:gpt-prueba') {
   t.mock.timers.enable({ apis: ['setTimeout'] })
-  const dir = mkdtempSync(join(tmpdir(), 'sloth-fondo-'))
+  const dir = mkdtempSync(join(tmpdir(), 'vid-fondo-'))
   const eventos: AgentEvent[] = []
   const mandados: string[] = []
   let emitir!: AgentOptions['onEvent']
@@ -18,13 +18,13 @@ function preparar(t: test.TestContext, model = 'codex:gpt-prueba') {
     emitir = opts.onEvent
     return { send: (texto: string) => void mandados.push(texto), steer() {}, compact() {}, async interrupt() {}, close() {} }
   })
-  const meta = sessions.create({ cardId: 'sloth', cwd: dir, title: 'Prueba', model })
+  const meta = sessions.create({ cardId: 'vid', cwd: dir, title: 'Prueba', model })
   t.after(() => {
     sessions.closeAll()
     rmSync(dir, { recursive: true, force: true })
   })
   const avisos = () => eventos.filter((e) => e.t === 'info' && e.text.includes('segundo plano')).length
-  // Lo que Sloth le mandó al agente por su cuenta, sin el primer mensaje.
+  // Lo que v!d le mandó al agente por su cuenta, sin el primer mensaje.
   const despertares = () => mandados.filter((m) => m.startsWith('Terminó lo que tenías en segundo plano')).length
   /** Un turno que acaba (`ok`) con algo de fondo que termina después. */
   const turnoConFondo = (ok = true) => {

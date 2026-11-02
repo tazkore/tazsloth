@@ -26,7 +26,7 @@ export interface Otro {
   cancelar?(): Promise<CuentaClaude> | CuentaClaude
   salir?(): Promise<CuentaClaude> | CuentaClaude
   conectando?(): string | null
-  /** Usar las llaves guardadas en Sloth, o no (Pi). */
+  /** Usar las llaves guardadas en v!d, o no (Pi). */
   llaves?(usar: boolean): Promise<CuentaClaude>
   modelos(): Promise<Model[]>
 }
@@ -40,7 +40,7 @@ export const OTROS: Partial<Record<Proveedor, Otro>> = {
   pi: { como: 'ventana', start: startPi, ...cuentaPi, llaves: llavesPi, modelos: modelosPi }
 }
 
-/** Ninguno de estos informa los límites de un plan a Sloth: se paga por uso o se ve en su página. */
+/** Ninguno de estos informa los límites de un plan a v!d: se paga por uso o se ve en su página. */
 export const sinLimites = (): LimitesClaude => ({ ventanas: [] })
 
 /** Qué se está conectando: reiniciar el servidor cortaría el inicio de sesión. */

@@ -1,6 +1,6 @@
-// Compila Sloth para venderla. `npm run compilar` arma en dist/Sloth la app que se instala en otra computadora y la
-// mete en su instalador, en dist/instalador: Sloth-Setup-<versión>.exe en Windows, Sloth-<versión>-mac-x64.dmg (y su
-// .zip, con el que se actualiza) en Mac y Sloth-<versión>-linux-x86_64.AppImage en Linux. Cada sistema se compila en el
+// Compila v!d para venderla. `npm run compilar` arma en dist/vid-koldgold la app que se instala en otra computadora y la
+// mete en su instalador, en dist/instalador: vid-koldgold-Setup-<versión>.exe en Windows, vid-koldgold-<versión>-mac-x64.dmg (y su
+// .zip, con el que se actualiza) en Mac y vid-koldgold-<versión>-linux-x86_64.AppImage en Linux. Cada sistema se compila en el
 // suyo: lleva su Node y los paquetes de ese sistema. Es una app de Electron (electron/main.ts) y la empaqueta
 // electron-builder. No se actualiza sola: no hay feed de actualizaciones (v!d Fase 1). Con
 // `--sin-instalador` la deja lista para abrir, sin instalar, en dist/instalador. Lleva su propio Node, la interfaz y el
@@ -19,7 +19,7 @@ import { armarVentana } from './electron.mjs'
 
 const REPO = join(dirname(fileURLToPath(import.meta.url)), '..')
 const DIST = join(REPO, 'dist')
-const SALIDA = join(DIST, 'TazSloth')
+const SALIDA = join(DIST, 'vid-koldgold')
 const APP = join(SALIDA, 'app')
 /** La ventana (main.cjs y preload.cjs), que electron-builder empaqueta como la app de Electron, y ayudante.exe. */
 const VENTANA = join(DIST, 'ventana')
@@ -63,7 +63,7 @@ const IDEAS = /[\\/](server[\\/]ideas[\\/](index|mcp)\.ts|web[\\/]src[\\/]Ideas\
 const SIN_IDEAS = 'export const Ideas = null, ideas = null, herramientasIdeas = () => ({})'
 
 const paso = (texto) => console.log(`\n· ${texto}`)
-// Compilada desde un hilo de Sloth, heredaría el `development` de su Vite, y React saldría en modo desarrollo.
+// Compilada desde un hilo de v!d, heredaría el `development` de su Vite, y React saldría en modo desarrollo.
 process.env.NODE_ENV = 'production'
 
 paso('Comprobando los tipos')
@@ -72,7 +72,7 @@ execSync('npm run typecheck', { cwd: REPO, stdio: 'inherit' })
 try {
   rmSync(SALIDA, { recursive: true, force: true })
 } catch (error) {
-  throw new Error(`No se pudo borrar ${SALIDA}: cierra la Sloth compilada si está abierta. (${error.message})`)
+  throw new Error(`No se pudo borrar ${SALIDA}: cierra la v!d compilada si está abierta. (${error.message})`)
 }
 mkdirSync(APP, { recursive: true })
 
@@ -119,17 +119,17 @@ const faltan = new Set(
 if (faltan.size) throw new Error(`El servidor importa paquetes que no van en la app: ${[...faltan].join(', ')}. Añádelos a PAQUETES.`)
 // La página del motor en vivo no va dentro del servidor: la arma cada proyecto de video con sus propios paquetes.
 cpSync(join(REPO, 'server', 'motor-pagina.jsx'), join(APP, 'server', 'motor-pagina.jsx'))
-// El MCP de la voz lo lanza cada agente con el Node de Sloth: va tal cual, sin paquetes.
+// El MCP de la voz lo lanza cada agente con el Node de v!d: va tal cual, sin paquetes.
 cpSync(join(REPO, 'server', 'voz', 'mcp.mjs'), join(APP, 'server', 'voz', 'mcp.mjs'))
 // El que lanza Playwright MCP a demanda, igual.
 cpSync(join(REPO, 'server', 'navegador-mcp.mjs'), join(APP, 'server', 'navegador-mcp.mjs'))
-// El puente con el SDK de Cursor: server/cursor.ts lo copia junto al SDK que se baja y lo corre con el Node de Sloth.
+// El puente con el SDK de Cursor: server/cursor.ts lo copia junto al SDK que se baja y lo corre con el Node de v!d.
 cpSync(join(REPO, 'server', 'cursor-puente.mjs'), join(APP, 'server', 'cursor-puente.mjs'))
 
 paso('Instalando los paquetes')
 const instalada = (p) => JSON.parse(readFileSync(join(REPO, 'node_modules', p, 'package.json'), 'utf8')).version
 const dependencias = Object.fromEntries(PAQUETES.map((p) => [p, instalada(p)]))
-writeFileSync(join(APP, 'package.json'), `${JSON.stringify({ name: 'sloth', version: VERSION, private: true, type: 'module', dependencies: dependencias }, null, 2)}\n`)
+writeFileSync(join(APP, 'package.json'), `${JSON.stringify({ name: 'vid-koldgold', version: VERSION, private: true, type: 'module', dependencies: dependencias }, null, 2)}\n`)
 // Sin los opcionales: son los programas de Claude y Codex para cada sistema, que se bajan al elegirlos.
 execSync('npm install --omit=dev --omit=optional --no-audit --no-fund --prefer-offline', { cwd: APP, stdio: 'inherit' })
 // Lo que corre es el .js: los tipos, las fuentes y sus mapas son la mitad de node_modules.
@@ -147,10 +147,11 @@ cpSync(join(REPO, 'scripts', 'start.mjs'), join(APP, 'scripts', 'start.mjs'))
 
 // Lo que se vende no lleva nada tuyo ni React en modo desarrollo: antes se buscaba a mano y siempre quedaba algo.
 paso('Revisando lo que se vende')
-// Las palabras que delatan al dueño (su usuario, sus cuentas) no van en el código: son SLOTH_TUYO, una expresión
+// Las palabras que delatan al dueño (su usuario, sus cuentas) no van en el código: son VID_TUYO, una expresión
 // regular en sus variables y en los secretos del repo. Sin ella, esta parte no se revisa.
-const TUYO_EN_TEXTO = process.env.SLOTH_TUYO ? new RegExp(process.env.SLOTH_TUYO, 'i') : null
-if (!TUYO_EN_TEXTO) console.warn('Sin SLOTH_TUYO: no reviso si lo que se vende lleva algo tuyo.')
+const TUYO = process.env.VID_TUYO || process.env.SLOTH_TUYO
+const TUYO_EN_TEXTO = TUYO ? new RegExp(TUYO, 'i') : null
+if (!TUYO_EN_TEXTO) console.warn('Sin VID_TUYO: no reviso si lo que se vende lleva algo tuyo.')
 const REACT_DEV = /react-dom-client\.development|react\.development/
 const hallazgos = [APP, join(SALIDA, 'skills')].flatMap((raiz) =>
   readdirSync(raiz, { recursive: true, withFileTypes: true })
@@ -183,7 +184,7 @@ paso('Armando la ventana')
 rmSync(VENTANA, { recursive: true, force: true })
 await armarVentana(VENTANA, { macFirmada: MAC_FIRMADA })
 if (WINDOWS) {
-  // ayudante.exe, que ancla Sloth a la barra de tareas en los Windows de antes y la desancla al desinstalarla
+  // ayudante.exe, que ancla v!d a la barra de tareas en los Windows de antes y la desancla al desinstalarla
   // (electron/barra.ts): C# con el csc de .NET Framework 4, que trae Windows.
   const AYUDANTE = join(REPO, 'scripts', 'ayudante')
   execFileSync(
@@ -192,18 +193,19 @@ if (WINDOWS) {
     { stdio: 'inherit' }
   )
 }
-// Su nombre (`sloth`) es la carpeta donde se instala: %LOCALAPPDATA%\Programs\Sloth, la de siempre. La descripción es el
-// nombre que enseña Windows (el Administrador de tareas). En Windows lleva koffi, con el que Sloth.exe le pide anclarla.
+// Su nombre (`vid-koldgold`) es la carpeta donde se instala: %LOCALAPPDATA%\Programs\vid-koldgold. productName y la
+// descripción llevan el nombre visible («v!d by Kold.Gold»); el «!» no va en nombres de archivo ni de carpeta (exe,
+// instalador, carpeta), que usan `vid-koldgold`. La descripción es el nombre que enseña Windows (el Administrador de tareas). En Windows lleva koffi, con el que vid-koldgold.exe le pide anclarla.
 // Linux pide además una página de la app.
 const ventana = {
-  name: 'tazsloth',
-  productName: 'TazSloth',
+  name: 'vid-koldgold',
+  productName: 'v!d by Kold.Gold',
   version: VERSION,
-  description: 'TazSloth',
-  author: 'Tazkore',
+  description: 'v!d by Kold.Gold',
+  author: 'Kold Gold SAPI',
   homepage: 'https://github.com/tazkore/tazsloth',
   // En Linux, el nombre con que el escritorio junta la ventana con su icono.
-  desktopName: 'tazsloth.desktop',
+  desktopName: 'vid-koldgold.desktop',
   main: 'main.cjs',
   dependencies: WINDOWS ? { koffi: instalada('koffi') } : {}
 }
@@ -211,7 +213,7 @@ writeFileSync(join(VENTANA, 'package.json'), `${JSON.stringify(ventana, null, 2)
 execSync('npm install --omit=dev --no-audit --no-fund --prefer-offline', { cwd: VENTANA, stdio: 'inherit' })
 
 /**
- * Lo que va fuera de app.asar. En Windows, junto a Sloth.exe, como hasta la 0.2: tus videos y tus hilos se quedan en app
+ * Lo que va fuera de app.asar. En Windows, junto a vid-koldgold.exe, como hasta la 0.2: tus videos y tus hilos se quedan en app
  * (scripts/instalador.nsh). En Mac y Linux, en resources: la app lo copia a tu carpeta al estrenar cada versión
  * (`prepararApp` en electron/main.ts). electron-builder nunca copia la carpeta node_modules de lo que copia: va aparte.
  */
@@ -223,18 +225,18 @@ const fuera = WINDOWS
       { from: join(SALIDA, 'node', 'node_modules'), to: 'node/node_modules' }
     ]
   : [
-      { from: APP, to: 'sloth' },
-      { from: join(APP, 'node_modules'), to: 'sloth/node_modules' },
+      { from: APP, to: 'vid' },
+      { from: join(APP, 'node_modules'), to: 'vid/node_modules' },
       { from: join(SALIDA, 'node'), to: 'node' },
       { from: join(SALIDA, 'node', 'lib', 'node_modules'), to: 'node/lib/node_modules' }
     ]
-/** Sloth.exe es siempre la app: ni un Node (ELECTRON_RUN_AS_NODE) ni otro código fuera de su app.asar. */
+/** vid-koldgold.exe es siempre la app: ni un Node (ELECTRON_RUN_AS_NODE) ni otro código fuera de su app.asar. */
 const FUSIBLES = { runAsNode: false, enableNodeOptionsEnvironmentVariable: false, enableNodeCliInspectArguments: false, onlyLoadAppFromAsar: true }
 
 /**
  * Ubuntu 24.04 (y los que le siguen) no deja a un programa cualquiera crear el espacio aislado de Chromium, y un AppImage
- * no puede traer el otro (chrome-sandbox con setuid): Sloth no abriría. Ahí, y solo ahí, sale sin él: el ejecutable pasa a
- * sloth.bin y en su lugar queda un guion que lo mira antes de abrirlo. Los fusibles se ponen aquí, antes de cambiarle el
+ * no puede traer el otro (chrome-sandbox con setuid): v!d no abriría. Ahí, y solo ahí, sale sin él: el ejecutable pasa a
+ * vid.bin y en su lugar queda un guion que lo mira antes de abrirlo. Los fusibles se ponen aquí, antes de cambiarle el
  * nombre: electron-builder los pondría después, en el guion.
  */
 async function linuxSinAislamiento(ctx) {
@@ -267,11 +269,13 @@ const hechos = await empaquetar({
   targets: objetivo,
   publish: 'never',
   config: {
-    // El mismo nombre ante Windows que la 0.2: lo ya anclado y los avisos siguen siendo de Sloth.
-    appId: 'TazSloth.App',
+    // Su nombre ante Windows (AppUserModelID): el acceso anclado y los avisos son de v!d.
+    appId: 'Gold.Kold.Vid',
     electronVersion: JSON.parse(readFileSync(join(REPO, 'node_modules', 'electron', 'package.json'), 'utf8')).version,
-    productName: 'TazSloth',
-    copyright: 'Tazkore. Basado en Sloth de Vancci (Apache 2.0 + Commons Clause)',
+    productName: 'v!d by Kold.Gold',
+    // Sin «!» en nombres de archivo: el ejecutable, los instaladores y la carpeta usan vid-koldgold.
+    executableName: 'vid-koldgold',
+    copyright: 'Kold Gold SAPI · basado en Sloth de Vancci (Apache-2.0)',
     directories: { app: VENTANA, output: join(DIST, 'instalador') },
     files: ['**/*', '!ayudante.exe'],
     extraFiles: WINDOWS ? fuera : [],
@@ -286,9 +290,9 @@ const hechos = await empaquetar({
       perMachine: false,
       runAfterFinish: true,
       createDesktopShortcut: true,
-      shortcutName: 'TazSloth',
-      uninstallDisplayName: 'TazSloth',
-      artifactName: 'TazSloth-Setup-${version}.${ext}',
+      shortcutName: 'v!d by Kold.Gold',
+      uninstallDisplayName: 'v!d by Kold.Gold',
+      artifactName: 'vid-koldgold-Setup-${version}.${ext}',
       installerIcon: ICONO,
       uninstallerIcon: ICONO,
       include: join(REPO, 'scripts', 'instalador.nsh'),
@@ -298,8 +302,8 @@ const hechos = await empaquetar({
     mac: {
       icon: ICONO_PNG,
       category: 'public.app-category.video',
-      artifactName: 'TazSloth-${version}-mac-${arch}.${ext}',
-      // Sin certificado, firma ad hoc: sin ninguna, macOS dice que Sloth «está dañada». Con ella, se
+      artifactName: 'vid-koldgold-${version}-mac-${arch}.${ext}',
+      // Sin certificado, firma ad hoc: sin ninguna, macOS dice que v!d «está dañada». Con ella, se
       // abre una vez desde Configuración → Privacidad y seguridad → «Abrir de todos modos».
       identity: MAC_FIRMADA ? undefined : '-',
       hardenedRuntime: MAC_FIRMADA,
@@ -307,14 +311,14 @@ const hechos = await empaquetar({
       entitlements: join(REPO, 'scripts', 'mac.entitlements'),
       entitlementsInherit: join(REPO, 'scripts', 'mac.entitlements'),
       // La voz se graba en la interfaz: sin esto, macOS ni siquiera pregunta por el micrófono.
-      extendInfo: { NSMicrophoneUsageDescription: 'TazSloth graba tu voz para los videos.' }
+      extendInfo: { NSMicrophoneUsageDescription: 'v!d graba tu voz para los videos.' }
     },
-    dmg: { artifactName: 'TazSloth-${version}-mac-${arch}.${ext}' },
+    dmg: { artifactName: 'vid-koldgold-${version}-mac-${arch}.${ext}' },
     linux: {
       icon: ICONO_PNG,
       category: 'AudioVideo',
       synopsis: 'Cada skill es una card: describes el trabajo y el agente lo hace a la vista.',
-      artifactName: 'TazSloth-${version}-linux-${arch}.${ext}',
+      artifactName: 'vid-koldgold-${version}-linux-${arch}.${ext}',
       syncDesktopName: true
     },
     // La app va en español: de los 55 idiomas de Chromium solo hacen falta el suyo y el inglés, al que recurre.

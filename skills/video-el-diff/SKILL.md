@@ -9,7 +9,7 @@ Un episodio son dos fases separadas por algo que solo hace el usuario: grabar la
 el guion; en la fase 2 (cuando llega su voz) armas el video con ella. `<skill>` es la carpeta de esta skill y los
 scripts van con el `python` del sistema.
 
-Episodios hechos, para copiar lo que funcionó: los de la carpeta donde trabajas (en Sloth, `trabajo/video-el-diff`), uno
+Episodios hechos, para copiar lo que funcionó: los de la carpeta donde trabajas (en v!d, `trabajo/video-el-diff`), uno
 por carpeta, y el de referencia en [`ejemplos/`](ejemplos/) (DeepSeek Harness).
 
 ## La marca
@@ -62,7 +62,7 @@ imágenes son lo que más entra. Por eso:
   una imagen solo para decidir algo visual.
 - **Subagentes con `model: "sonnet"`** para lo mecánico y para lo visual en volumen: el agente de captura
   ([`MATERIAL.md`](MATERIAL.md)) y la primera revisión de las hojas (fase 2). Te devuelven texto, y sus imágenes no
-  se quedan en tu contexto. Si el mensaje trae una línea `Subagentes:` (la pone Sloth: lo medido, o lo que eligió el
+  se quedan en tu contexto. Si el mensaje trae una línea `Subagentes:` (la pone v!d: lo medido, o lo que eligió el
   usuario), lanza cada uno con el `model` y el `effort` que dice: `captura` es el agente de captura, `pantalla` el de
   pantalla, `revisión` el revisor de las hojas y `escenas` los que escriben las escenas (paso 3). Sin esa línea, los
   de esta skill (para `escenas`, Opus con `effort: "medium"`: con Sonnet, en el-diff-8 y el-diff-9, la revisión
@@ -75,11 +75,11 @@ imágenes son lo que más entra. Por eso:
 
 ## En un lote
 
-Si el mensaje trae `Lote: video 3 de 20. Carpeta: <nombre>` (lo pone Sloth), eres uno de varios episodios que hacen a
+Si el mensaje trae `Lote: video 3 de 20. Carpeta: <nombre>` (lo pone v!d), eres uno de varios episodios que hacen a
 la vez otros agentes, cada uno en su hilo, y nadie mira el tuyo mientras trabajas:
 
 - **Tema:** el video de la línea `Enlace:`.
-- **Proyecto:** `python <skill>/scripts/nuevo.py <nombre> --formato <formato>`, con ese nombre exacto y no `el-diff-N`: el panel de Sloth lo
+- **Proyecto:** `python <skill>/scripts/nuevo.py <nombre> --formato <formato>`, con ese nombre exacto y no `el-diff-N`: el panel de v!d lo
   busca así, y dos episodios que cuentan a la vez el siguiente N acaban en la misma carpeta.
 - **Voz:** la fase 1 acaba pidiendo el audio al usuario. Mientras llega, prepara las escenas según la fase 2.
 - **No preguntes** antes de entregar: lo que preguntarías, decídelo y dilo al entregar.
@@ -89,10 +89,10 @@ la vez otros agentes, cada uno en su hilo, y nadie mira el tuyo mientras trabaja
 
 ## Formato
 
-El formato lo elige el usuario en Sloth al crear el video y llega en la línea `Formato: vertical` (TikTok, 1080x1920)
+El formato lo elige el usuario en v!d al crear el video y llega en la línea `Formato: vertical` (TikTok, 1080x1920)
 o `Formato: horizontal` (YouTube, 1920x1080); sin esa línea, vertical. Cada episodio se hace en ese formato y solo en
 ese: `nuevo.py` lo pone en `FORMATO` de `guion.py` y se compone así desde el principio. Si en el hilo piden el otro
-formato, no hagas una copia: dile que cree otro video en Sloth con el otro formato. Se entrega solo el episodio
+formato, no hagas una copia: dile que cree otro video en v!d con el otro formato. Se entrega solo el episodio
 (`out/el-diff-final.mp4`, paso 6), sin cortes: lo que trae seguidores es el episodio entero (19 de octubre de 2026).
 El `GANCHO` (el rótulo fijo de arriba) y la portada como primer cuadro son del vertical.
 
@@ -105,7 +105,7 @@ El `GANCHO` (el rótulo fijo de arriba) y la portada como primer cuadro son del 
 Las series son formatos fijos del canal, cada una en su archivo: qué es, dónde buscar el tema y cómo elegirlo, qué
 tiene que pasar en el video y unos temas para empezar. Las de todos los estilos están en
 [`video-base/series/`](../video-base/series/) y su uso, en [`SERIES.md`](../video-base/SERIES.md); las propias del
-noticiero irían en [`series/`](series/) (aún no hay ninguna), y con el mismo nombre la suya manda. Sloth las enseña al
+noticiero irían en [`series/`](series/) (aún no hay ninguna), y con el mismo nombre la suya manda. v!d las enseña al
 crear un video y, si el usuario elige una, el mensaje trae la línea `Serie: <nombre> (<archivo>; …)`, con la ruta desde
 la carpeta de las skills.
 
@@ -119,9 +119,9 @@ la carpeta de las skills.
 ## Fase 1: el guion
 
 1. **Proyecto.** `python <skill>/scripts/nuevo.py <nombre> --formato <vertical|horizontal>` (el de la línea
-   `Formato:`, ver [Formato](#formato)) desde la carpeta donde trabajas (en Sloth,
-   `trabajo/video-el-diff`). Si el mensaje trae `Carpeta: <nombre>` (la pone Sloth, sola o en la línea `Lote:`), es ese
-   nombre, exacto: el panel de Sloth lo busca así. Sin esa línea, `el-diff-N`, con N el siguiente número libre en
+   `Formato:`, ver [Formato](#formato)) desde la carpeta donde trabajas (en v!d,
+   `trabajo/video-el-diff`). Si el mensaje trae `Carpeta: <nombre>` (la pone v!d, sola o en la línea `Lote:`), es ese
+   nombre, exacto: el panel de v!d lo busca así. Sin esa línea, `el-diff-N`, con N el siguiente número libre en
    esa carpeta. Copia la plantilla y la marca, y su `node_modules` es una unión a la carpeta que comparten todos los
    episodios (la primera vez en una computadora se instala, unos minutos): no corras `npm install` en el episodio,
    porque cambiaría la de todos. Listo cuando la carpeta existe con `node_modules`. Con `el-diff-N`, si `nuevo.py` dice que la carpeta ya existe, usa otro nombre: puede ser de otra sesión
@@ -163,10 +163,10 @@ la carpeta de las skills.
    - **Buscar.** En un solo turno, lista los datos que el guion necesita y todas las búsquedas para hallar la fuente
      primaria de cada uno (repo, anuncio oficial, página de precios, paper, post, reseña), en inglés y con los nombres
      propios, y córrelas de una vez: `node <skill>/scripts/buscar.mjs "consulta" "consulta" ...` (`--horas 72` para lo
-     reciente). Busca en el radar de Sloth, que ya leyó las noticias del tema del noticiero en las fuentes que eligió el
+     reciente). Busca en el radar de v!d, que ya leyó las noticias del tema del noticiero en las fuentes que eligió el
      usuario: 6 búsquedas tardan 0.1 s y lo hallado queda en `fuentes/textos/` en segundos. Lo que no esté (lo de hace meses, una biografía, un sitio que el radar no sigue): todas las WebSearch en
      un mismo mensaje y `node <skill>/scripts/leer.mjs <url> <url> ...`, también de una vez. Si sale con el código 3
-     (Sloth cerrado), todo va por WebSearch.
+     (v!d cerrado), todo va por WebSearch.
    - **Citas.** Escribe `fuentes/datos.json`, `[{"dato": ..., "claves": ...}]`: cada dato con sus cifras en dígitos y,
      en `claves`, las palabras con que lo diría la fuente, en su idioma («bookmarks», «seed round», «300ms»). Luego
      `python <skill>/scripts/citas.py` busca la cita de cada uno en todo `fuentes/textos/` (en menos de un segundo; seis
@@ -184,7 +184,7 @@ la carpeta de las skills.
      criterio (memes, clips, fotos de personas, el video de un post) va al agente de captura.
    Listo cuando `verificar.py` no se queja de ningún dato que va en el guion.
 4. **Guion.** Escríbelo según [`ESTILO.md`](ESTILO.md) en `fuentes/borrador.md`, no en `guion.md`, y llena
-   `material.md` (frase, fuente, archivo). Sloth enseña `guion.md` en cuanto existe y el usuario lo graba enseguida:
+   `material.md` (frase, fuente, archivo). v!d enseña `guion.md` en cuanto existe y el usuario lo graba enseguida:
    el 19 de octubre grabó dos datos más fuertes que su fuente antes de que se verificaran. `guion.md` nace en la
    entrega.
    Si el usuario trae su guion o pide conservar su manera de hablar, no lo reescribes: sigue [Un guion que no
@@ -200,12 +200,12 @@ la carpeta de las skills.
    `guion.md` y avísale al usuario antes de que grabe.
    Si la fila cita una frase de una captura, comprueba con `python ubicar.py <png> "frase"` que esa captura la trae:
    en el episodio 3, `material.md` citaba una frase de Vals que su captura no tenía.
-5. **Entrega.** Primero copia `fuentes/borrador.md` a `guion.md`: así aparece en Sloth, ya verificado. Di el ángulo
+5. **Entrega.** Primero copia `fuentes/borrador.md` a `guion.md`: así aparece en v!d, ya verificado. Di el ángulo
    en una frase (y, si cambiaste el enfoque del tema, por qué), qué corregiste contra las
    fuentes y qué fecha dice el logo, y pídele su voz: la graba donde quiera (en el celular sirve) y la manda en
    cualquier formato de audio. No pegues el guion en
-   el chat si trabajas dentro de Sloth (en su carpeta `trabajo`): lo lee en la etapa Guion del panel, y su botón
-   «Copiar» lo copia sin el título ni los encabezados. Fuera de Sloth, pégalo completo **sin los encabezados `##`**. Lo graba (o lo genera) leyendo todo lo que ve: en el episodio 5 la voz leyó
+   el chat si trabajas dentro de v!d (en su carpeta `trabajo`): lo lee en la etapa Guion del panel, y su botón
+   «Copiar» lo copia sin el título ni los encabezados. Fuera de v!d, pégalo completo **sin los encabezados `##`**. Lo graba (o lo genera) leyendo todo lo que ve: en el episodio 5 la voz leyó
    los 14 títulos. No hace falta escribir la pronunciación.
    **Con `Voz:` de AI Studio en el mensaje, o `voz_studio` en la marca y sin `Voz:`, la voz la generas tú**: no se
    la pidas. Al copiar `guion.md`, pídela con `generar_voz` (`archivo` el `guion.md`, que se narra sin títulos ni
@@ -218,8 +218,8 @@ la carpeta de las skills.
 
 ## Fase 2: el video
 
-La voz llega adjunta, en el formato que sea (m4a del celular, mp3, wav…): en Sloth, el mensaje trae su ruta (en
-`data\attachments` de Sloth). `voz.py` la convierte. Todo se corre en la raíz del proyecto.
+La voz llega adjunta, en el formato que sea (m4a del celular, mp3, wav…): en v!d, el mensaje trae su ruta (en
+`data\attachments` de v!d). `voz.py` la convierte. Todo se corre en la raíz del proyecto.
 
 La fase 2 la coordinas tú, en tu sesión: lo pesado va en subagentes con el contexto nuevo (los que escriben las
 escenas y los revisores) y lo demás son scripts. Así salió el-diff-10 (25 de octubre) en 26 minutos de punta a punta,
@@ -266,7 +266,7 @@ vuelve a pagar todo tu contexto.
    en [`ejemplos/vertical-guion.py`](ejemplos/vertical-guion.py) (el arranque y el cierre de un episodio vertical).
    Escríbelo en tandas de unas 8 frases, en el orden del guion, y tras cada tanda corre `python guion.py`; una captura
    que aún no llega no lo detiene: su beat sale sin marcas y `guion.py` la lista como `FALTA`. Si la voz
-   ya llegó, corre la línea del paso 4: así el usuario ve en el editor de Sloth cómo se va armando el video, en vivo.
+   ya llegó, corre la línea del paso 4: así el usuario ve en el editor de v!d cómo se va armando el video, en vivo.
    Mientras falten tandas, la última escena escrita se estira hasta el final de la voz y el porcentaje de
    `adaptar.py` sale bajo por fuerza: la comprobación del 90 % del paso 4 es con el guion completo.
 
@@ -286,7 +286,7 @@ vuelve a pagar todo tu contexto.
 4. **Línea de tiempo.** `python guion.py && python voz/adaptar.py && python audio/sintetizar.py && node vivo.mjs`.
    `adaptar.py` imprime qué porcentaje de las palabras del guion encontró en la voz y avisa si es menos del 90 %: el
    `say` no coincide con lo que se grabó. `sintetizar.py` hace la música a lo que dura la voz (si ya está, no tarda nada). `vivo.mjs` arma en un segundo la vista en
-   vivo: en el editor de Sloth, la etapa Escenas reproduce el video tal cual saldrá, sin renderizarlo, y el usuario lo
+   vivo: en el editor de v!d, la etapa Escenas reproduce el video tal cual saldrá, sin renderizarlo, y el usuario lo
    mira mientras trabajas. Cada vez que cambies `guion.py` o algo de `src/`, vuelve a correr esta línea entera para que
    la vista se ponga al día.
 5. **Revisión.** Primero lo que se mide: `node <skill>/scripts/reglas.mjs`. Recorre la vista en vivo sin renderizar (unos
@@ -341,9 +341,9 @@ No le propongas al usuario cambios a la skill.
 
 ## Entorno
 
-- El Python de Sloth solo se usa para yt-dlp y WhisperX, y siempre con `-E -s -B -X utf8`. `scripts/comun.py` lo busca
-  donde lo busca video-base (`sloth.py`) y lo llama así: usa los scripts en vez de llamarlo a mano. Los procesos de
-  transcripción están en `python\procesos` de Sloth (`SLOTH_PROCESOS`).
+- El Python de v!d solo se usa para yt-dlp y WhisperX, y siempre con `-E -s -B -X utf8`. `scripts/comun.py` lo busca
+  donde lo busca video-base (`vid.py`) y lo llama así: usa los scripts en vez de llamarlo a mano. Los procesos de
+  transcripción están en `python\procesos` de v!d (`VID_PROCESOS`).
 - Los parches de varias líneas van en un archivo `.py` dentro de `fuentes/scripts/`, escrito con la herramienta Write:
   un heredoc de bash con comillas mezcladas o con `\n` se rompe (pasó en casi todos los episodios del lote).
 - Un script de Python que imprime emojis o acentos truena en la consola de Windows (cp1252): córrelo con `python -X utf8`.

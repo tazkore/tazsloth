@@ -1,11 +1,11 @@
 /**
- * Lo que la ventana de Sloth (main.ts) le da a la interfaz: `window.sloth` (`PuenteSloth`). Corre antes que la página,
+ * Lo que la ventana de v!d (main.ts) le da a la interfaz: `window.vid` (`PuenteVid`). Corre antes que la página,
  * aislado de ella.
  */
 import { contextBridge, ipcRenderer, type IpcRendererEvent } from 'electron'
-import type { EstadoNavegador, PuenteSloth } from '../shared/types.ts'
+import type { EstadoNavegador, PuenteVid } from '../shared/types.ts'
 
-const puente: PuenteSloth = {
+const puente: PuenteVid = {
   traer: () => ipcRenderer.send('traer'),
   anclada: () => ipcRenderer.invoke('anclada'),
   anclar: () => ipcRenderer.invoke('anclar'),
@@ -28,4 +28,6 @@ const puente: PuenteSloth = {
   }
 }
 
+contextBridge.exposeInMainWorld('vid', puente)
+// Alias de compatibilidad: el mismo puente con su nombre de antes de la Fase 2.
 contextBridge.exposeInMainWorld('sloth', puente)

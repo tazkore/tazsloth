@@ -13,10 +13,10 @@ import { mcpVoz } from './voz/index.ts'
 import { SKILLS } from './skills.ts'
 
 /**
- * OpenCode 2 (`opencode serve`), la versión gratis de Sloth: trabaja con la cuenta de OpenCode de cada quien, que se crea
+ * OpenCode 2 (`opencode serve`), la versión gratis de v!d: trabaja con la cuenta de OpenCode de cada quien, que se crea
  * gratis (`server/cuenta-opencode.ts`); sus modelos gratis no cobran nada y los de pago, del saldo de la cuenta. Como lo
  * hace T3 Code (`packages/provider-opencode/src/server/v2`): un solo servidor para todos los hilos, cada hilo una sesión
- * en su carpeta (`location`), y lo de cada hilo va en su sesión: las instrucciones de Sloth
+ * en su carpeta (`location`), y lo de cada hilo va en su sesión: las instrucciones de v!d
  * (`session.instructions.entry.put`) y su navegador, un MCP con su nombre (`mcp.add`) que las reglas de la sesión dejan
  * usar solo a ese hilo. Un servidor por hilo chocaría en la base SQLite que comparten.
  *
@@ -37,7 +37,7 @@ const ZEN = ['opencode', 'opencode-go']
 export const CONSOLA = 'opencode'
 
 /**
- * Sloth no pide permisos (como Claude con `bypassPermissions` y Codex con `approvalPolicy: never`). La pregunta interactiva
+ * v!d no pide permisos (como Claude con `bypassPermissions` y Codex con `approvalPolicy: never`). La pregunta interactiva
  * se niega: dejaría el turno esperando una respuesta que la interfaz no sabe dar. La última regla que coincide manda.
  */
 const REGLAS = [
@@ -55,9 +55,9 @@ const CONFIG = { permissions: REGLAS, skills: [SKILLS], share: 'disabled', snaps
 interface Servidor {
   client: OpenCodeClient
   proc: ChildProcess
-  /** Lo que escucha cada sesión de Sloth, por su id. */
+  /** Lo que escucha cada sesión de v!d, por su id. */
   oyentes: Map<string, (e: Evento) => void>
-  /** La sesión de Sloth de cada subagente (sesión hija), hasta la del agente principal. */
+  /** La sesión de v!d de cada subagente (sesión hija), hasta la del agente principal. */
   raiz: Map<string, string>
   usos: number
   reloj?: ReturnType<typeof setTimeout>
@@ -148,7 +148,7 @@ async function abrir(): Promise<Servidor> {
       clearTimeout(s.reloj)
       process.off('exit', cerrar)
       corte.abort()
-      for (const oye of s.oyentes.values()) oye({ type: 'sloth.caida', data: {} } as never)
+      for (const oye of s.oyentes.values()) oye({ type: 'vid.caida', data: {} } as never)
       s.oyentes.clear()
     })
     void (async () => {
@@ -167,7 +167,7 @@ async function abrir(): Promise<Servidor> {
   }
 }
 
-/** Cada evento a su sesión de Sloth: el de un subagente, a la del agente que lo lanzó. */
+/** Cada evento a su sesión de v!d: el de un subagente, a la del agente que lo lanzó. */
 function repartir(s: Servidor, e: OpenCodeEvent) {
   const d = (e as { data?: { sessionID?: string; parentID?: string; form?: { sessionID?: string } } }).data
   // El de un formulario va dentro de él.
@@ -244,11 +244,11 @@ export function startOpenCode(opts: AgentOptions, conectar: () => Promise<Servid
   let compactando = false
   const { providerID, id: modelo } = modeloDe(opts.model)
   let ventana = 0
-  // El nombre de los MCP del hilo: `sloth-<hilo>-<nombre>`. OpenCode esconde los nombres de más de 64 letras.
-  const mcp = `sloth-${(opts.hilo ?? randomBytes(4).toString('hex')).replace(/[^a-zA-Z0-9-]/g, '-').slice(0, 24)}`
-  // El navegador y la voz: las herramientas de Ideas corren dentro del servidor de Sloth (como con Codex, no llegan).
+  // El nombre de los MCP del hilo: `vid-<hilo>-<nombre>`. OpenCode esconde los nombres de más de 64 letras.
+  const mcp = `vid-${(opts.hilo ?? randomBytes(4).toString('hex')).replace(/[^a-zA-Z0-9-]/g, '-').slice(0, 24)}`
+  // El navegador y la voz: las herramientas de Ideas corren dentro del servidor de v!d (como con Codex, no llegan).
   const servidoresMcp = { ...navegadorAgente(opts.lote, opts.hilo), ...mcpVoz() }
-  const reglas = [...REGLAS, { action: 'sloth-*', resource: '*', effect: 'deny' as const }, { action: `${mcp}-*`, resource: '*', effect: 'allow' as const }]
+  const reglas = [...REGLAS, { action: 'vid-*', resource: '*', effect: 'deny' as const }, { action: `${mcp}-*`, resource: '*', effect: 'allow' as const }]
   const emit = opts.onEvent
   // Lo que va llegando a trozos, por id; las herramientas, con su nombre hasta que llega su entrada.
   const textos = new Map<string, string>()
@@ -270,7 +270,7 @@ export function startOpenCode(opts: AgentOptions, conectar: () => Promise<Servid
 
   function oir(e: Evento) {
     const d = e.data
-    if (e.type === ('sloth.caida' as string)) {
+    if (e.type === ('vid.caida' as string)) {
       const turno = busy
       terminar(false, 'Se cerró OpenCode.', true)
       opts.onExit?.(cerrado ? undefined : { error: 'Se cerró OpenCode.', turno })
@@ -367,7 +367,7 @@ export function startOpenCode(opts: AgentOptions, conectar: () => Promise<Servid
       case 'form.created':
         // Un formulario que pide elegir algo (un buscador, una respuesta): la interfaz no sabe contestarlo y el turno se
         // quedaría esperando. Se cancela y el agente sigue sin eso.
-        void servidorDe?.client.session.form.cancel({ sessionID: d.form.sessionID, formID: d.form.id, message: 'Sloth no puede contestar formularios. Sigue sin esto, o pregúntaselo al usuario en un mensaje normal.' }).catch(() => {})
+        void servidorDe?.client.session.form.cancel({ sessionID: d.form.sessionID, formID: d.form.id, message: 'v!d no puede contestar formularios. Sigue sin esto, o pregúntaselo al usuario en un mensaje normal.' }).catch(() => {})
         return
       case 'permission.asked':
         // Con las reglas no debería pedir nada; si lo pide (una regla de OpenCode que va antes), se acepta como Codex.
@@ -404,13 +404,13 @@ export function startOpenCode(opts: AgentOptions, conectar: () => Promise<Servid
     let viva = opts.resume ? await c.session.get({ sessionID: opts.resume }).then((x) => x.id, () => '') : ''
     if (!viva) {
       // Con título: si no, OpenCode gasta una llamada al modelo en ponerle uno.
-      const nueva = await c.session.create({ location, title: 'Sloth', model: { providerID, id: modelo, ...(opts.effort ? { variant: opts.effort } : {}) }, permissions: reglas })
+      const nueva = await c.session.create({ location, title: 'v!d', model: { providerID, id: modelo, ...(opts.effort ? { variant: opts.effort } : {}) }, permissions: reglas })
       viva = nueva.id
     }
     sesion = viva
     if (cerrado) return
     s.oyentes.set(sesion, oir)
-    await c.session.instructions.entry.put({ sessionID: sesion, key: 'sloth', value: INSTRUCCIONES })
+    await c.session.instructions.entry.put({ sessionID: sesion, key: 'vid', value: INSTRUCCIONES })
     // Si el navegador no arranca, el hilo sigue sin él.
     await Promise.all(
       Object.entries(servidoresMcp).map(([nombre, srv]) =>
@@ -463,7 +463,7 @@ export function startOpenCode(opts: AgentOptions, conectar: () => Promise<Servid
     const path = skill?.path ?? (skill && join(SKILLS, skill.name, 'SKILL.md'))
     if (path && !existsSync(path)) throw new Error(`No se encontró la skill ${skill!.name}.`)
     const conocidas = skill ? await c.skill.list({ location: { directory: opts.cwd } }).then((l) => l.data.map((x) => x.id), () => [] as string[]) : []
-    const texto = skill ? `Usa la skill ${skill.name} de Sloth, la de ${path} (no otra copia con ese nombre).\n\n${text}` : text
+    const texto = skill ? `Usa la skill ${skill.name} de v!d, la de ${path} (no otra copia con ese nombre).\n\n${text}` : text
     if (!steer) busy = true
     await c.session.prompt({
       sessionID: sesion,
@@ -523,7 +523,7 @@ const limite = (error?: { status?: number; type?: string; message?: string }) =>
 const sinUsoGratis = (error?: { message?: string }) => /free usage/i.test(error?.message ?? '')
 const SIN_USO_GRATIS = 'Se acabó tu uso gratis de OpenCode por ahora (OpenCode no dice cuándo vuelve).'
 
-/** El error de un turno o de una respuesta suelta, en palabras de Sloth. */
+/** El error de un turno o de una respuesta suelta, en palabras de v!d. */
 const errorDe = (error: { status?: number; message?: string } | undefined, otro: string | undefined) =>
   sinUsoGratis(error) ? SIN_USO_GRATIS : limite(error) ? 'El modelo gratis llegó a su límite por ahora. Espera unos minutos o elige otro modelo gratis.' : (error?.message ?? otro)
 
@@ -560,7 +560,7 @@ export async function opencodeModels(): Promise<Model[]> {
   }
 }
 
-/** Si hay una cuenta de OpenCode activa: sin ella, Sloth no trabaja con OpenCode (`server/cuenta-opencode.ts`). */
+/** Si hay una cuenta de OpenCode activa: sin ella, v!d no trabaja con OpenCode (`server/cuenta-opencode.ts`). */
 export const conCuenta = (client: OpenCodeClient) =>
   client.credential.list().then((l) => l.some((c) => c.integrationID === CONSOLA && c.active), () => false)
 
@@ -578,7 +578,7 @@ export async function redactarOpenCode(model: string | undefined, cwd: string, p
     const elegido = model ?? (await opencodeModels())[0]?.id
     if (!elegido) throw new Error('OpenCode no tiene modelos gratis ahora. Intenta más tarde.')
     const { providerID, id } = modeloDe(elegido)
-    const sesion = await c.session.create({ location: { directory: cwd }, title: 'Sloth', model: { providerID, id }, permissions: [{ action: '*', resource: '*', effect: 'deny' }] })
+    const sesion = await c.session.create({ location: { directory: cwd }, title: 'v!d', model: { providerID, id }, permissions: [{ action: '*', resource: '*', effect: 'deny' }] })
     const textos = new Map<string, string>()
     let reloj: ReturnType<typeof setTimeout> | undefined
     try {
@@ -588,14 +588,14 @@ export async function redactarOpenCode(model: string | undefined, cwd: string, p
           const d = e.data
           if (e.type === 'session.text.ended') textos.set(`${d.assistantMessageID}:${d.ordinal}`, d.text)
           if (e.type === 'session.execution.succeeded') (clearTimeout(reloj), ok([...textos.values()].join('\n').trim()))
-          if (e.type === 'session.execution.failed' || e.type === 'session.execution.interrupted' || e.type === ('sloth.caida' as string)) {
+          if (e.type === 'session.execution.failed' || e.type === 'session.execution.interrupted' || e.type === ('vid.caida' as string)) {
             clearTimeout(reloj)
             mal(new Error(errorDe(d.error, 'OpenCode no pudo responder. Intenta otra vez.')))
           }
         })
       })
       void listo.catch(() => {})
-      await c.session.instructions.entry.put({ sessionID: sesion.id, key: 'sloth', value: instruccion })
+      await c.session.instructions.entry.put({ sessionID: sesion.id, key: 'vid', value: instruccion })
       await c.session.prompt({ sessionID: sesion.id, text: prompt, files: imagenes.filter((p) => existsSync(p)).map((p) => ({ uri: pathToFileURL(p).href })) })
       return await listo
     } finally {

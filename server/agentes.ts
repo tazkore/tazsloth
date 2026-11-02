@@ -15,15 +15,15 @@ import { correr } from './version.ts'
  * el primer mensaje de un hilo suyo) a `PIEZAS/<agente>`, y queda para las siguientes versiones mientras no cambie la
  * suya. Lo mismo para los proveedores que vengan: una entrada más en `AGENTES`.
  *
- * Casi todos salen de npm, con el npm que trae Sloth. Muse Code, con el instalador de Meta, y Antigravity, del zip que
+ * Casi todos salen de npm, con el npm que trae v!d. Muse Code, con el instalador de Meta, y Antigravity, del zip que
  * publica Google (como los baja T3 Code). DeepSeek no tiene programa: usa el de Claude Code (`programaDe`).
  *
- * En el repo (y en las versiones de Sloth que aún lo traían dentro) el programa de Claude, Codex y OpenCode ya está en
+ * En el repo (y en las versiones de v!d que aún lo traían dentro) el programa de Claude, Codex y OpenCode ya está en
  * node_modules de la app, y se usa ese.
  */
 
 const APP = resolve(dirname(fileURLToPath(import.meta.url)), '..')
-const PIEZAS = join(process.env.APPDATA ?? '', 'tazsloth', 'piezas', 'agentes')
+const PIEZAS = join(process.env.APPDATA ?? '', 'vid-koldgold', 'piezas', 'agentes')
 const WINDOWS = process.platform === 'win32'
 const plataforma = `${process.platform}-${process.arch}`
 
@@ -36,7 +36,7 @@ const versionDe = (paquete: string): string => JSON.parse(readFileSync(join(APP,
 interface Agente {
   nombre: string
   /**
-   * La versión, para los que no trae la app: va en el nombre de su carpeta, así otra versión de Sloth que pida otra la
+   * La versión, para los que no trae la app: va en el nombre de su carpeta, así otra versión de v!d que pida otra la
    * baja aparte.
    */
   version?: string
@@ -115,7 +115,7 @@ const AGENTES: Record<Programa, Agente> = {
   pi: {
     nombre: 'Pi',
     version: '1.4.0',
-    // Es de Node: corre con el de Sloth (`comandoAgente`).
+    // Es de Node: corre con el de v!d (`comandoAgente`).
     paquete() {
       return `@earendil-works/pi-coding-agent@${this.version}`
     },
@@ -125,7 +125,7 @@ const AGENTES: Record<Programa, Agente> = {
   cursor: {
     nombre: 'Cursor',
     version: '1.2.0',
-    // Corre dentro de Sloth (`server/cursor.ts` lo importa de aquí), con sus ayudantes de cada sistema al lado.
+    // Corre dentro de v!d (`server/cursor.ts` lo importa de aquí), con sus ayudantes de cada sistema al lado.
     paquete() {
       return `@cursor/sdk@${this.version}`
     },
@@ -177,7 +177,7 @@ const AGENTES: Record<Programa, Agente> = {
   }
 }
 
-/** Donde queda lo que se bajó de cada agente; con su versión, si la fija Sloth. */
+/** Donde queda lo que se bajó de cada agente; con su versión, si la fija v!d. */
 const carpeta = (p: Programa) => join(PIEZAS, p, ...(AGENTES[p].version ? [AGENTES[p].version!] : []))
 
 /**
@@ -196,7 +196,7 @@ function buscar(p: Programa): string | null {
   return null
 }
 
-/** La versión de un agente que no trae la app: la que fija Sloth o, la de Muse, la que dejó su instalador. */
+/** La versión de un agente que no trae la app: la que fija v!d o, la de Muse, la que dejó su instalador. */
 export function versionFija(p: Proveedor): string | undefined {
   const g = programaDe(p)
   if (g !== 'muse') return AGENTES[g].version
@@ -208,7 +208,7 @@ export function versionFija(p: Proveedor): string | undefined {
 }
 
 /**
- * Cómo se lanza un agente: su programa, o el Node de Sloth con él si es de Node (Pi). `null` si no se ha bajado.
+ * Cómo se lanza un agente: su programa, o el Node de v!d con él si es de Node (Pi). `null` si no se ha bajado.
  */
 export function comandoAgente(p: Proveedor): { command: string; args: string[] } | null {
   const exe = rutaAgente(p)
@@ -342,7 +342,7 @@ export function conAgente(p: Proveedor, opts: AgentOptions, arrancar: (opts: Age
   }
 }
 
-/** Instala `paquete` en `dir` con el npm de Sloth, sin package.json propio ni scripts de instalación. */
+/** Instala `paquete` en `dir` con el npm de v!d, sin package.json propio ni scripts de instalación. */
 function npm(dir: string, paquete: string) {
   return correr(`npm install --prefix "${dir}" --no-save --no-audit --no-fund --ignore-scripts --loglevel=error ${paquete}`, dir)
 }
@@ -353,7 +353,7 @@ function npm(dir: string, paquete: string) {
  */
 async function arranca(exe: string): Promise<boolean> {
   for (let i = 0; i < 30; i++) {
-    // Pi es de Node: corre con el de Sloth.
+    // Pi es de Node: corre con el de v!d.
     const [comando, args] = exe.endsWith('.js') ? [process.execPath, [exe, '--version']] : [exe, ['--version']]
     const error = await new Promise<ExecFileException | null>((ok) => execFile(comando, args, { timeout: 30000, windowsHide: true }, ok))
     if (!error) return true

@@ -124,7 +124,7 @@ ventanas `corre` y el resto del tiempo está gris, quieto y medio fundido con el
 
 **Los modelos salen de la biblioteca** (la skill [`modelos-3d`](../modelos-3d/SKILL.md)):
 `python -B -X utf8 <modelos-3d>/scripts/modelos.py buscar <palabras>` dice cuáles sirven, con su miniatura, y
-`usar <id>` los copia a `src/modelos/`; el usuario los ve en Sloth, en «Modelos 3D». Los del primer video: `moneda`,
+`usar <id>` los copia a `src/modelos/`; el usuario los ve en v!d, en «Modelos 3D». Los del primer video: `moneda`,
 `fichas` (`Flujo`: fichas que viajan de uno a otro; `Lluvia`: fichas que caen, se amontonan y se van), `cadena`,
 `disco` (un logo real como medalla), `icono-3d`, `panal` (algo que se llena y se vacía), `eter`, `regalo`, `boveda` y
 `aro` (encierra varias cosas en el piso para darles un nombre). Lo que el tema necesite y no esté, se hace con el

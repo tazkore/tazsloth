@@ -17,7 +17,7 @@ import { DESCRIPCION_YOUTUBE, PLAN_YOUTUBE, RECOMENDACION_YOUTUBE } from './yout
 /**
  * Investiga el tema del video con su guion y fotogramas, reúne Ideas y datos públicos de YouTube, y adjunta miniaturas
  * reales al agente. Guarda propuestas y evidencia sin cambiar el título elegido ni aprobar una publicación. El mismo
- * análisis sirve para ambos botones; procesa dos videos a la vez y guarda la cola para retomarla al abrir Sloth.
+ * análisis sirve para ambos botones; procesa dos videos a la vez y guarda la cola para retomarla al abrir v!d.
  * Una solicitud conserva el modelo, esfuerzo y contenido recibidos; no se duplica mientras ese video ya espera o trabaja.
  */
 const execFileP = promisify(execFile)
@@ -35,7 +35,7 @@ export function recomendacionesYoutube(app: string, api: ApiPublicaYoutube, reda
     if (existsSync(archivo)) Object.assign(trabajos, JSON.parse(readFileSync(archivo, 'utf8')))
     for (const r of Object.values(trabajos)) if (r.estado === 'trabajando' || r.estado === 'cola') {
       if (r.pendiente) { r.estado = 'cola'; r.fase = 'En cola para continuar'; delete r.error }
-      else { r.estado = 'error'; r.fase = 'Interrumpido'; r.error = 'Sloth se cerró durante el análisis. Puedes reintentar.' }
+      else { r.estado = 'error'; r.fase = 'Interrumpido'; r.error = 'v!d se cerró durante el análisis. Puedes reintentar.' }
     }
   } catch { roto = true }
   const activos = new Set<string>()

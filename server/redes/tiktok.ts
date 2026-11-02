@@ -19,7 +19,7 @@ const dos = (n: number) => String(n).padStart(2, '0')
 const TOUR = '.react-joyride__overlay'
 
 /**
- * Cierra el tour cuando tapa lo que Sloth va a pulsar. Sale la primera vez en un perfil nuevo (el de la app) y con cada
+ * Cierra el tour cuando tapa lo que v!d va a pulsar. Sale la primera vez en un perfil nuevo (el de la app) y con cada
  * novedad. Su botón («Entendido», «Siguiente») o, si no se encuentra, Escape; y si sigue, se quita la capa.
  */
 async function cerrarTour(page: Page) {
@@ -52,7 +52,7 @@ export const tiktok: ModuloRed = {
     // Cada error dice en qué paso pasó, y guarda lo que se veía: si TikTok cambia su página, se sabe dónde.
     let paso = 'Al subir el video'
     try {
-      // La otra vez pudo quedar sin que Sloth lo viera: si ya está en la lista, no se sube de nuevo, y vale su hora.
+      // La otra vez pudo quedar sin que v!d lo viera: si ya está en la lista, no se sube de nuevo, y vale su hora.
       if (p.reintento) {
         await page.goto(LISTA, { waitUntil: 'domcontentloaded' })
         if (page.url().includes('/login')) throw new SinSesion(SESION)
@@ -272,7 +272,7 @@ async function buscar(page: Page, texto: string, hasta: string): Promise<string 
   return null
 }
 
-/** La hora de una fila de la lista (`16 oct, 16:00`) como la guarda Sloth (`2026-10-16 16:00`). La lista no dice el año: el que la deja más cerca de hoy. */
+/** La hora de una fila de la lista (`16 oct, 16:00`) como la guarda v!d (`2026-10-16 16:00`). La lista no dice el año: el que la deja más cerca de hoy. */
 function horaDe(fila: string): string | null {
   const m = HORA.exec(fila)
   if (!m) return null

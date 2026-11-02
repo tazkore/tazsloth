@@ -1,8 +1,8 @@
 """
 Los modelos de la transcripción, fijados: el Whisper, el Parakeet y los dos alineadores para el español. Viven en
-`%APPDATA%/youtube/modelos` (`MODELOS` de `sloth.py` y `comun.py`), cada uno en una carpeta que lleva su versión: si se
-cambia la versión fijada, hay que ponerlo de nuevo. Los procesos no bajan nada: los baja `instalarPythonSloth` de
-`server/requisitos.ts` con `download` («Descargar todo» de Sloth), y `installed()` le dice si faltan.
+`%APPDATA%/youtube/modelos` (`MODELOS` de `vid.py` y `comun.py`), cada uno en una carpeta que lleva su versión: si se
+cambia la versión fijada, hay que ponerlo de nuevo. Los procesos no bajan nada: los baja `instalarPythonVid` de
+`server/requisitos.ts` con `download` («Descargar todo» de v!d), y `installed()` le dice si faltan.
 
 Los alineadores dan los tiempos por palabra. El que se usa lo elige quien lanza `transcribir.py` (`alineador`; El Diff,
 en `scripts/voz.py`):
@@ -151,7 +151,7 @@ def needed(aligner_name: str | None, engine: str = "whisper") -> list[Model]:
 
 def check(models: Path, engine: str) -> dict:
     """
-    Lo que le falta al Python de Sloth con ese motor (`falta`: sin eso no transcribe) y lo que lo haría más rápido
+    Lo que le falta al Python de v!d con ese motor (`falta`: sin eso no transcribe) y lo que lo haría más rápido
     (`mejora`). Sin NVIDIA basta con uno de los dos transcriptores: uno que ya transcribe con Whisper (instalado antes de
     Parakeet) puede bajar Parakeet, que es la mejora; uno nuevo baja solo Parakeet. Lo pregunta server/requisitos.ts.
     """

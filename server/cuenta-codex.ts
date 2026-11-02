@@ -4,7 +4,7 @@ import { asegurarAgente, rutaAgente } from './agentes.ts'
 import { CodexRpc } from './codex-rpc.ts'
 import { ventanasCodex, type LimitesCodexRpc } from './limites-codex.ts'
 
-/** La cuenta se autoriza y renueva en Codex; Sloth solo ve su correo, plan y enlace de inicio de sesión. */
+/** La cuenta se autoriza y renueva en Codex; v!d solo ve su correo, plan y enlace de inicio de sesión. */
 let rpc: CodexRpc | undefined
 let login: { id: string; url: string } | undefined
 let fallo: string | undefined

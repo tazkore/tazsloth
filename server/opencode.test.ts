@@ -104,18 +104,18 @@ test('crea la sesión en la carpeta del hilo con su modelo, sus reglas y su nave
   const crear = h.pedidos.find((p) => p.metodo === 'session.create')!.input
   assert.deepEqual(crear.model, { providerID: 'opencode', id: 'big-pickle', variant: 'high' })
   assert.equal(crear.location.directory, process.cwd())
-  assert.equal(crear.title, 'Sloth')
+  assert.equal(crear.title, 'v!d')
   // La última regla manda: las preguntas interactivas no, los MCP de otros hilos no, los suyos sí.
   assert.deepEqual(crear.permissions.slice(-3), [
     { action: 'question', resource: '*', effect: 'deny' },
-    { action: 'sloth-*', resource: '*', effect: 'deny' },
-    { action: 'sloth-hilo-1-*', resource: '*', effect: 'allow' }
+    { action: 'vid-*', resource: '*', effect: 'deny' },
+    { action: 'vid-hilo-1-*', resource: '*', effect: 'allow' }
   ])
-  for (const add of h.pedidos.filter((p) => p.metodo === 'mcp.add')) assert.match(add.input.server, /^sloth-hilo-1-/)
+  for (const add of h.pedidos.filter((p) => p.metodo === 'mcp.add')) assert.match(add.input.server, /^vid-hilo-1-/)
   assert.deepEqual(h.sesiones, [SESION])
   const prompt = h.pedidos.find((p) => p.metodo === 'session.prompt')!.input
   assert.deepEqual(prompt.skills, [{ id: 'video-explicativo' }])
-  assert.match(prompt.text, /^Usa la skill video-explicativo de Sloth, la de /)
+  assert.match(prompt.text, /^Usa la skill video-explicativo de v!d, la de /)
   assert.equal(prompt.delivery, 'queue')
 })
 
@@ -134,7 +134,7 @@ test('las herramientas del MCP del hilo se nombran como en Claude', async () => 
   await setImmediate()
   await setImmediate()
   const base = { sessionID: SESION, assistantMessageID: 'm1' }
-  h.oir({ type: 'session.tool.input.started', data: { ...base, id: 't1', name: 'sloth-hilo-1-playwright_browser_navigate' } })
+  h.oir({ type: 'session.tool.input.started', data: { ...base, id: 't1', name: 'vid-hilo-1-playwright_browser_navigate' } })
   h.oir({ type: 'session.tool.called', data: { ...base, id: 't1', input: { url: 'https://example.com' } } })
   const tool = h.events.find((e) => e.t === 'tool') as any
   assert.equal(tool.name, 'mcp__playwright__browser_navigate')
@@ -153,7 +153,7 @@ test('detenerlo acaba el turno con «lo detuviste», y si se cae OpenCode el tur
 
   h.run.send('Otra vez', undefined, [])
   await setImmediate()
-  h.oir({ type: 'sloth.caida', data: { sessionID: SESION } })
+  h.oir({ type: 'vid.caida', data: { sessionID: SESION } })
   const fin = h.events.at(-1) as any
   assert.equal(fin.t, 'background')
   const corte = h.events.findLast((e) => e.t === 'turn_end') as any

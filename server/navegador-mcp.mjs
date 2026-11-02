@@ -19,7 +19,7 @@ import { createInterface } from 'node:readline'
 
 const [cache, suelta, ...programa] = process.argv.slice(2)
 const OCIOSO = Number(suelta)
-const ARRANQUE = 'sloth-arranque'
+const ARRANQUE = 'vid-arranque'
 
 function leerGuardado() {
   try {

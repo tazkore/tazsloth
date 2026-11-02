@@ -29,7 +29,7 @@ const salio = (red: RedId, p: Pick<Publicacion, 'estado' | 'cuando'>, ahora = Da
 
 /**
  * Una sección con el navegador de las redes a la derecha, como el de los hilos, mientras está abierto y `puede`: en Mis
- * videos, lo que sube Sloth; en Opciones, donde inicias sesión.
+ * videos, lo que sube v!d; en Opciones, donde inicias sesión.
  */
 export function ConNavegadorRedes({ puede = true, children }: { puede?: boolean; children: ReactNode }) {
   const abierto = useNavegadorAbierto(NAVEGADOR_REDES)
@@ -72,8 +72,8 @@ export function RedesOpciones({ onIniciando }: { onIniciando?(si: boolean): void
   useEffect(() => {
     leerAviso()
     const oir = (e: Event) => setAviso((e as CustomEvent<Aviso>).detail)
-    addEventListener('sloth-redes', oir)
-    return () => removeEventListener('sloth-redes', oir)
+    addEventListener('vid-redes', oir)
+    return () => removeEventListener('vid-redes', oir)
   }, [])
 
   // Mientras inicias sesión (en el navegador de la app, o en la ventana de Edge), se mira cada pocos segundos si ya entraste.
@@ -145,8 +145,8 @@ const PERFIL: Record<RedId, (usuario: string) => string> = {
 
 /**
  * Una red: su logo, el ritmo (se elige en «Mis videos») en una línea, la cuenta en un desplegable y, debajo, lo que
- * tiene programado. TikTok se conecta iniciando sesión en el navegador de la app, que se abre a la derecha (fuera de la ventana de Sloth, en Edge); una red con `token` (Instagram), pegando un token de su API, que
- * Sloth prueba antes de guardarlo y renueva solo. Como las llaves, vive en las variables de tu usuario de Windows. Debajo,
+ * tiene programado. TikTok se conecta iniciando sesión en el navegador de la app, que se abre a la derecha (fuera de la ventana de v!d, en Edge); una red con `token` (Instagram), pegando un token de su API, que
+ * v!d prueba antes de guardarlo y renueva solo. Como las llaves, vive en las variables de tu usuario de Windows. Debajo,
  * lo que falló en ella y ya no está en el disco (`sinVideo`): sigue en la nube, y se reintenta o se quita desde aquí.
  */
 function RedFila(props: { red: Red; conectando: 'abriendo' | 'app' | 'edge' | null; onConectar(): void; onCuenta(cuenta: string | null): void; onNube(): void; sinVideo: Publicacion[]; onCambio(): void; calendario?: CalendarioRedTipo; ahora: number }) {
@@ -205,11 +205,11 @@ function RedFila(props: { red: Red; conectando: 'abriendo' | 'app' | 'edge' | nu
           )
         )}
       </div>
-      {/* Google no deja entrar dentro de la app: si vas a Google, Sloth abre Edge para ese paso (`server/redes/navegador.ts`). */}
+      {/* Google no deja entrar dentro de la app: si vas a Google, v!d abre Edge para ese paso (`server/redes/navegador.ts`). */}
       {props.conectando === 'app' && (
         <p className="muted small fila-extra">
           {red.enEdge
-            ? 'Google no deja entrar desde una app. Al terminar en Edge, la ventana se cierra y la sesión pasa sola a Sloth.'
+            ? 'Google no deja entrar desde una app. Al terminar en Edge, la ventana se cierra y la sesión pasa sola a v!d.'
             : `Lo más rápido: «Usar código QR» con la app de ${red.nombre} en tu teléfono. Si entras con Google, se abre Edge para ese paso.`}
         </p>
       )}
@@ -252,14 +252,14 @@ function RedFila(props: { red: Red; conectando: 'abriendo' | 'app' | 'edge' | nu
               <a href="https://developers.facebook.com/apps/creation/" target="_blank" rel="noreferrer">
                 developers.facebook.com
               </a>{' '}
-              con tu Facebook y crea una app (por ejemplo, «Sloth») con el caso de uso «Administrar mensajes y contenido en Instagram», sin portafolio comercial.
+              con tu Facebook y crea una app (por ejemplo, «v!d») con el caso de uso «Administrar mensajes y contenido en Instagram», sin portafolio comercial.
             </li>
             <li>
               En ese caso de uso, abre «Configuración de la API con el inicio de sesión de Instagram» → «Generar tokens de acceso» → «Agregar cuenta», y entra
               con tu Instagram. Si te pide un rol: en Roles de la app, añade tu cuenta como evaluador de Instagram y acepta la invitación en Instagram
               (Configuración → Apps y sitios web).
             </li>
-            <li>Pulsa «Generar token», cópialo y pégalo aquí. Sloth lo prueba al momento y lo renueva solo cada día: no caduca.</li>
+            <li>Pulsa «Generar token», cópialo y pégalo aquí. v!d lo prueba al momento y lo renueva solo cada día: no caduca.</li>
           </ol>
           <div className="opcion-fila">
             <input type="password" autoFocus placeholder="Pega el token de Instagram" value={token} onChange={(e) => setToken(e.target.value)} autoComplete="off" />
@@ -285,11 +285,11 @@ const TOKEN_CLOUDFLARE = `https://dash.cloudflare.com/profile/api-tokens?${new U
   permissionGroupKeys: JSON.stringify([{ key: 'workers_scripts', type: 'edit' }, { key: 'workers_r2', type: 'edit' }]),
   accountId: '*',
   zoneId: 'all',
-  name: 'Sloth',
+  name: 'v!d by Kold.Gold',
 })}`
 
 /**
- * Paso 1 de Instagram: la nube donde esperan los videos hasta su hora, en tu cuenta de Cloudflare. Pegas un token y Sloth
+ * Paso 1 de Instagram: la nube donde esperan los videos hasta su hora, en tu cuenta de Cloudflare. Pegas un token y v!d
  * la monta (`server/redes/cloudflare.ts`).
  */
 function MontarNube(props: { onLista(): void; onCancelar(): void }) {
@@ -323,7 +323,7 @@ function MontarNube(props: { onLista(): void; onCancelar(): void }) {
           <a href="https://dash.cloudflare.com/?to=/:account/r2/overview" target="_blank" rel="noreferrer">
             R2
           </a>
-          , donde esperan los videos. Pide una tarjeta, pero no cobra hasta pasar de 10 GB, y Sloth borra cada video al publicarlo.
+          , donde esperan los videos. Pide una tarjeta, pero no cobra hasta pasar de 10 GB, y v!d borra cada video al publicarlo.
         </li>
         <li>
           Abre{' '}
@@ -332,7 +332,7 @@ function MontarNube(props: { onLista(): void; onCancelar(): void }) {
           </a>
           , que ya trae los permisos. Baja hasta «Continuar», pulsa «Crear token» y cópialo.
         </li>
-        <li>Pégalo aquí. Sloth monta tu nube en menos de un minuto y la pone al día con cada versión.</li>
+        <li>Pégalo aquí. v!d monta tu nube en menos de un minuto y la pone al día con cada versión.</li>
       </ol>
       <div className="opcion-fila">
         <input type="password" autoFocus placeholder="Pega el token de Cloudflare" value={token} onChange={(e) => setToken(e.target.value)} autoComplete="off" />
@@ -366,8 +366,8 @@ export function usePublicar(card: Card | null, videos: VideoHecho[] | null): { b
   // Cada cambio en lo programado (subir, programar, fallar) llega por el WebSocket: entonces se vuelve a mirar.
   useEffect(() => {
     if (!card) return
-    addEventListener('sloth-redes', leer)
-    return () => removeEventListener('sloth-redes', leer)
+    addEventListener('vid-redes', leer)
+    return () => removeEventListener('vid-redes', leer)
   }, [card?.id])
 
   if (!card || !videos) return { barra: null, insignia: () => null }
@@ -514,7 +514,7 @@ export function ResumenRedes(props: { marcas?: MarcasDeRedes; videos: VideoHecho
           </button>
         )
       })}
-      {cuenta('enCola') > 0 && <span className="muted small">Los de la cola los sube Sloth solo.</span>}
+      {cuenta('enCola') > 0 && <span className="muted small">Los de la cola los sube v!d solo.</span>}
       {faltan.length > 0 && (
         <button className="primary" title="Eliges cuáles van ahora; cada uno, al siguiente hueco libre" onClick={() => setRevisar(faltan)}>
           Revisar y programar ({faltan.length})
@@ -699,7 +699,7 @@ function Insignia({ p, onCambio, onError }: { p: Publicacion; onCambio(): void; 
 
 /**
  * En la barra lateral, junto a Opciones: lo que falló en redes y las redes que cerraron la sesión, cada cosa con un enlace
- * a donde se arregla. Se entera por el WebSocket (`sloth-redes`), y lo vuelve a pedir al reconectar.
+ * a donde se arregla. Se entera por el WebSocket (`vid-redes`), y lo vuelve a pedir al reconectar.
  */
 export function AvisoRedes({ connected }: { connected: boolean }) {
   const [aviso, setAviso] = useState<Aviso | null>(null)
@@ -708,8 +708,8 @@ export function AvisoRedes({ connected }: { connected: boolean }) {
   }, [connected])
   useEffect(() => {
     const oir = (e: Event) => setAviso((e as CustomEvent<Aviso>).detail)
-    addEventListener('sloth-redes', oir)
-    return () => removeEventListener('sloth-redes', oir)
+    addEventListener('vid-redes', oir)
+    return () => removeEventListener('vid-redes', oir)
   }, [])
   if (!aviso) return null
   const opciones = () => (location.hash = '/opciones')

@@ -167,14 +167,14 @@ def _ocr_por_trozos(ruta: Path, idioma: str) -> dict:
 
 
 # El nombre del bloque de texto que `pagina.mjs` mete en el PNG.
-CLAVE_PAGINA = "sloth-pagina"
+CLAVE_PAGINA = "vid-pagina"
 
 
 @functools.cache
 def _pagina_de(archivo: Path, cambio: float) -> dict | None:
     from PIL import Image
     with Image.open(archivo) as im:
-        texto = getattr(im, "text", {}).get(CLAVE_PAGINA)
+        texto = getattr(im, "text", {}).get(CLAVE_PAGINA) or getattr(im, "text", {}).get("sloth-pagina")  # la de antes de la Fase 2
         tam = im.size
     if not texto:
         return None

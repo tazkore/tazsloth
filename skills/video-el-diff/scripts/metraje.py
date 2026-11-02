@@ -24,7 +24,7 @@ import sys
 import tempfile
 from pathlib import Path
 
-from comun import sloth, turno_youtube
+from comun import vid, turno_youtube
 
 FONDO = "0x0d0d10"  # COLOR.fondo de la plantilla
 
@@ -39,7 +39,7 @@ def segundos(t: str) -> float:
 def buscar(que: str, n: int) -> None:
     # Sin turno: una búsqueda es una petición ligera, no una descarga. En el-diff-10 (25 de octubre), nueve búsquedas de
     # cuatro agentes de clip esperaron en fila detrás de la descarga del video del tema, y los clips tardaron 17 minutos.
-    r = sloth("-m", "yt_dlp", f"ytsearch{n}:{que}", "--flat-playlist", "--dump-json", "--no-warnings",
+    r = con_python("-m", "yt_dlp", f"ytsearch{n}:{que}", "--flat-playlist", "--dump-json", "--no-warnings",
               capture_output=True, text=True, encoding="utf8")
     if r.returncode != 0:
         sys.exit(r.stderr[-1500:])
@@ -63,10 +63,10 @@ def bajar(url: str, desde: float, hasta: float, salida: Path, tal_cual: bool, ll
         base = ["-m", "yt_dlp", "-f", "bv*[height<=1080]+ba/b", "--merge-output-format", "mp4", "--download-sections",
                 f"*{desde}-{hasta}", "--force-keyframes-at-cuts", "--no-progress", "--no-warnings"]
         with turno_youtube():
-            sloth(*base, "-o", str(crudo), url)
+            con_python(*base, "-o", str(crudo), url)
             if "youtu" in url and (not crudo.exists() or alto(crudo) < 720):
                 print("-- reintento con el cliente web_embedded --", flush=True)
-                sloth(*base, "--extractor-args", "youtube:player_client=web_embedded", "-o", str(otro), url)
+                con_python(*base, "--extractor-args", "youtube:player_client=web_embedded", "-o", str(otro), url)
                 if otro.exists() and (not crudo.exists() or alto(otro) > alto(crudo)):
                     otro.replace(crudo)
         if not crudo.exists():

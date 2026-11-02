@@ -5,13 +5,13 @@ import { join } from 'node:path'
 import { test } from 'node:test'
 
 // skills.ts fija ~/.claude/skills al cargarse: el inicio va a una carpeta de prueba antes de importarlo.
-const casa = mkdtempSync(join(tmpdir(), 'sloth-skills-'))
+const casa = mkdtempSync(join(tmpdir(), 'vid-skills-'))
 process.env.HOME = casa
 process.env.USERPROFILE = casa
-// Y las skills como las trae Sloth, que `guardarSkillTuya` no toca.
-const originales = mkdtempSync(join(tmpdir(), 'sloth-originales-'))
+// Y las skills como las trae v!d, que `guardarSkillTuya` no toca.
+const originales = mkdtempSync(join(tmpdir(), 'vid-originales-'))
 mkdirSync(join(originales, 'video-base'))
-process.env.SLOTH_SKILLS_ORIGINALES = originales
+process.env.VID_SKILLS_ORIGINALES = originales
 const { enlazarSkills, enlazarSkillsCodex, guardarSkillTuya } = await import('./skills.ts')
 
 test('Codex lee las mismas skills que Claude, y una copia vieja sale de sus carpetas', (t) => {
@@ -54,8 +54,8 @@ test('Codex lee las mismas skills que Claude, y una copia vieja sale de sus carp
   assert.ok(existsSync(join(casa, 'otro-sitio', 'SKILL.md')))
 })
 
-test('borrar un estilo tuyo guarda su skill en una copia y quita sus enlaces, sin tocar las de Sloth', (t) => {
-  const raiz = mkdtempSync(join(tmpdir(), 'sloth-tuya-'))
+test('borrar un estilo tuyo guarda su skill en una copia y quita sus enlaces, sin tocar las de v!d', (t) => {
+  const raiz = mkdtempSync(join(tmpdir(), 'vid-tuya-'))
   t.after(() => rmSync(raiz, { recursive: true, force: true }))
   t.after(() => rmSync(originales, { recursive: true, force: true }))
   const app = join(raiz, 'app')

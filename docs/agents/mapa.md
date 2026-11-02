@@ -1,4 +1,4 @@
-# Mapa de Sloth
+# Mapa de v!d
 
 Cada módulo explica lo suyo en su comentario de cabecera, y los campos de una card están en `Card` (`shared/types.ts`).
 Este es el mapa:
@@ -13,18 +13,18 @@ Este es el mapa:
 - `server/opencode.ts`: adaptador de OpenCode 2, la versión gratis (con la cuenta de OpenCode de cada quien, que se crea
   gratis y se conecta en `server/cuenta-opencode.ts`; primero sus modelos gratis de Zen y luego los de pago), hecho
   como el de T3 Code: un solo `opencode serve` para todos los hilos, con sus datos en `data/opencode`; cada hilo es una
-  sesión en su carpeta, con las instrucciones de Sloth y su navegador (un MCP que solo él puede usar). Se prueba con un
+  sesión en su carpeta, con las instrucciones de v!d y su navegador (un MCP que solo él puede usar). Se prueba con un
   turno grabado (`opencode.grabacion.json`). Cada `conexion` se devuelve con `soltarConexion`: un minuto sin hilos ni
   consultas cierra el servidor, y un inicio de sesión lo conserva hasta autorizarse, cancelarse o vencer. ADR 0009 y 0010.
 - `server/agentes.ts`: el programa de cada agente no viene en el instalador: se baja al elegirlo (bienvenida, Opciones o
-  el primer mensaje de un hilo suyo, `conAgente`) a `%APPDATA%\sloth\piezas\agentes`. En el repo, Claude Code, Codex y
+  el primer mensaje de un hilo suyo, `conAgente`) a `%APPDATA%\vid-koldgold\piezas\agentes`. En el repo, Claude Code, Codex y
   OpenCode ya están en node_modules. Un proveedor nuevo es una entrada más en `AGENTES` y en `PROVEEDORES`
   (`shared/providers.ts`).
 - Los demás agentes, como en T3 Code (ADR 0012), cada uno con su cuenta y su catálogo en `server/proveedores.ts` y su fila
   en Opciones (`CuentaAgente`): DeepSeek es Claude Code con la API de DeepSeek (`server/deepseek.ts`); Grok y
   Antigravity hablan ACP (`server/acp.ts`, `grok.ts`, `antigravity.ts`; Antigravity, un proceso para todos sus hilos); Cursor corre su SDK en un puente aparte
   (`cursor.ts`, `cursor-puente.mjs`); Muse Code, su MSP (`muse.ts`); Pi, su RPC con una extensión que le pasa los MCP de
-  Sloth (`pi.ts`). Lo que comparten (las instrucciones, la skill por su ruta, los MCP del hilo) está en
+  v!d (`pi.ts`). Lo que comparten (las instrucciones, la skill por su ruta, los MCP del hilo) está en
   `server/instrucciones.ts`; el JSON-RPC por líneas, en `server/rpc-lineas.ts`.
 - `server/sessions.ts`: cada hilo es `data/sessions/<id>.json` (qué es) y `<id>.jsonl` (lo que pasó). Retoma la sesión
   del proveedor tras reiniciar, reparte los lotes según la máquina y cierra el proceso de un video del lote al acabar.
@@ -32,12 +32,12 @@ Este es el mapa:
   agentes lo conservan hasta comprobar que retoman. `npm run hilo -- <id>` (`scripts/hilo.mjs`) resume un hilo desde esos archivos.
 - Lo que aguanta la máquina (ADR 0011): el aviso antes de pasar de dos videos a la vez (`shared/limites.ts`,
   `web/src/AvisoVideos.tsx`), el tope de subagentes de Claude (`server/tope-agentes.ts`), el de navegadores (`turnoNavegador` en `video-base/scripts/chrome.mjs`),
-  Whisper cargado mientras trabaja un video (`server/voz-viva.ts`) y la fila de la GPU, con la voz primero (`sloth.py`).
+  Whisper cargado mientras trabaja un video (`server/voz-viva.ts`) y la fila de la GPU, con la voz primero (`vid.py`).
 - `cards.json`: las cards. `skill` es la carpeta en `SKILLS` (`server/skills.ts`): en la app que se vende,
   `~/.claude/skills`, enlazada también en `~/.codex/skills` y `~/.agents/skills` (`enlazarSkillsCodex`), para que Claude y
   Codex lean los mismos archivos; en el repo, `skills/` (su Claude usa su propia configuración, `data/claude`, y no toca la
-  de la Sloth instalada). Los scripts de las skills la reciben en `SLOTH_SKILLS`. `cwd`, donde trabaja (`{app}` es la
-  carpeta de Sloth; sin él, `<trabajo>/<id>`, de `carpetaTrabajo` en `server/trabajo.ts`: fuera del repo en desarrollo). `etapas` es el avance, leído de los archivos del hilo (`server/etapas.ts`) con los
+  de la v!d instalada). Los scripts de las skills la reciben en `VID_SKILLS`. `cwd`, donde trabaja (`{app}` es la
+  carpeta de v!d; sin él, `<trabajo>/<id>`, de `carpetaTrabajo` en `server/trabajo.ts`: fuera del repo en desarrollo). `etapas` es el avance, leído de los archivos del hilo (`server/etapas.ts`) con los
   globs `listo`. Los videos terminados son los de la etapa «Video» (los `_*` son a medias); `server/reglas-repo.test.ts`
   comprueba que ningún glob cuente un borrador. Los estilos que cada quien hace con la card «Nuevo estilo» (skill
   `crear-estilo`) van en `data/tus-cards.json` y `skills/<id>`, que ninguna actualización toca. Son las únicas que la
@@ -50,7 +50,7 @@ Este es el mapa:
   cambio; un clic en el cuadro, una escena o un tramo va al chat como referencia (`Referencia.tsx`).
   Los motores y los vigilantes de carpetas se liberan tras cinco minutos sin uso; los hilos a la vista conservan ambos, y
   los que trabajan, sus vigilantes. Las ondas de audio se calculan de una en una y se guardan en bytes, 32 archivos como máximo.
-- La carpeta del video: un hilo de video nace con su carpeta nombrada por Sloth, y el mensaje lleva la línea
+- La carpeta del video: un hilo de video nace con su carpeta nombrada por v!d, y el mensaje lleva la línea
   `Carpeta: <nombre>`, que leen las skills. Con `lote`, varios enlaces pueden ser un video cada uno
   (`lote-MMDD-HHMM-NN`, ver `skills/video-base/LOTE.md`). Cambiar la carpeta desde el estudio usa una que ya existe.
   Todo estilo de video hace vertical y horizontal: el compositor manda la línea `Formato:` (`skills/video-base/FORMATO.md`).
@@ -61,7 +61,7 @@ Este es el mapa:
   «Mis videos» (`MisVideos.tsx`) los junta todos. Cada card enseña de fondo el más nuevo (`server/previas.ts`).
 - `server/redes/` y `web/src/Redes.tsx`: los verticales terminados se programan al ritmo que eliges en «Mis videos» (`web/src/Ritmos.tsx`, las cuentas en `shared/ritmo.ts`; YouTube lleva el suyo).
   TikTok va por su página (ADR 0002), en la página `redes` del navegador integrado, con su propio perfil (sin la ventana
-  de Sloth, en un Edge con `data/redes/perfil`);
+  de v!d, en un Edge con `data/redes/perfil`);
   Instagram, por la nube (`nube/`, un Worker de Cloudflare con R2 y un cron, ADR 0003), que publica con la computadora
   apagada. La nube se despliega con `npm run nube -- deploy`, no con «Reiniciar backend». Cuando todo un video quedó
   programado, se borra lo regenerable de su carpeta (`out/partes`, `_bundle_rev`). Para mirar o mover la cola:
@@ -74,7 +74,7 @@ Este es el mapa:
   (`server/navegador-agente.ts`, lanzado a demanda por `server/navegador-mcp.mjs`) entra en él por CDP. Sin ventana, un Chrome con `data/navegador`; en lotes, uno limpio.
   Sus capturas y los logs de consola quedan en `data/navegador-capturas/`. Copia lo mejor del de T3 Code (`C:\dev\t3code`):
   pestañas (el agente solo usa la primera), tamaños fijos (`navegador-medidas.ts`) y bordes que se arrastran. T3 usa
-  `<webview>` y Sloth una vista nativa: el tamaño fijo es `enableDeviceEmulation`, y por eso el relevo reescala los clics.
+  `<webview>` y v!d una vista nativa: el tamaño fijo es `enableDeviceEmulation`, y por eso el relevo reescala los clics.
 - `server/ideas/` y `web/src/Ideas.tsx`: Ideas, qué video hacer: largo en YouTube o vertical en TikTok e Instagram
   (`formato: 'vertical'`), en `trabajo/ideas/<id>/`. Investigar mide cada video contra su canal (outlier: 3× o más),
   transcribe lo dicho (`transcribir.ts`) y agrupa temas con vectores locales (`vectores.ts`); en vertical busca con
@@ -88,25 +88,25 @@ Este es el mapa:
 - `server/originales.ts` y `web/src/TusCambios.tsx`: en la app que se vende, «Con tus cambios (N)» bajo la card dice qué
   archivos de su skill (y de video-base) ya no son como los trae la versión, y vuelve a la original, entera o uno a uno.
   Lo que se pisa, también al actualizar (`prepararSkills`), se copia antes a `data/skills-tuyas`.
-- `server/requisitos.ts`: lo que las skills necesitan fuera de Sloth. Cada card pide solo los paquetes de su skill
-  (`PAQUETES` dice cuáles). Instala automáticamente el Python de Sloth en `%APPDATA%\youtube\piezas\python`,
+- `server/requisitos.ts`: lo que las skills necesitan fuera de v!d. Cada card pide solo los paquetes de su skill
+  (`PAQUETES` dice cuáles). Instala automáticamente el Python de v!d en `%APPDATA%\youtube\piezas\python`,
   sus paquetes y los modelos; elige CUDA y Whisper si hay una NVIDIA que lo aguante (`aguantaCuda`) y, si no, CPU y
-  Parakeet (`MotorVoz`, ADR 0007). Una instalación interrumpida se puede reanudar. Si hay varios, Sloth y `sloth.py`
+  Parakeet (`MotorVoz`, ADR 0007). Una instalación interrumpida se puede reanudar. Si hay varios, v!d y `vid.py`
   usan el mismo (`elegirPython`).
-- `server/equipo.ts` y `web/src/Equipo.tsx`: Opciones → Tu equipo. Qué eligió Sloth para esta computadora y cuánto
+- `server/equipo.ts` y `web/src/Equipo.tsx`: Opciones → Tu equipo. Qué eligió v!d para esta computadora y cuánto
   tarda aquí la voz y el render, de lo que midió (`equipo.json`, junto a los modelos). Si puede ir más rápido (Parakeet
   sin NVIDIA), el hilo nuevo lo ofrece arriba.
 - `server/espacio.ts` y `web/src/Espacio.tsx`: Opciones → Espacio en disco. Lo que dejan los videos y no hace falta
   (temporales de Remotion, pedazos de render, `node_modules` repetidos, cachés viejas); lo seguro lo borra solo cada
   6 horas si nada trabaja. Las skills evitan dejarlo con `espacio.py` y `remotion.cjs` de video-base.
-- `python/procesos/`: lo que las skills corren con el Python de Sloth (transcribir la voz o un video ajeno), lanzado por
-  `proceso()` de `sloth.py` o `comun.py`. Con NVIDIA transcribe Whisper, ya cargado en `video-base/scripts/voz_viva.py`
+- `python/procesos/`: lo que las skills corren con el Python de v!d (transcribir la voz o un video ajeno), lanzado por
+  `proceso()` de `vid.py` o `comun.py`. Con NVIDIA transcribe Whisper, ya cargado en `video-base/scripts/voz_viva.py`
   (ADR 0008); sin ella, Parakeet y `alineador.py` (`parakeet.py` dice cuál y por qué).
 - `server/cuenta.ts`, `server/version.ts` y `server/opciones.ts`: la cuenta de Claude, la versión de Claude y de Codex
-  (la que trae Sloth: se ponen al día al subirlas en package.json y publicar) y las credenciales de YouTube e Instagram (en las variables de entorno del usuario).
+  (la que trae v!d: se ponen al día al subirlas en package.json y publicar) y las credenciales de YouTube e Instagram (en las variables de entorno del usuario).
   `server/acceso.ts`: si Claude y Codex pagan con la suscripción o con una llave de API (Opciones → Agentes), guardada en
   `data/agentes.json`, cifrado con AES-256-GCM (`server/secretos.ts`, llave maestra con DPAPI en Windows).
 - `server/token.ts`: el token del servidor local (`data/servidor-token`), que exigen `/api` y `/ws`; la ventana lo
-  recibe en una cookie HttpOnly y los procesos locales en `VID_TOKEN` (junto a `SLOTH_URL`).
+  recibe en una cookie HttpOnly y los procesos locales en `VID_TOKEN` (junto a `VID_URL`).
 - `web/src`: React. `api.ts` habla con el servidor; `eventos.ts` guarda los eventos fuera de `App`, `items.ts` los junta
   en bloques y `Timeline.tsx` los dibuja; `Composer.tsx` es el campo de texto.

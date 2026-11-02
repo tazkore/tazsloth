@@ -10,7 +10,7 @@ import { Sessions } from './sessions.ts'
 
 /** Comprueba el comando y su cola sin abrir proveedores ni cambiar hilos reales. */
 function preparar(t: test.TestContext, model = 'codex:gpt-prueba') {
-  const dir = mkdtempSync(join(tmpdir(), 'sloth-compactar-'))
+  const dir = mkdtempSync(join(tmpdir(), 'vid-compactar-'))
   const eventos: AgentEvent[] = []
   const enviados: string[] = []
   let compactaciones = 0
@@ -22,7 +22,7 @@ function preparar(t: test.TestContext, model = 'codex:gpt-prueba') {
       compact() { compactaciones++ }, async interrupt() {}, close() {}
     }
   })
-  const meta = sessions.create({ cardId: 'sloth', cwd: dir, title: 'Prueba', model })
+  const meta = sessions.create({ cardId: 'vid', cwd: dir, title: 'Prueba', model })
   t.after(() => { sessions.closeAll(); rmSync(dir, { recursive: true, force: true }) })
   return { sessions, meta, eventos, enviados, emitir: (e: AgentEvent) => emitir(e), compactaciones: () => compactaciones }
 }

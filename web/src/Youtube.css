@@ -1,4 +1,4 @@
-/* YouTube reutiliza las filas de Opciones, los botones de Entrega y el modal de Sloth. */
+/* YouTube reutiliza las filas de Opciones, los botones de Entrega y el modal de v!d. */
 .youtube-pasos { margin: 0; padding-left: 20px; }
 .youtube-pasos li + li { margin-top: 5px; }
 .youtube-terminado, .youtube-revisado.listo, .youtube-estado.listo { color: var(--ok); }
