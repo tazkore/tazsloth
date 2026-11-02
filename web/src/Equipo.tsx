@@ -48,10 +48,10 @@ export function AvisoEquipo() {
   return (
     <>
       <button className="aviso-version" title={e.mejora.error ? `La última vez falló: ${e.mejora.error}` : 'Transcribir tu voz unas cinco veces más rápido'} onClick={() => setPreguntar(true)}>
-        ↑ Acelerar Sloth en tu equipo
+        ↑ Acelerar vid.kold.gold en tu equipo
       </button>
       {preguntar && (
-        <Confirm title="¿Acelerar Sloth en tu equipo?" action="Acelerar" onConfirm={mejorar} onClose={() => setPreguntar(false)}>
+        <Confirm title="¿Acelerar vid.kold.gold en tu equipo?" action="Acelerar" onConfirm={mejorar} onClose={() => setPreguntar(false)}>
           {POR_QUE}
           {e.mejora.error && <span className="bad small fila-extra">La última vez falló: {e.mejora.error}</span>}
         </Confirm>
@@ -73,7 +73,7 @@ export function TuEquipo() {
   }
 
   const voz = !e?.motor
-    ? 'Falta el Python de Sloth: descárgalo en Herramientas de video.'
+    ? 'Falta el Python de vid.kold.gold: descárgalo en Herramientas de video.'
     : e.midiendo
       ? 'Midiendo cuánto tarda aquí… (unos 30 s)'
       : e.voz
@@ -123,7 +123,7 @@ export function TuEquipo() {
         )}
       </div>
       {e && error && <p className="bad small fila-extra">{error}</p>}
-      <p className="grupo-nota">Sloth elige solo cómo trabajar en esta computadora. Los tiempos salen de lo que ya hizo aquí, y los scripts los usan para decirte cuánto falta.</p>
+      <p className="grupo-nota">vid.kold.gold elige solo cómo trabajar en esta computadora. Los tiempos salen de lo que ya hizo aquí, y los scripts los usan para decirte cuánto falta.</p>
     </section>
   )
 }

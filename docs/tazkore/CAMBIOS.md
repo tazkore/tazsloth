@@ -38,3 +38,10 @@ iconos, y el sistema de licencias (solo se activa al compilar con `VENTA`).
 | Requisitos de Python también para `kold-gold` | `server/requisitos.ts` |
 | Texto para redes de Kold Gold (palabra clave de comentario, hashtags del sector, sin ofertas) | `server/redes/index.ts` |
 | Series «Un embarque, paso a paso» y «Mitos de la importación» | `skills/video-base/series/kold-gold-*.md` |
+
+## Marca vid.kold.gold (2 nov 2026)
+
+- Nombre visible: **vid.kold.gold** (barra lateral, pestaña, ventanas, bienvenida, opciones, ideas). El instalador, el appId y las carpetas de datos siguen como TazSloth para no mover tus videos ni romper actualizaciones.
+- Paleta Kold Gold: fondo carbón azulado `#0b0d12`, paneles `#12151c`/`#1b1f29`, texto plata `#e6e9ef`, secundario `#8f97a8`, acento cobre-oro `#d69a5c` (hover `#efb57a`). Las variables conservan sus nombres (`--amber`…) para no chocar con Sloth al traer cambios.
+- Metal: `--metal` (cobre) y `--metal-plata` en el botón de enviar, botones principales y el wordmark.
+- Icono nuevo: sello de acero y cobre con globo y play (`assets/icon.svg|png|ico`, vista en `docs/tazkore/icono-preview.png`).

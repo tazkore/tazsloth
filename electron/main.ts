@@ -51,7 +51,7 @@ const LUGAR = join(APP, 'data', 'ventana.json')
 /** Existe si marcaste «No volver a mostrar» en el aviso al cerrar. */
 const SIN_AVISO = join(APP, 'data', 'sin-aviso-al-cerrar.json')
 /** --bg de web/src/styles.css: el fondo mientras carga y el de la barra de título. */
-const FONDO = '#0f0e0c'
+const FONDO = '#0b0d12'
 /** Cada cuánto se pregunta si hay versión nueva. */
 const CADA = 6 * 3600_000
 /**
@@ -146,7 +146,7 @@ function abrir() {
   const { maximizada, ...medidas } = lugar()
   const v = new BrowserWindow({
     ...medidas,
-    title: 'TazSloth',
+    title: 'vid.kold.gold',
     show: false,
     backgroundColor: FONDO,
     // En Windows 11, la barra de título y el borde del color de Sloth (Electron los vuelve a pintar al enfocarla). En
@@ -167,7 +167,7 @@ function abrir() {
     if (d.reason === 'clean-exit') return
     caidas = [...caidas.filter((t) => Date.now() - t < 60_000), Date.now()]
     if (caidas.length <= 3) v.reload()
-    else if (caidas.length === 4) dialog.showErrorBox('TazSloth', 'La ventana se cerró varias veces seguidas. Recárgala con Ctrl+R: los agentes y tus archivos siguen trabajando.')
+    else if (caidas.length === 4) dialog.showErrorBox('vid.kold.gold', 'La ventana se cerró varias veces seguidas. Recárgala con Ctrl+R: los agentes y tus archivos siguen trabajando.')
   })
   v.on('close', (e) => {
     // Solo si el servidor es de esta ventana: si no (el repo, o Sloth ya abierta de otra forma), cerrarla no detiene nada.
@@ -190,10 +190,10 @@ async function avisarAlCerrar(v: BrowserWindow) {
   avisando = true
   const { response, checkboxChecked } = await dialog.showMessageBox(v, {
     type: 'question',
-    title: 'TazSloth',
+    title: 'vid.kold.gold',
     message: '¿Cerrar Sloth?',
     detail: 'Se cierra por completo, sin quedarse de fondo: se detiene todo lo que esté haciendo, también los videos a medias.',
-    buttons: ['Cerrar TazSloth', 'Cancelar'],
+    buttons: ['Cerrar vid.kold.gold', 'Cancelar'],
     defaultId: 0,
     cancelId: 1,
     // Botones normales: si no, Windows los pinta como enlaces grandes con flecha.
@@ -398,7 +398,7 @@ function arrancar() {
   s.stdout!.on('data', escribir)
   s.stderr!.on('data', escribir)
   s.on('error', (e) => {
-    dialog.showErrorBox('TazSloth', `No se pudo abrir TazSloth: ${e.message}`)
+    dialog.showErrorBox('vid.kold.gold', `No se pudo abrir vid.kold.gold: ${e.message}`)
     salir()
   })
   s.on('exit', termino)
@@ -428,7 +428,7 @@ function termino(codigo: number | null) {
     if (!ventana) app.quit()
     return
   }
-  dialog.showMessageBoxSync({ type: 'warning', title: 'TazSloth', message: 'TazSloth se cerró.', detail: `Lo que pasó está en el registro:\n${REGISTRO}` })
+  dialog.showMessageBoxSync({ type: 'warning', title: 'vid.kold.gold', message: 'vid.kold.gold se cerró.', detail: `Lo que pasó está en el registro:\n${REGISTRO}` })
   salir()
 }
 

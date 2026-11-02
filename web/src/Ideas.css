@@ -6,7 +6,7 @@
 
 .ideas-canales { display: flex; flex-wrap: wrap; gap: 6px; }
 .ideas-canal { display: inline-flex; align-items: center; gap: 7px; padding: 6px 14px; border-radius: 999px; border: 1px solid var(--line); color: var(--muted); font-size: 13px; font-weight: 600; transition: color 0.15s, border-color 0.15s, background 0.15s; }
-.ideas-canal:hover { color: var(--text); border-color: #4a4236; }
+.ideas-canal:hover { color: var(--text); border-color: #3a4254; }
 .ideas-canal.on { color: var(--amber); border-color: var(--amber); background: var(--amber-tinte); }
 .ideas-canal.mas { border-style: dashed; }
 /* Los logos de TikTok e Instagram (`Logos.tsx`), más chicos que en Opciones: van en una pastilla, una ficha o una portada. */

@@ -43,7 +43,7 @@ const frenable = (hilo: string) => !PERFILES[hilo]
 /** Lo que espera una página que nadie ve ni usa antes de cerrarse. */
 const OCIOSA = 20 * 60_000
 /** --bg de web/src/styles.css: lo que se ve mientras la página pinta. */
-const FONDO = '#0f0e0c'
+const FONDO = '#0b0d12'
 /** Los escalones del zoom de una página. */
 const ZOOMS = [0.5, 0.67, 0.75, 0.9, 1, 1.1, 1.25, 1.5, 2]
 

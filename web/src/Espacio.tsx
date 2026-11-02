@@ -72,7 +72,7 @@ export function EspacioDisco() {
         )}
       </div>
       {e && error && <p className="bad small fila-extra">{error}</p>}
-      <p className="grupo-nota">Lo de «Liberar» Sloth también lo borra solo cada 6 horas, cuando nada trabaja. Lo que usa un hilo que está trabajando se queda para la próxima.</p>
+      <p className="grupo-nota">Lo de «Liberar» vid.kold.gold también lo borra solo cada 6 horas, cuando nada trabaja. Lo que usa un hilo que está trabajando se queda para la próxima.</p>
     </section>
   )
 }

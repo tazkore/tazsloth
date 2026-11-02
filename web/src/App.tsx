@@ -450,7 +450,7 @@ export function App() {
         {/* Plegada, cada botón es su icono y dice qué es al pasar el ratón; los textos se esconden en Barra.css. */}
         <div className="brand-fila">
           <button className="brand" onClick={newChat} title={plegada ? 'Nuevo chat' : undefined}>
-            <img src="/icon.svg" alt="" /> Sloth
+            <img src="/icon.svg" alt="" /> <span className="brand-nombre">vid.<b>kold</b>.gold</span>
           </button>
           <button className="plegar" title={plegada ? 'Desplegar la barra (Ctrl+B)' : 'Plegar la barra (Ctrl+B)'} aria-expanded={!plegada} onClick={() => plegar(!plegada)}>
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">

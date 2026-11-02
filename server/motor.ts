@@ -226,7 +226,7 @@ export function servirMotor(res: ServerResponse, folder: string, sub: string | u
   const html = `<!doctype html>
 <html lang="es">
 <meta charset="utf-8" />
-<title>Sloth · en vivo</title>
+<title>vid.kold.gold · en vivo</title>
 <style>html, body, #raiz { margin: 0; height: 100%; background: #000; overflow: hidden; }</style>
 <div id="raiz"></div>
 <script>

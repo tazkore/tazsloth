@@ -1,15 +1,18 @@
-/* La paleta de Sloth: oscuro cálido con acento ámbar. */
+/* La paleta de vid.kold.gold: carbón azulado de Kold Gold, texto plata y acento cobre-oro. */
 :root {
-  --bg: #0f0e0c;
-  --panel: #171512;
-  --panel-2: #221f1b;
-  --line: #2e2a24;
-  --text: #ede6d6;
-  --muted: #9a907f;
-  --amber: #e8a33d;
-  --amber-2: #f4b04a;
-  --amber-tinte: rgba(232, 163, 61, 0.13);
-  --sobre-ambar: #1b1408;
+  --bg: #0b0d12;
+  --panel: #12151c;
+  --panel-2: #1b1f29;
+  --line: #2a303d;
+  --text: #e6e9ef;
+  --muted: #8f97a8;
+  --amber: #d69a5c;
+  --amber-2: #efb57a;
+  --amber-tinte: rgba(214, 154, 92, 0.14);
+  --sobre-ambar: #1a1006;
+  --plata: #c9ced8;
+  --metal: linear-gradient(135deg, #f5c08a 0%, #d69a5c 45%, #9a6233 100%);
+  --metal-plata: linear-gradient(135deg, #f3f4f6 0%, #b6bcc8 55%, #6b7280 100%);
   --ok: #8fc177;
   --bad: #e06c55;
   --radio: 10px;
@@ -106,14 +109,14 @@ input, textarea, select { font: inherit; color: inherit; }
 .estante h2 { flex: 1; margin: 0; font-size: 11px; font-weight: 650; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
 .cards { min-height: 0; overflow-y: auto; display: grid; grid-template-columns: repeat(auto-fill, minmax(168px, 1fr)); grid-auto-rows: max-content; gap: 14px; margin: 0 -6px; padding: 4px 6px 6px; }
 .card { position: relative; aspect-ratio: 3 / 4; overflow: hidden; isolation: isolate; border-radius: 14px; border: 1px solid var(--line); background: var(--panel-2); text-align: left; transition: border-color 0.15s, transform 0.15s; }
-.card:hover { border-color: #4a4236; transform: translateY(-2px); }
+.card:hover { border-color: #3a4254; transform: translateY(-2px); }
 .card.active { border-color: var(--amber); box-shadow: 0 0 0 1px var(--amber); }
 .card-previa { position: absolute; inset: 0; z-index: -2; width: 100%; height: 100%; object-fit: cover; }
 .card-fondo { position: absolute; inset: 0; z-index: -2; display: flex; flex-direction: column; gap: 12px; padding: 16px; background: radial-gradient(circle at 20% 0%, var(--amber-tinte), transparent 65%), var(--panel-2); }
 .card-icon { font-size: 34px; line-height: 1; }
 .card-icon.big { font-size: 40px; }
 .card-desc { font-size: 12.5px; line-height: 1.45; color: var(--muted); display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; }
-.card::after { content: ''; position: absolute; inset: 0; z-index: -1; background: linear-gradient(to top, rgba(15, 14, 12, 0.92), rgba(15, 14, 12, 0.35) 32%, transparent 55%); }
+.card::after { content: ''; position: absolute; inset: 0; z-index: -1; background: linear-gradient(to top, rgba(11, 13, 18, 0.92), rgba(11, 13, 18, 0.35) 32%, transparent 55%); }
 .card-pie { position: absolute; left: 0; right: 0; bottom: 0; display: flex; flex-direction: column; gap: 1px; padding: 12px 14px; }
 .card-title { font-size: 15px; font-weight: 650; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .card.active .card-title { color: var(--amber-2); }
@@ -121,7 +124,7 @@ input, textarea, select { font: inherit; color: inherit; }
 .card-uso.vivo { color: var(--amber); }
 .card-actions { position: absolute; top: 8px; right: 8px; display: flex; gap: 2px; opacity: 0; transition: opacity 0.15s; }
 .card:hover .card-actions, .card:focus-visible .card-actions { opacity: 1; }
-.card-actions span { width: 24px; height: 24px; display: grid; place-items: center; border-radius: 6px; background: rgba(15, 14, 12, 0.8); color: var(--text); font-size: 12px; }
+.card-actions span { width: 24px; height: 24px; display: grid; place-items: center; border-radius: 6px; background: rgba(11, 13, 18, 0.8); color: var(--text); font-size: 12px; }
 .card-actions span:hover { background: var(--panel); }
 .card-actions span.danger:hover { color: var(--bad); }
 /* Un estilo elegido: sus videos en el sitio de las cards. */
@@ -140,23 +143,23 @@ input, textarea, select { font: inherit; color: inherit; }
 .video-marco { position: relative; display: block; align-self: flex-start; max-width: 100%; }
 .video-marco.vertical video { aspect-ratio: 9 / 16; object-fit: contain; }
 .video-marco.horizontal video { aspect-ratio: 16 / 9; object-fit: contain; }
-.video-forma { position: absolute; left: 7px; bottom: 7px; padding: 2px 7px; border-radius: 999px; background: rgba(15, 14, 12, 0.8); color: var(--text); font-size: 11px; font-weight: 600; pointer-events: none; }
+.video-forma { position: absolute; left: 7px; bottom: 7px; padding: 2px 7px; border-radius: 999px; background: rgba(11, 13, 18, 0.8); color: var(--text); font-size: 11px; font-weight: 600; pointer-events: none; }
 .video-titulo, .video-archivo { width: 0; min-width: 100%; font-size: 12.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .video-archivo { margin-top: -6px; font-size: 11.5px; font-family: var(--mono); color: var(--muted); }
 /* El ✕ de cada video, como el de las cards: arriba a la izquierda (a la derecha va la palomita de redes), al pasar por encima. */
 .video-con-subida { position: relative; }
-.video-borrar { position: absolute; top: 7px; left: 7px; z-index: 1; width: 24px; height: 24px; display: grid; place-items: center; border-radius: 6px; background: rgba(15, 14, 12, 0.8); color: var(--text); font-size: 12px; opacity: 0; transition: opacity 0.15s; }
+.video-borrar { position: absolute; top: 7px; left: 7px; z-index: 1; width: 24px; height: 24px; display: grid; place-items: center; border-radius: 6px; background: rgba(11, 13, 18, 0.8); color: var(--text); font-size: 12px; opacity: 0; transition: opacity 0.15s; }
 .video-con-subida:hover .video-borrar, .video-borrar:focus-visible { opacity: 1; }
 .video-borrar:hover { background: var(--panel); color: var(--bad); }
 /* comunidad: compartir el video, junto al ✕. */
-.video-compartir { position: absolute; top: 7px; left: 35px; z-index: 1; width: 24px; height: 24px; display: grid; place-items: center; border-radius: 6px; background: rgba(15, 14, 12, 0.8); color: var(--text); opacity: 0; transition: opacity 0.15s; }
+.video-compartir { position: absolute; top: 7px; left: 35px; z-index: 1; width: 24px; height: 24px; display: grid; place-items: center; border-radius: 6px; background: rgba(11, 13, 18, 0.8); color: var(--text); opacity: 0; transition: opacity 0.15s; }
 .video-con-subida:hover .video-compartir, .video-compartir:focus-visible { opacity: 1; }
 .video-compartir:hover { background: var(--panel); color: var(--amber); }
 .video-compartir-ico { width: 13px; height: 13px; }
 
 /* El compositor */
 .composer { background: var(--panel-2); border: 1px solid var(--line); border-radius: 16px; padding: 12px 12px 10px 16px; transition: border-color 0.15s; }
-.composer:focus-within { border-color: #4a4236; }
+.composer:focus-within { border-color: #3a4254; }
 .composer.dragging { border-color: var(--amber); border-style: dashed; }
 .thumbs { display: flex; flex-wrap: wrap; gap: 8px; }
 .composer .thumbs { margin-bottom: 8px; }
@@ -164,17 +167,17 @@ input, textarea, select { font: inherit; color: inherit; }
 .thumb > button:first-child { width: 100%; height: 100%; border: 1px solid var(--line); border-radius: var(--radio); overflow: hidden; }
 .thumb > button:first-child:hover { border-color: var(--amber); }
 .thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
-.thumb-x { position: absolute; top: 4px; right: 4px; width: 20px; height: 20px; border-radius: 6px; background: rgba(15, 14, 12, 0.8); border: 1px solid var(--line); color: var(--text); font-size: 14px; line-height: 1; }
+.thumb-x { position: absolute; top: 4px; right: 4px; width: 20px; height: 20px; border-radius: 6px; background: rgba(11, 13, 18, 0.8); border: 1px solid var(--line); color: var(--text); font-size: 14px; line-height: 1; }
 .thumb-x:hover { border-color: var(--muted); }
 .tool-mirada { display: block; margin: 2px 0 8px 26px; max-width: min(100% - 26px, 420px); border: 1px solid var(--line); border-radius: var(--radio); overflow: hidden; background: var(--panel); cursor: zoom-in; }
 .tool-mirada:hover { border-color: var(--amber); }
 .tool-mirada img { display: block; width: 100%; max-height: 220px; object-fit: contain; }
-.lightbox { position: fixed; inset: 0; z-index: 50; background: rgba(15, 14, 12, 0.88); display: grid; place-items: center; padding: 40px; cursor: zoom-out; }
+.lightbox { position: fixed; inset: 0; z-index: 50; background: rgba(11, 13, 18, 0.88); display: grid; place-items: center; padding: 40px; cursor: zoom-out; }
 .lightbox img, .lightbox video { max-width: 100%; max-height: 100%; border-radius: var(--radio); box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5); }
 /* El círculo del contexto: empieza arriba y se llena en el sentido del reloj. */
 .context-ring { position: relative; display: grid; place-items: center; cursor: default; }
 .context-ring > svg { transform: rotate(-90deg); }
-.context-ring circle { fill: none; stroke: #4a4236; stroke-width: 3.5; }
+.context-ring circle { fill: none; stroke: #3a4254; stroke-width: 3.5; }
 .context-ring > b { position: absolute; font-size: 10px; font-weight: 700; color: var(--text); letter-spacing: -0.02em; }
 .context-ring circle.fill { stroke: var(--amber); stroke-linecap: round; transition: stroke-dashoffset 0.4s ease; }
 .context-ring.full circle.fill { stroke: var(--bad); }
@@ -210,7 +213,7 @@ input, textarea, select { font: inherit; color: inherit; }
 .context-limit-reset, .context-limit-note { font-size: 10.5px; color: var(--muted); }
 .editor { position: relative; font-size: 15px; line-height: 1.5; }
 .editor .field { min-height: 46px; max-height: 320px; overflow-y: auto; outline: 0; white-space: pre-wrap; overflow-wrap: anywhere; }
-.editor .placeholder { position: absolute; inset: 0 auto auto 0; color: #6f6759; pointer-events: none; }
+.editor .placeholder { position: absolute; inset: 0 auto auto 0; color: #667085; pointer-events: none; }
 /* La etiqueta de una imagen dentro del texto, como en T3 Code. */
 .chip { display: inline-flex; align-items: center; gap: 5px; vertical-align: -3px; margin: 0 2px; padding: 1px 6px 1px 2px; border-radius: 6px; background: var(--panel); border: 1px solid var(--line); font-size: 12.5px; line-height: 1.4; font-weight: 600; white-space: nowrap; overflow-wrap: normal; user-select: all; max-width: 100%; }
 .chip img { width: 16px; height: 16px; border-radius: 3px; object-fit: cover; }
@@ -273,7 +276,7 @@ a.link-chip:hover { border-color: var(--amber); }
 @keyframes rise { from { opacity: 0; transform: translateY(4px); } }
 @keyframes drop { from { opacity: 0; transform: translateY(-4px); } }
 .attach { width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center; color: var(--muted); border: 1px solid var(--line); }
-.attach:hover:not(:disabled) { color: var(--text); border-color: #4a4236; }
+.attach:hover:not(:disabled) { color: var(--text); border-color: #3a4254; }
 .send { width: 34px; height: 34px; border-radius: 50%; background: var(--amber); color: var(--sobre-ambar); font-weight: 800; font-size: 17px; }
 .send:hover:not(:disabled) { background: var(--amber-2); }
 .send.stop { background: var(--text); font-size: 12px; }
@@ -348,7 +351,7 @@ a.link-chip:hover { border-color: var(--amber); }
 .tool.error .tool-verb { color: var(--bad); }
 .tool-body { margin: 2px 0 8px 34px; display: flex; flex-direction: column; gap: 6px; }
 .tool-body pre { margin: 0; font-family: var(--mono); font-size: 12px; background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 10px; max-height: 360px; overflow: auto; white-space: pre-wrap; word-break: break-word; }
-.tool-output { color: #cfc6b4; }
+.tool-output { color: #c9ced8; }
 .nested { margin-left: 26px; padding-left: 10px; border-left: 2px solid var(--line); }
 
 /* Los subagentes, como en T3 Code: una fila por cada uno (o un grupo, los que salen juntos) que se abre en su vista.
@@ -429,3 +432,10 @@ span.sub-avatar > .logo.chico svg { width: 13px; height: 13px; }
 .modal-actions { display: flex; justify-content: flex-end; align-items: center; gap: 16px; margin-top: 20px; }
 .primary.danger { background: var(--bad); color: var(--sobre-ambar); }
 .primary.danger:hover:not(:disabled) { background: var(--bad); filter: brightness(1.1); }
+
+/* vid.kold.gold: el metal de Kold Gold en las acciones principales y en la marca. Lo demás sigue en colores planos. */
+.send:not(.stop), .primary, .final-boton.principal, .esc-listo, .transporte-play { background: var(--metal); box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.28), 0 1px 2px rgba(0, 0, 0, 0.4); }
+.send:not(.stop):hover:not(:disabled), .primary:hover:not(:disabled) { filter: brightness(1.08); }
+.brand-nombre { font-family: var(--mono); font-size: 14px; font-weight: 700; letter-spacing: -0.02em; color: var(--plata); }
+.brand-nombre b { font-weight: 800; background: var(--metal); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.plegada .brand-nombre { display: none; }

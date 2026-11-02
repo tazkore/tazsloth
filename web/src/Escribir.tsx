@@ -315,7 +315,7 @@ export function Escribir(props: {
         />
         {props.conVideo && (
           <span className="esc-video">
-            <button className={`esc-adjuntar${eligiendo ? ' on' : ''}`} title="Los primeros 5 segundos de un video que hiciste con Sloth" onClick={() => setEligiendo(!eligiendo)}>
+            <button className={`esc-adjuntar${eligiendo ? ' on' : ''}`} title="Los primeros 5 segundos de un video que hiciste con vid.kold.gold" onClick={() => setEligiendo(!eligiendo)}>
               <Icono de="video" />
               <span>Video</span>
             </button>
@@ -397,7 +397,7 @@ function MisVideosParaElegir({ onElegir, onCerrar }: { onElegir(v: VideoHecho): 
           <p className="esc-elegir-nota">Se suben sus primeros 5 segundos. Para enseñarlo entero, pega su enlace en el texto.</p>
           {error && <p className="esc-elegir-nada">{error}</p>}
           {videos === null && !error && <p className="esc-elegir-nada">Cargando…</p>}
-          {videos?.length === 0 && <p className="esc-elegir-nada">Aún no terminas ningún video con Sloth.</p>}
+          {videos?.length === 0 && <p className="esc-elegir-nada">Aún no terminas ningún video con vid.kold.gold.</p>}
           {!!videos?.length && (
             <div className="esc-elegir-lista">
               {videos.map((v) => (

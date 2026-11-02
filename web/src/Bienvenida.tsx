@@ -85,9 +85,9 @@ export function Bienvenida() {
         <header>
           <img src="/icon.svg" alt="" />
           <div>
-            <h2>Te damos la bienvenida a Sloth</h2>
+            <h2>Te damos la bienvenida a vid.kold.gold</h2>
             <p>
-              Sloth hace videos con Claude, con ChatGPT, con OpenCode y otros agentes. Eliges un estilo, le das un tema o un enlace, y
+              vid.kold.gold hace videos con Claude, con ChatGPT, con OpenCode y otros agentes. Eliges un estilo, le das un tema o un enlace, y
               lo ves trabajar paso a paso: investiga, escribe el guion, te pide tu voz y arma el video.
             </p>
           </div>
@@ -95,7 +95,7 @@ export function Bienvenida() {
 
         {/* Con uno basta. Con ChatGPT, además, hace las imágenes de los videos. */}
         <Paso n={1} titulo="Elige con qué trabaja" hecho={claude || chatgpt || opencode}>
-          Con uno basta, y Sloth no te cobra aparte. Todos se conectan en Opciones → Agentes; Pi usa el plan o la llave que le
+          Con uno basta, y vid.kold.gold no te cobra aparte. Todos se conectan en Opciones → Agentes; Pi usa el plan o la llave que le
           conectes.
           {OPCIONES.map(({ titulo, nota, agentes }) => (
             <div className="opcion" key={titulo}>
@@ -123,8 +123,8 @@ export function Bienvenida() {
           <Requisitos onListo={setListo} />
         </Paso>
         {anclada !== null && (
-          <Paso n={3} titulo="Ten Sloth a mano (opcional)" hecho={anclada}>
-            {anclada ? 'Sloth está anclada a la barra de tareas.' : 'Ánclala a la barra de tareas para abrirla con un clic.'}
+          <Paso n={3} titulo="Ten vid.kold.gold a mano (opcional)" hecho={anclada}>
+            {anclada ? 'vid.kold.gold está anclada a la barra de tareas.' : 'Ánclala a la barra de tareas para abrirla con un clic.'}
             {!anclada && (
               <div className="anclar">
                 <button className="boton" disabled={anclando} onClick={() => void anclar()}>
@@ -132,7 +132,7 @@ export function Bienvenida() {
                 </button>
                 {sinPermiso && (
                   <p className="small">
-                    Windows no dejó anclarla desde aquí. Haz clic derecho en el icono de Sloth en la barra de tareas y elige
+                    Windows no dejó anclarla desde aquí. Haz clic derecho en el icono de vid.kold.gold en la barra de tareas y elige
                     «Anclar a la barra de tareas».
                   </p>
                 )}
@@ -141,7 +141,7 @@ export function Bienvenida() {
           </Paso>
         )}
         <Paso n={anclada === null ? 3 : 4} titulo="Haz tu primer video">
-          Elige un estilo, escribe el tema o pega un enlace y pulsa <b>↑</b>. Cuando el guion está listo, Sloth te pide tu voz:
+          Elige un estilo, escribe el tema o pega un enlace y pulsa <b>↑</b>. Cuando el guion está listo, vid.kold.gold te pide tu voz:
           grábalo con el celular y súbelo en la etapa «Tu voz». Luego arma el video y lo revisa. El Diff tarda de una a dos
           horas; el Video explicativo, unos 40 minutos. Cuando acaba, lo descargas desde el video o en «Mis videos».
         </Paso>

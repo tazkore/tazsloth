@@ -14,7 +14,7 @@
 /* El estado de cada video: en verde lo que ya está, en ámbar lo que falta, en rojo lo que falló. */
 .insignia { display: inline-flex; align-items: center; gap: 6px; align-self: flex-start; max-width: 100%; margin-top: -2px; padding: 1px 8px; border-radius: 999px; border: 1px solid var(--line); color: var(--muted); font-size: 11px; white-space: nowrap; }
 .insignia.hecho { border-color: transparent; background: rgba(143, 193, 119, 0.13); color: var(--ok); }
-.insignia.falta { color: var(--amber); border-color: rgba(232, 163, 61, 0.45); }
+.insignia.falta { color: var(--amber); border-color: rgba(214, 154, 92, 0.45); }
 .insignia.moviendo { color: var(--text); }
 .insignia.mal { color: var(--bad); border-color: var(--bad); }
 /* Listo en todas las redes: una palomita en la esquina del video, para verlo de lejos. */

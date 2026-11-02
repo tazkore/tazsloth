@@ -71,7 +71,7 @@ export function useAvisos(p: { sessions: SessionMeta[]; cards: Card[]; openId: s
   }, [p.openId])
 
   useEffect(() => {
-    document.title = p.sinVer ? `(${p.sinVer}) Sloth` : 'Sloth'
+    document.title = p.sinVer ? `(${p.sinVer}) vid.kold.gold` : 'vid.kold.gold'
   }, [p.sinVer])
 }
 
