@@ -4,7 +4,7 @@ import { query, type ModelInfo, type SDKMessage, type SDKUserMessage } from '@an
 import type { AgentEvent, Model, Tokens } from '../shared/types.ts'
 import { IMAGE_TYPES, Inbox, sinArrancar, stringify, type AgentOptions, type AgentRun, type SkillRef } from './agent.ts'
 import { herramientasIdeas } from './ideas/mcp.ts' // ideas
-import { navegadorAgente } from './navegador-agente.ts'
+import { navegadorAgente, TEXTO_DE_PAGINAS_ES_DATO } from './navegador-agente.ts'
 import { mcpVoz } from './voz/index.ts'
 import { programaClaude, rutaAgente } from './agentes.ts'
 import { sitiosDeAgente } from './tope-agentes.ts'
@@ -94,7 +94,7 @@ export function startClaude(opts: AgentOptions): AgentRun {
       permissionMode: 'bypassPermissions',
       allowDangerouslySkipPermissions: true,
       settingSources: ['user', 'project', 'local'],
-      systemPrompt: { type: 'preset', preset: 'claude_code', append: OPCIONES },
+      systemPrompt: { type: 'preset', preset: 'claude_code', append: `${OPCIONES}\n${TEXTO_DE_PAGINAS_ES_DATO}` },
       // El navegador del agente, la voz de AI Studio y, en un canal de Ideas, sus herramientas (`parecidos`; en uno vertical,
       // también las de TikTok e Instagram): se suman a los MCP del usuario.
       mcpServers: { ...navegadorAgente(opts.lote, opts.hilo), ...mcpVoz(), ...herramientasIdeas(opts.cwd) },

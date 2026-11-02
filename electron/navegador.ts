@@ -26,9 +26,11 @@ import { mkdirSync, readFileSync } from 'node:fs'
 import { createServer } from 'node:http'
 import type { AddressInfo } from 'node:net'
 import { join } from 'node:path'
-import { app, ipcMain, Menu, session, shell, WebContentsView, type BrowserWindow, type Session } from 'electron'
+import { app, dialog, ipcMain, Menu, session, shell, WebContentsView, type BrowserWindow, type Session } from 'electron'
 import { WebSocketServer, type WebSocket } from 'ws'
 import { guardar } from '../server/disco.ts'
+import { descargaPeligrosa, ESQUEMAS_BLOQUEADOS, urlPermitida } from '../shared/navegador-politica.ts'
+import { revisarEntrada } from './confirmacion.ts'
 import { crearRelevo, type Relevo } from './relevo.ts'
 import { actividadNavegador } from './actividad-navegador.ts'
 import { type AccionNavegador, type EstadoNavegador, NAVEGADOR_REDES, NAVEGADOR_VOZ, type PantallaNavegador } from '../shared/types.ts'
@@ -91,9 +93,26 @@ let vista: { hilo: string; caja: Caja; pantalla: PantallaNavegador | null } | nu
  */
 let medida = { width: 1280, height: 800 }
 
+const particionDe = (hilo: string) => PERFILES[hilo] ?? PARTICION
+
+/** Los avisos «El agente quiere…» uno tras otro: dos clics seguidos no abren dos diálogos encima. */
+let pregunta: Promise<unknown> = Promise.resolve()
+const ESPERA_RESPUESTA = 90_000
+function preguntarAccion(accion: string, sitio: string): Promise<boolean> {
+  const dialogo = async () => {
+    const opciones = { type: 'question' as const, title: 'v!d', message: `El agente quiere: ${accion} en ${sitio}`, detail: 'Si no fuiste tú quien se lo pidió, bloquéalo.', buttons: ['Permitir', 'Bloquear'], defaultId: 1, cancelId: 1, noLink: true }
+    const r = ventana && !ventana.isDestroyed() ? await dialog.showMessageBox(ventana, opciones) : await dialog.showMessageBox(opciones)
+    return r.response === 0
+  }
+  const respuesta = pregunta.then(dialogo, dialogo)
+  pregunta = respuesta.catch(() => {})
+  // Sin respuesta en un rato, se bloquea: un agente no espera para siempre ni se sale con la suya.
+  return Promise.race([respuesta, new Promise<boolean>((ok) => setTimeout(() => ok(false), ESPERA_RESPUESTA))]).catch(() => false)
+}
+
 /** Pone el navegador: lo que pide la interfaz, el perfil de las páginas y el relevo para el agente. */
 export function iniciarNavegador(appDir: string) {
-  for (const p of [PARTICION, PARTICION_REDES, PARTICION_VOZ]) prepararPerfil(session.fromPartition(p))
+  for (const p of [PARTICION, PARTICION_REDES, PARTICION_VOZ]) prepararPerfil(session.fromPartition(p), p)
 
   ipcMain.on('navegador:ver', (_e, hilo: string | null, caja?: Caja, pantalla?: PantallaNavegador | null) => ver(hilo, caja, pantalla))
   ipcMain.on('navegador:ir', (_e, hilo: string, url: string) => {
@@ -111,7 +130,16 @@ export function iniciarNavegador(appDir: string) {
 }
 
 /** Un perfil de las páginas: cómo se presenta a los sitios, qué permisos da y dónde van las descargas. */
-function prepararPerfil(perfil: Session) {
+function prepararPerfil(perfil: Session, particion: string) {
+  // La política (`shared/navegador-politica.ts`): qué sitios abre cada perfil y que ninguno abra file://, chrome:// ni
+  // javascript:. Cubre cada navegación de la página y de sus marcos, también las redirecciones.
+  perfil.webRequest.onBeforeRequest({ urls: ['<all_urls>'] }, (d, responder) => {
+    const esquema = d.url.slice(0, d.url.indexOf(':') + 1).toLowerCase()
+    const pagina = d.resourceType === 'mainFrame'
+    const v = ESQUEMAS_BLOQUEADOS.includes(esquema) ? { ok: false } : pagina ? urlPermitida(particion, d.url) : { ok: true }
+    if (!v.ok) console.warn(`Navegador (${particion}): bloqueado ${d.url.slice(0, 120)}`)
+    responder({ cancel: !v.ok })
+  })
   // Sin «Electron» ni el nombre de la app: algunos sitios no dejan entrar a un navegador que no conocen.
   perfil.setUserAgent(perfil.getUserAgent().replace(/ Electron\/\S+/, '').replace(new RegExp(` ${app.getName().replace(/\W/g, '\\$&')}/\\S+`, 'i'), ''))
   // Ningún permiso que pida una página (cámara, ubicación, avisos), salvo copiar y la pantalla completa.
@@ -122,6 +150,10 @@ function prepararPerfil(perfil: Session) {
   // tuyo, donde elijas. Lo que baja un marco de otro proceso (el WAV de AI Studio, de un `blob:null`) no avisa por CDP:
   // va con su nombre.
   perfil.on('will-download', (_e, item, wc) => {
+    if (descargaPeligrosa(item.getFilename()) || descargaPeligrosa(item.getURL())) {
+      console.warn(`Navegador (${particion}): descarga bloqueada ${item.getFilename()}`)
+      return item.cancel()
+    }
     const h = [...hojas.values()].find((x) => x.vista.webContents === wc)
     if (h?.descargas) item.setSavePath(join(h.descargas, h.guid ?? `${Date.now()}-${item.getFilename().replace(/[^\w.-]+/g, '-')}`))
     if (h) h.guid = null
@@ -153,7 +185,7 @@ export function ventanaDelNavegador(v: BrowserWindow) {
 
 /** Una página nueva para un hilo, en blanco y escondida. */
 function abrir(hilo: string): Hoja {
-  const partition = PERFILES[hilo] ?? PARTICION
+  const partition = particionDe(hilo)
   const v = new WebContentsView({ webPreferences: { partition, sandbox: true, backgroundThrottling: frenable(hilo) } })
   v.setBackgroundColor(FONDO)
   v.setVisible(false)
@@ -194,6 +226,12 @@ function abrir(hilo: string): Hoja {
   // El «¿Salir del sitio?» de una página: la ventana no lo enseña, y sin esto cancelaría cada navegación (la del agente,
   // la de las redes y la tuya). Se sale sin preguntar.
   wc.on('will-prevent-unload', (e) => e.preventDefault())
+  // Una navegación que la política no deja (un `javascript:`, un sitio fuera de la lista del perfil) no sale.
+  const sinPermiso = (e: { preventDefault(): void }, url: string) => {
+    if (!urlPermitida(partition, url).ok) e.preventDefault()
+  }
+  wc.on('will-navigate', (e) => sinPermiso(e, e.url))
+  wc.on('will-redirect', (e) => sinPermiso(e, e.url))
   // Con el foco en la página, Ctrl+R es suyo: el menú de v!d recargaría la interfaz.
   wc.on('before-input-event', (e, t) => {
     if (t.type !== 'keyDown' || !(t.control || t.meta) || t.alt || t.key.toLowerCase() !== 'r') return
@@ -458,7 +496,22 @@ async function conectar(ws: WebSocket, hilo: string) {
       url: () => wc.getURL(),
       titulo: () => wc.getTitle(),
       agente: () => wc.getUserAgent(),
-      descargas: (carpeta) => void (h.descargas = carpeta)
+      descargas: (carpeta) => void (h.descargas = carpeta),
+      revisar: async (metodo, params) => {
+        if (metodo === 'Page.navigate') {
+          const v = urlPermitida(particionDe(hilo), String(params.url ?? ''))
+          return v.ok ? null : `El navegador de v!d no abre eso: ${v.motivo}`
+        }
+        // Las páginas de las redes y la voz las maneja v!d mismo; a la persona se le pregunta por lo que hace un agente.
+        if (PERFILES[hilo]) return null
+        return revisarEntrada(metodo, params, {
+          evaluar: async (expresion) => {
+            const r = (await wc.debugger.sendCommand('Runtime.evaluate', { expression: expresion, returnByValue: true })) as { result?: { value?: unknown } }
+            return r.result?.value
+          },
+          preguntar: preguntarAccion
+        })
+      }
     },
     (texto) => ws.readyState === ws.OPEN && ws.send(texto)
   )

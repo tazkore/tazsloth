@@ -26,6 +26,7 @@ import { AvisoEquipo } from './Equipo' // tu equipo
 import { MisVideos, Rejilla, VideoDe } from './MisVideos'
 import { Modelos3D } from './Modelos3D' // modelos 3D
 import { SocialMedia } from './SocialMedia' // Social Media
+import { Feedback } from './Feedback' // feedback
 import { Icono } from './Iconos'
 import { Bienvenida } from './Bienvenida'
 import { MarcaAgente } from './Logos'
@@ -54,6 +55,7 @@ type View =
   | { kind: 'videos'; estilo?: string }
   | { kind: 'modelos3d' } // modelos 3D
   | { kind: 'social' } // Social Media
+  | { kind: 'feedback' } // feedback
 
 /** Lo que se escribió en un hilo nuevo sin mandarlo. Vive en localStorage hasta que se manda o se borra. */
 type Saved = Draft & { cardId: string; at: number }
@@ -73,6 +75,7 @@ function readHash(): View {
   if (kind === 'mis-videos') return { kind: 'videos', estilo: id || undefined }
   if (kind === 'modelos-3d') return { kind: 'modelos3d' } // modelos 3D
   if (kind === 'social-media') return { kind: 'social' } // Social Media
+  if (kind === 'feedback') return { kind: 'feedback' } // feedback
   return { kind: 'new', cardId: kind === 'new' ? id : undefined }
 }
 
@@ -91,8 +94,10 @@ function go(view: View) {
               : view.kind === 'modelos3d' // modelos 3D
                 ? '/modelos-3d'
                 : view.kind === 'social' // Social Media
-                ? '/social-media'
-                : view.cardId
+                  ? '/social-media'
+                  : view.kind === 'feedback' // feedback
+                    ? '/feedback'
+                    : view.cardId
                 ? `/new/${view.cardId}`
                 : '/'
 }
@@ -485,6 +490,15 @@ export function App() {
           </span>{' '}
           Modelos 3D
         </button>
+        {/* feedback */}
+        <button className={`new-chat${view.kind === 'feedback' ? ' active' : ''}`} onClick={() => go({ kind: 'feedback' })} title={plegada ? 'Feedback' : undefined}>
+          <span className="new-chat-icon">
+            <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z" />
+            </svg>
+          </span>{' '}
+          Feedback
+        </button>
         <label className="buscar" title={plegada ? 'Buscar (Ctrl K)' : undefined} onClick={() => plegada && buscar()}>
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
             <circle cx="11" cy="11" r="7" />
@@ -615,6 +629,7 @@ export function App() {
         )}
         {view.kind === 'modelos3d' && <Modelos3D />} {/* modelos 3D */}
         {view.kind === 'social' && <SocialMedia />} {/* Social Media */}
+        {view.kind === 'feedback' && <Feedback />} {/* feedback */}
         {view.kind === 'videos' && (
           <ConNavegadorRedes>
             <MisVideos cards={cards} sessions={sessions} proyectos={proyectos} estilo={view.estilo} onEstilo={(estilo) => go({ kind: 'videos', estilo })} />

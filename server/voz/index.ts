@@ -1,5 +1,5 @@
-import { spawn } from 'node:child_process'
 import { createHash, randomBytes } from 'node:crypto'
+import { lanzarEdge, nuevoEdge } from '../edge-seguro.ts'
 import { copyFileSync, existsSync, mkdirSync, readdirSync, readFileSync, rmSync, statSync } from 'node:fs'
 import type { IncomingMessage, ServerResponse } from 'node:http'
 import { homedir } from 'node:os'
@@ -43,7 +43,7 @@ import { leerLlave } from '../avatar/llaves.ts'
 const URL_VOZ = 'https://aistudio.google.com/generate-speech'
 const ENTRAR = `https://accounts.google.com/ServiceLogin?continue=${encodeURIComponent(URL_VOZ)}`
 /** El del script con que El Diff generaba antes la voz: si dejó abierto su Edge, con el mismo perfil, se usa ese. */
-const PUERTO = 9336
+const edgeVoz = nuevoEdge()
 /** Edge donde lo instala cada sistema y, si no está (lo normal en Mac y Linux), Chrome: Google deja entrar en los dos. */
 const EDGE =
   process.platform === 'win32'
@@ -93,12 +93,12 @@ export function voz(app: string) {
 
   // ── Edge, con el perfil donde se entra ──────────────────────────────────────────────────────────────────────────
 
-  const responde = () => fetch(`http://127.0.0.1:${PUERTO}/json/version`).then((r) => r.ok, () => false)
+  const responde = () => fetch(`http://127.0.0.1:${edgeVoz.valor}/json/version`).then((r) => r.ok, () => false)
 
   /** El Edge del perfil: el que ya está abierto o uno nuevo. `ventana`, para entrar; si no, sin ventana ni sonido. */
   async function abrirEdge(ventana: boolean): Promise<Browser> {
     if (await responde()) {
-      const b = await conectarCDP(`http://127.0.0.1:${PUERTO}`)
+      const b = await conectarCDP(`http://127.0.0.1:${edgeVoz.valor}`)
       if (!ventana) return b
       // Para entrar hace falta la ventana: se cierra el de sin ventana (la sesión vive en el perfil).
       await cerrarEdge(b)
@@ -107,9 +107,9 @@ export function voz(app: string) {
     if (!edge) throw new Error(process.platform === 'win32' ? 'No encontré Microsoft Edge, donde se entra con Google.' : 'No encontré Microsoft Edge ni Google Chrome: instala uno para entrar con Google.')
     mkdirSync(perfil(), { recursive: true })
     const extra = ventana ? [ENTRAR] : ['--headless=new', '--mute-audio', 'about:blank']
-    spawn(edge, [`--remote-debugging-port=${PUERTO}`, `--user-data-dir=${perfil()}`, '--no-first-run', '--no-default-browser-check', ...extra], { detached: true, stdio: 'ignore' }).unref()
+    await lanzarEdge(edgeVoz, edge, [`--user-data-dir=${perfil()}`, '--no-first-run', '--no-default-browser-check', ...extra])
     for (let i = 0; i < 40 && !(await responde()); i++) await espera(500)
-    return conectarCDP(`http://127.0.0.1:${PUERTO}`)
+    return conectarCDP(`http://127.0.0.1:${edgeVoz.valor}`)
   }
 
   async function cerrarEdge(b: Browser) {

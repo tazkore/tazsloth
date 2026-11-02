@@ -1,5 +1,5 @@
-import { spawn } from 'node:child_process'
 import { existsSync, mkdirSync } from 'node:fs'
+import { lanzarEdge, nuevoEdge } from '../edge-seguro.ts'
 import { join } from 'node:path'
 import type { Browser, BrowserContext, Page } from 'playwright-core'
 import { conectarCDP } from '../playwright.ts'
@@ -19,7 +19,7 @@ import { integrado } from '../navegador-agente.ts'
  * paso se da en Edge (`conGoogle`), y la sesión de la red pasa a la app al entrar (`pasarDeEdge`).
  */
 
-const PUERTO = 9334
+const edgeRedes = nuevoEdge()
 /** Edge donde lo instala cada sistema y, si no está (lo normal en Mac y Linux), Chrome: Google deja entrar en los dos. */
 const EDGE =
   process.platform === 'win32'
@@ -39,7 +39,7 @@ let conectado: Browser | null = null
 let enLaApp = false
 
 const responde = () =>
-  fetch(`http://127.0.0.1:${PUERTO}/json/version`).then(
+  fetch(`http://127.0.0.1:${edgeRedes.valor}/json/version`).then(
     (r) => r.ok,
     () => false
   )
@@ -70,10 +70,10 @@ async function abrirEdge(app: string, url: string): Promise<Browser> {
     if (!edge) throw new Error(process.platform === 'win32' ? 'No encontré Microsoft Edge, que es el navegador con el que v!d publica.' : 'No encontré Microsoft Edge ni Google Chrome: instala uno para entrar con Google.')
     const perfil = join(app, 'data', 'redes', 'perfil')
     mkdirSync(perfil, { recursive: true })
-    spawn(edge, [`--remote-debugging-port=${PUERTO}`, `--user-data-dir=${perfil}`, '--no-first-run', '--no-default-browser-check', url], { detached: true, stdio: 'ignore' }).unref()
+    await lanzarEdge(edgeRedes, edge, [`--user-data-dir=${perfil}`, '--no-first-run', '--no-default-browser-check', url])
     for (let i = 0; i < 40 && !(await responde()); i++) await new Promise((r) => setTimeout(r, 500))
   }
-  return conectarCDP(`http://127.0.0.1:${PUERTO}`)
+  return conectarCDP(`http://127.0.0.1:${edgeRedes.valor}`)
 }
 
 /** La página va a iniciar sesión con Google, que no lo deja hacer dentro de la app. */
