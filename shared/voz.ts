@@ -8,6 +8,15 @@ import type { Card, VozStudio } from './types.ts'
 /** La guía que siguen las skills con la línea `Voz:` (en `VID_SKILLS`). */
 const GUIA = 'video-base/VOZ.md'
 
+/** Lo que vale el menú «Voz» para una voz de ElevenLabs: `eleven:<id>|<nombre>`. */
+export const valorEleven = (v: { id: string; nombre: string }) => `eleven:${v.id}|${v.nombre}`
+
+/** La voz de ElevenLabs de un valor del menú, o `null` si es de AI Studio (o ninguna). */
+export function vozEleven(valor: string): { id: string; nombre: string } | null {
+  const m = /^eleven:([^|]+)\|(.+)$/.exec(valor)
+  return m ? { id: m[1], nombre: m[2] } : null
+}
+
 /**
  * La línea del primer mensaje con la voz elegida en el compositor. `voz`: el nombre de una voz de AI Studio, que genera
  * el agente; vacía, la manda el usuario. Un estilo que hace la suya (`propia`, el reel con edge-tts) no lleva línea si no
@@ -15,6 +24,8 @@ const GUIA = 'video-base/VOZ.md'
  */
 export function lineaVoz(card: Pick<Card, 'voz'>, voz: string): string {
   if (card.voz === false) return ''
+  const eleven = vozEleven(voz)
+  if (eleven) return `Voz: genérala tú con ElevenLabs, voz ${eleven.nombre} (id ${eleven.id}; pasa proveedor "elevenlabs" a generar_voz; cómo, en ${GUIA}).`
   if (voz) return `Voz: genérala tú en AI Studio con la voz ${voz} (cómo, en ${GUIA}).`
   return card.voz?.propia ? '' : `Voz: la manda el usuario; no la generes (${GUIA}).`
 }

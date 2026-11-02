@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import type { Card, EstadoVoz } from '../../shared/types'
-import { lineaVoz } from '../../shared/voz'
+import type { VozElevenInfo } from '../../shared/avatar'
+import { lineaVoz, valorEleven, vozEleven } from '../../shared/voz'
 import { api } from './api'
 import { Picker } from './Composer'
 import { Logo } from './Logos'
@@ -17,6 +18,12 @@ export function useVoz() {
   const [error, setError] = useState<string>()
   const recibir = (p: Promise<EstadoVoz>) => p.then((e) => (setEstado(e), setError(undefined)), (e: Error) => setError(e.message))
   useEffect(() => void recibir(api('/api/voz')), [])
+  // Las voces de ElevenLabs (`server/avatar/`), si hay llave: sus clones salen primero en el menú.
+  const [eleven, setEleven] = useState<VozElevenInfo[]>([])
+  useEffect(() => {
+    if (!estado?.elevenlabs) return setEleven([])
+    void api<{ voces: VozElevenInfo[] }>('/api/avatar/elevenlabs/voces').then((r) => setEleven(r.voces), () => setEleven([]))
+  }, [estado?.elevenlabs])
   useEffect(() => {
     if (!estado?.conectando) return
     const t = setInterval(() => void recibir(api('/api/voz')), 2000)
@@ -24,6 +31,7 @@ export function useVoz() {
   }, [estado?.conectando])
   return {
     estado,
+    eleven,
     error: error ?? estado?.error,
     conectar: () => void recibir(api('/api/voz/conectar', {})),
     desconectar: () => void recibir(api('/api/voz/desconectar', {}))
@@ -43,14 +51,17 @@ export function SelectorVoz({ card, voz, valor, onCambio }: { card: Card; voz: U
   if (card.voz === false) return null
   const e = voz.estado
   const propia = card.voz?.propia ?? 'La mando yo'
-  const label = e?.conectando ? 'Voz: entra con Google en Edge…' : valor && e?.cuenta ? `Voz: ${valor} · AI Studio` : `Voz: ${propia.toLowerCase()}`
+  // Con ElevenLabs basta la llave; con AI Studio, la cuenta de Google.
+  const conVoces = !!e?.cuenta || voz.eleven.length > 0
+  const deEleven = vozEleven(valor)
+  const label = e?.conectando ? 'Voz: entra con Google en Edge…' : deEleven && conVoces ? `Voz: ${deEleven.nombre} · ElevenLabs` : valor && e?.cuenta ? `Voz: ${valor} · AI Studio` : `Voz: ${propia.toLowerCase()}`
   return (
     <Picker
       label={label}
-      value={e?.cuenta ? valor : ''}
+      value={conVoces ? valor : ''}
       menuWidth={340}
       disabled={!e || e.conectando}
-      groups={[{ label: 'Voz', options: [{ value: '', label: propia }] }, ...gruposDeVoces(e, valor)]}
+      groups={[{ label: 'Voz', options: [{ value: '', label: propia }] }, ...gruposDeVoces(e, valor, voz.eleven)]}
       onChange={(v) => (v === CONECTAR ? voz.conectar() : onCambio(v))}
     />
   )
@@ -60,12 +71,15 @@ export function SelectorVoz({ card, voz, valor, onCambio }: { card: Card; voz: U
  * Las voces de AI Studio para un menú, por grupos como los pone la página. Sin cuenta, la opción de conectarla. Una
  * elegida antes que ya no sale entre las de la página (`valor`) sigue a la vista.
  */
-function gruposDeVoces(e: EstadoVoz | undefined, valor = '') {
-  if (!e?.cuenta) return [{ label: 'AI Studio · Gemini 3.8 Flash TTS, gratis', options: [{ value: CONECTAR, label: 'Conectar tu cuenta de Google…' }] }]
+function gruposDeVoces(e: EstadoVoz | undefined, valor = '', eleven: VozElevenInfo[] = []) {
+  const deEleven = eleven.length
+    ? [{ label: 'ElevenLabs · tus voces y clones', options: [...eleven].sort((a, b) => Number(b.clon) - Number(a.clon)).map((v) => ({ value: valorEleven(v), label: `${v.nombre}${v.clon ? ' · clon' : ''}${v.descripcion ? ` · ${v.descripcion}` : ''}` })) }]
+    : []
+  if (!e?.cuenta) return [...deEleven, { label: 'AI Studio · Gemini 3.8 Flash TTS, gratis', options: [{ value: CONECTAR, label: 'Conectar tu cuenta de Google…' }] }]
   const grupos = new Map<string, { value: string; label: string }[]>()
   for (const v of e.voces) grupos.set(`AI Studio · ${v.grupo}`, [...(grupos.get(`AI Studio · ${v.grupo}`) ?? []), { value: v.nombre, label: `${v.nombre} · ${v.descripcion}` }])
-  if (valor && !e.voces.some((v) => v.nombre === valor)) grupos.set('AI Studio', [{ value: valor, label: valor }])
-  return [...grupos].map(([label, options]) => ({ label, options }))
+  if (valor && !vozEleven(valor) && !e.voces.some((v) => v.nombre === valor)) grupos.set('AI Studio', [{ value: valor, label: valor }])
+  return [...deEleven, ...[...grupos].map(([label, options]) => ({ label, options }))]
 }
 
 /** La última voz que se eligió para generar desde un hilo ya empezado. */

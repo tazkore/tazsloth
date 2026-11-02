@@ -16,6 +16,7 @@ Lo que comparten los estilos de vídeo: el lote, los errores ya vistos y los scr
 | [LOTE.md](LOTE.md) | Lo que cambia cuando el vídeo es uno de un lote; solo se lee si el mensaje trae `Lote:` |
 | [PORTADA.md](PORTADA.md) | La portada que todo vídeo vertical lleva de primer fotograma, en el estilo de su vídeo, y la miniatura de YouTube del horizontal |
 | [VOZ.md](VOZ.md) | La voz que el usuario elige al pedir el vídeo (`Voz:` del mensaje): mandarla él o generarla tú en AI Studio con el MCP `voz` |
+| [AVATAR.md](AVATAR.md) | El motor que anima al personaje o presentador (`Avatar:` del mensaje): sprites, ComfyUI local, nube gratis, HeyGen o Codex, con el MCP `avatar` |
 | [SERIES.md](SERIES.md) | Las series (`series/`), formatos fijos del canal para todo estilo: v!d las ofrece al crear un vídeo; solo se lee si el mensaje trae `Serie:` |
 | [PROYECTOS.md](PROYECTOS.md) | El proyecto y la serie del hilo (`Proyecto:`, `MemoriaProyecto:`, `MemoriaSerie:` del mensaje): leer su memoria, respetarla y proponer al final qué agregar |
 | `scripts/` | Las herramientas (abajo) |

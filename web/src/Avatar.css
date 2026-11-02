@@ -1,0 +1,14 @@
+/* Opciones → Avatares y voz y el menú «Avatar» del compositor (Avatar.tsx). */
+.av-barra { height: 4px; border-radius: 2px; background: var(--line); overflow: hidden; }
+.av-barra > span { display: block; height: 100%; background: var(--amber); transition: width 0.4s; }
+.av-etiqueta { display: inline-block; padding: 1px 7px; border-radius: 999px; border: 1px solid var(--line); color: var(--muted); font-size: 11px; white-space: nowrap; }
+.av-etiqueta.ok { color: var(--ok); border-color: var(--ok); }
+.av-etiqueta.justo { color: var(--amber); border-color: var(--amber); }
+.av-etiqueta.no { color: var(--bad); border-color: var(--bad); }
+.av-acciones { display: flex; align-items: center; gap: 8px; flex-shrink: 0; flex-wrap: wrap; justify-content: flex-end; }
+.av-campos { display: flex; flex-direction: column; gap: 8px; }
+.av-campos textarea { min-height: 70px; padding: 7px 11px; border-radius: 8px; background: var(--panel); border: 1px solid var(--line); outline: none; resize: vertical; color: inherit; font: inherit; }
+.av-campos textarea:focus { border-color: var(--amber); }
+.av-enlaces { display: flex; gap: 14px; flex-wrap: wrap; }
+.av-enlaces a { color: var(--amber-2); font-size: 12.5px; }
+.av-nota { color: var(--muted); font-size: 12px; margin: 0; }

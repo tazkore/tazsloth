@@ -1073,6 +1073,10 @@ export interface EstadoVoz {
   voces: VozStudio[]
   enFila: number
   error?: string
+  /** El proveedor por omisión de Opciones → Avatares y voz. */
+  proveedor?: 'gemini' | 'elevenlabs'
+  /** Hay llave de ElevenLabs: sus voces se piden a `/api/avatar/elevenlabs/voces`. */
+  elevenlabs?: boolean
 }
 
 /**

@@ -17,6 +17,7 @@ import { ConNavegadorRedes, RedesOpciones } from './Redes' // redes
 import { YoutubeOpciones } from './Youtube'
 import { VozOpciones } from './Voz' // voz de AI Studio
 import { AgenciaOpciones } from './AgenciaOpciones' // agencia
+import { AvatarOpciones } from './Avatar' // avatares y voz
 import { VENTA } from '../../shared/venta'
 import './Opciones.css'
 
@@ -80,6 +81,9 @@ function Ajustes({ onDone, iniciando, onIniciando }: { onDone(): void; iniciando
       </Grupo>
       <Grupo titulo="Voz" nota="Al pedir un video eliges en «Voz» si la mandas tú o si el agente la genera aquí. La sesión de Google vive en un perfil aparte del navegador de v!d: ningún agente la usa.">
         <VozOpciones />
+      </Grupo>
+      <Grupo titulo="Avatares y voz" nota="Cómo se anima el personaje de tus videos y con qué voz habla. Nada se descarga ni se paga sin que pulses el botón: ComfyUI son unos 2 GB y cada modelo, de 5 a 35 GB. En «Avatar» del compositor eliges el motor de cada video.">
+        <AvatarOpciones />
       </Grupo>
       {/* Solo sirven a Ideas: sin la de YouTube, las recomendaciones van con el canal conectado. */}
       {!VENTA && (

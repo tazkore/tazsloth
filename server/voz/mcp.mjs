@@ -18,20 +18,24 @@ const HERRAMIENTAS = [
   {
     name: 'voces',
     description:
-      'Las voces de Google AI Studio (Gemini 3.8 Flash TTS) con que v!d puede generar la narración, cada una con cómo suena y su grupo (Podcast, Storyteller…). Son las que enseña la página; AI Studio tiene más de 2.000 y cualquier nombre de su buscador sirve. Dice también si hay una cuenta de Google conectada.',
+      'Las voces con que v!d puede generar la narración. Con `proveedor` "gemini" (el de siempre) son las de Google AI Studio (Gemini 3.8 Flash TTS), cada una con cómo suena y su grupo (Podcast, Storyteller…); AI Studio tiene más de 2.000 y cualquier nombre de su buscador sirve, y dice si hay una cuenta de Google conectada. Con "elevenlabs" son las de la cuenta de ElevenLabs del usuario, con sus clones (como «Tazkore IA»), cada una con su id.',
     inputSchema: {
       type: 'object',
-      properties: { buscar: { type: 'string', description: 'Solo las que tengan esto en su nombre, cómo suenan o su grupo («deep», «Podcast»)' } }
+      properties: {
+        buscar: { type: 'string', description: 'Solo las que tengan esto en su nombre, cómo suenan o su grupo («deep», «Podcast»)' },
+        proveedor: { type: 'string', enum: ['gemini', 'elevenlabs'], description: 'De quién son las voces. Sin él, el proveedor por omisión de Opciones.' }
+      }
     }
   },
   {
     name: 'generar_voz',
     description:
-      'Genera la narración en Google AI Studio con la voz pedida, en la cuenta de Google del usuario, y deja el WAV (24 kHz, mono) en `salida`. Pasa el texto tal como se narra, o `archivo`: un guion en Markdown se narra sin títulos ni encabezados. Las etiquetas de AI Studio, como <laugh> o <short pause>, van dentro del texto. Una frase tarda unos 5 s y 6 minutos de guion unos 100 s; si no acaba en 40 s, devuelve un id para esperarla con estado_voz. Si el texto y la voz no cambiaron desde el último WAV de esa ruta, sale al momento.',
+      'Genera la narración con la voz pedida y deja el WAV (24 kHz, mono) en `salida`, igual venga de Google AI Studio (la cuenta de Google del usuario) o de ElevenLabs (su llave): el audio pasa por el mismo pipeline. `proveedor` sale de la línea `Voz:` del mensaje. Pasa el texto tal como se narra, o `archivo`: un guion en Markdown se narra sin títulos ni encabezados. Las etiquetas de AI Studio, como <laugh> o <short pause>, van dentro del texto. Una frase tarda unos 5 s y 6 minutos de guion unos 100 s; si no acaba en 40 s, devuelve un id para esperarla con estado_voz. Si el texto y la voz no cambiaron desde el último WAV de esa ruta, sale al momento.',
     inputSchema: {
       type: 'object',
       properties: {
-        voz: { type: 'string', description: 'El nombre de la voz en AI Studio, como Fola o Kore' },
+        voz: { type: 'string', description: 'El nombre de la voz en AI Studio, como Fola o Kore; con elevenlabs, el id o el nombre de la voz (como Tazkore IA)' },
+        proveedor: { type: 'string', enum: ['gemini', 'elevenlabs'], description: 'gemini (AI Studio) o elevenlabs. Sin él, el proveedor por omisión de Opciones → Avatares y voz.' },
         texto: { type: 'string', description: 'Lo que se narra' },
         archivo: { type: 'string', description: 'O la ruta absoluta de un .md o .txt con lo que se narra' },
         salida: { type: 'string', description: 'La ruta absoluta del .wav que deja, como <carpeta del video>/fuentes/voz/ai-studio.wav' }
@@ -60,16 +64,23 @@ function contar(t) {
 }
 
 const LLAMADAS = {
-  async voces({ buscar } = {}) {
+  async voces({ buscar, proveedor } = {}) {
     const e = await pedir('/api/voz')
+    if ((proveedor ?? e.proveedor) === 'elevenlabs') {
+      if (!e.elevenlabs) return 'No hay llave de ElevenLabs: que el usuario la pegue en Opciones → Avatares y voz. Mientras, pídele la voz o usa proveedor gemini.'
+      const { voces } = await pedir('/api/avatar/elevenlabs/voces')
+      const q = buscar?.toLowerCase()
+      const lista = voces.filter((v) => !q || `${v.nombre} ${v.descripcion} ${v.categoria}`.toLowerCase().includes(q))
+      return [`ElevenLabs: ${lista.length} voces${q ? ` con «${buscar}»` : ''} (los clones, primero):`, ...[...lista].sort((a, b) => Number(b.clon) - Number(a.clon)).map((v) => `${v.nombre} [${v.id}]${v.clon ? ' · clon' : ''}${v.descripcion ? ` · ${v.descripcion}` : ''}`)].join('\n')
+    }
     if (!e.cuenta) return 'No hay cuenta de Google conectada para AI Studio: que el usuario la conecte en Opciones → Voz. Mientras, pídele la voz.'
     const b = buscar?.toLowerCase()
     const voces = e.voces.filter((v) => !b || `${v.nombre} ${v.descripcion} ${v.grupo}`.toLowerCase().includes(b))
     const grupos = Map.groupBy(voces, (v) => v.grupo)
     return [`Cuenta: ${e.cuenta}. ${voces.length} voces${b ? ` con «${buscar}»` : ''}:`, ...[...grupos].map(([g, vs]) => `${g}: ${vs.map((v) => `${v.nombre} (${v.descripcion})`).join('; ')}`)].join('\n')
   },
-  async generar_voz({ voz, texto, archivo, salida }) {
-    const t = await pedir('/api/voz/generar', { voz, texto, archivo, salida })
+  async generar_voz({ voz, texto, archivo, salida, proveedor }) {
+    const t = await pedir('/api/voz/generar', { voz, texto, archivo, salida, proveedor })
     return contar(t.estado === 'lista' || t.estado === 'error' ? t : await pedir(`/api/voz/trabajos/${t.id}?esperar=${ESPERA}`))
   },
   async estado_voz({ id }) {
