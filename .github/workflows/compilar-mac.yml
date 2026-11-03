@@ -1,0 +1,46 @@
+# Compila v!d para Mac (Apple Silicon e Intel) y deja el .dmg y el .zip como artefactos de la ejecución.
+# Sin certificado de Apple va con firma ad hoc: la primera vez se abre con clic derecho → Abrir (ver docs/agents/publicacion.md).
+name: Compilar v!d para Mac
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  mac:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: macos-15
+            arch: arm64
+          - os: macos-15-intel
+            arch: x64
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24.18.0
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - run: npm run compilar
+        env:
+          # Secretos vacíos: firma ad hoc, sin notarizar.
+          CSC_LINK: ''
+          CSC_KEY_PASSWORD: ''
+          APPLE_ID: ''
+          APPLE_APP_SPECIFIC_PASSWORD: ''
+          APPLE_TEAM_ID: ''
+      - run: ls -la dist/instalador
+      - uses: actions/upload-artifact@v4
+        with:
+          name: vid-koldgold-mac-${{ matrix.arch }}
+          path: |
+            dist/instalador/*.dmg
+            dist/instalador/*.zip
+          if-no-files-found: error
+          retention-days: 30
