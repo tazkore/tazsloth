@@ -4,6 +4,10 @@ name: Compilar v!d para Mac
 
 on:
   workflow_dispatch:
+  # La rama por defecto no es tazkore: así corre también al cambiar este archivo o la versión en tazkore.
+  push:
+    branches: [tazkore]
+    paths: ['.github/workflows/compilar-mac.yml', 'package.json']
 
 permissions:
   contents: read
