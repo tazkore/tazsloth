@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 300" xmlns:c2pa="http://c2pa.org/manifest">
+  <!-- Wordmark v!d by Kold.Gold para splash, portada e instalador. Fondo transparente. -->
+  <defs>
+    <radialGradient id="fondo" cx="50%" cy="38%" r="64%">
+      <stop offset="0%" stop-color="#222a3d" />
+      <stop offset="100%" stop-color="#080a0f" />
+    </radialGradient>
+    <linearGradient id="cobre" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#ffd6a6" />
+      <stop offset="45%" stop-color="#d69a5c" />
+      <stop offset="100%" stop-color="#7d4a22" />
+    </linearGradient>
+    <linearGradient id="cobreV" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#ffd6a6" />
+      <stop offset="50%" stop-color="#d69a5c" />
+      <stop offset="100%" stop-color="#8a5328" />
+    </linearGradient>
+    <linearGradient id="acero" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#f6f7f9" />
+      <stop offset="50%" stop-color="#a9b0bd" />
+      <stop offset="100%" stop-color="#454c5c" />
+    </linearGradient>
+    <linearGradient id="aceroV" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#ffffff" />
+      <stop offset="55%" stop-color="#c3c9d4" />
+      <stop offset="100%" stop-color="#7c8496" />
+    </linearGradient>
+  </defs>
+  <g fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="40" transform="translate(-60,-90)">
+    <polyline points="106,196 150,332 194,196" stroke="url(#aceroV)" />
+    <circle cx="356" cy="282" r="50" stroke="url(#aceroV)" />
+    <rect x="386" y="128" width="40" height="224" rx="20" fill="url(#aceroV)" stroke="none" />
+    <rect x="236" y="130" width="40" height="158" rx="20" fill="url(#cobreV)" stroke="none" />
+    <path d="M 241 298 L 283 322 L 241 346 Z" fill="url(#cobre)" stroke="url(#cobre)" stroke-width="10" />
+  </g>
+  <line x1="400" y1="45" x2="400" y2="255" stroke="#d69a5c" stroke-opacity="0.5" stroke-width="3" />
+  <text x="430" y="130" font-family="Segoe UI, Inter, Arial, sans-serif" font-size="44" font-weight="400" fill="#a9b0bd" letter-spacing="2">by</text>
+  <text x="430" y="210" font-family="Segoe UI, Inter, Arial, sans-serif" font-size="66" font-weight="700" fill="url(#cobre)" letter-spacing="-1">Kold.Gold</text>
+</svg>

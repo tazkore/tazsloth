@@ -3,6 +3,15 @@
 TazSloth es el fork de Tazkore de [Sloth](https://github.com/Vancci-sloth/sloth) (Apache 2.0 + Commons Clause).
 Uso interno, sin venta. Los cambios propios viven en la rama `tazkore`; `main` sigue a `upstream`.
 
+## v1.1.0 — Marca al centro (4-nov-2026)
+
+- Versión 1.0.1 → 1.1.0 (`package.json` y `package-lock.json`; `scripts/compilar.mjs` y el servidor la leen de ahí).
+- Inicio (chat nuevo): el logo «v!d by Kold.Gold» grande y centrado entre las skills y el compositor, sin acaparar: `clamp(220px, 32%, 420px)` (hasta 300 px con pantallas de menos de 800 px de alto, para que el compositor siga a la vista en 1366×768). Usa el wordmark de `assets/wordmark.svg`, sin su metadato C2PA, copiado a `web/public/wordmark.svg`.
+- Pie fijo en la esquina de abajo a la derecha: «un servicio de agentes.kold.gold» (11,5 px, `--muted`), con enlace a https://agentes.kold.gold que Electron abre en el navegador externo. También sale sobre la bienvenida.
+- Archivos: `web/src/Marca.tsx`, `web/src/Marca.css`, `web/src/App.tsx`, `web/src/Bienvenida.tsx`, `web/public/wordmark.svg`.
+- No hay pantalla de splash propia (la ventana de Electron se muestra al estar lista), así que no se tocó.
+- Capturas en `docs/tazkore/capturas-1.1/`.
+
 ## Fase 2 · Identidad (1-nov-2026, base upstream a90083e)
 
 | Qué | Antes | Ahora | Archivos |

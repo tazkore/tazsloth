@@ -2,6 +2,7 @@ import { useEffect, useState, type ReactNode } from 'react'
 import { Icono } from './Iconos'
 import { Logo } from './Logos'
 import { CuentaChatGPT, CuentaClaude, CuentaOpenCode, Requisitos } from './Opciones'
+import { PieMarca } from './Marca'
 import './Bienvenida.css'
 
 const VISTA = 'bienvenida'
@@ -82,6 +83,7 @@ export function Bienvenida() {
   if (!abierta) return null
   return (
     <div className="modal-backdrop" onClick={cerrar}>
+      <PieMarca />
       <div className="modal bienvenida" role="dialog" aria-modal aria-label="Bienvenida" onClick={(e) => e.stopPropagation()}>
         <header>
           <img src="/icon.svg" alt="" />
