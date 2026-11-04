@@ -57,13 +57,18 @@ console.log(`· ${cards.length} estilos de video, con los dos formatos`)
  */
 function modulosDe(skill) {
   const casa = process.env.LOCALAPPDATA ?? join(process.env.HOME ?? '', '.cache')
+  // El trabajo de desarrollo de v!d (server/trabajo.ts): fuera de AppData desde v1.1.
+  const dev = process.env.VID_TRABAJO ?? (process.platform === 'win32' ? 'C:\\vid-datos\\trabajo' : null)
+  // Cada glob, relativo a `casa`, o `[raíz, glob]`.
   const buscar = (...globs) =>
     globs
-      .flatMap((g) => globSync(g, { cwd: casa }).map((r) => join(casa, r)))
+      .map((g) => (Array.isArray(g) ? g : [casa, g]))
+      .filter(([raiz]) => raiz && existsSync(raiz))
+      .flatMap(([raiz, g]) => globSync(g, { cwd: raiz }).map((r) => join(raiz, r)))
       .filter((nm) => existsSync(join(nm, 'remotion', 'package.json')))
       .sort((a, b) => statSync(b).mtimeMs - statSync(a).mtimeMs)[0]
   return (
-    buscar(`Programs/vid-koldgold/app/trabajo/${skill}/*/node_modules`, `vid-koldgold-dev/trabajo/${skill}/*/node_modules`) ??
+    buscar(`Programs/vid-koldgold/app/trabajo/${skill}/*/node_modules`, [dev, `${skill}/*/node_modules`], `vid-koldgold-dev/trabajo/${skill}/*/node_modules`) ??
     buscar(`Programs/sloth/app/trabajo/${skill}/*/node_modules`, `sloth-dev/trabajo/${skill}/*/node_modules`) ??
     buscar(`${skill}/modulos/*/node_modules`, `sloth-modulos/${skill}-*/node_modules`)
   )

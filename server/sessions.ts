@@ -164,6 +164,26 @@ export class Sessions {
     return [...this.metas.values()].sort((a, b) => b.updatedAt - a.updatedAt)
   }
 
+  /**
+   * Los hilos que llegaron a `data/sessions` con el servidor ya abierto (el historial de Sloth, `importar-sloth.ts`):
+   * se leen y se avisan a la pantalla. Los que ya conocía no se tocan. Devuelve cuántos sumó.
+   */
+  incorporar(ids: string[]): number {
+    let n = 0
+    for (const id of ids) {
+      if (this.metas.has(id)) continue
+      try {
+        const meta = alDia(JSON.parse(readFileSync(join(this.dir, `${id}.json`), 'utf8')))
+        this.metas.set(meta.id, meta)
+        this.pushMeta(meta)
+        n++
+      } catch (error) {
+        console.error(`No se pudo leer el hilo importado ${id}: ${error instanceof Error ? error.message : error}`)
+      }
+    }
+    return n
+  }
+
   get(id: string): { meta: SessionMeta; events: AgentEvent[] } | null {
     const meta = this.metas.get(id)
     return meta ? { meta, events: this.load(id) } : null

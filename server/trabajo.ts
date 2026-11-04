@@ -5,8 +5,16 @@ import { VENTA } from '../shared/venta.ts'
 
 /** Este repo, cuando v!d corre desde aquí. */
 const REPO = resolve(dirname(fileURLToPath(import.meta.url)), '..')
-/** Donde trabaja la copia del repo: fuera de él. Espacio en disco la mira también desde la instalada. */
-export const TRABAJO_DEV = join(process.env.LOCALAPPDATA || join(homedir(), '.local', 'share'), 'vid-koldgold-dev', 'trabajo')
+/**
+ * Donde trabajaba la copia del repo hasta v1.1. En Windows, `AppData\Local` la virtualiza el paquete MSIX de Claude
+ * Desktop: un v!d arrancado desde ahí y otro desde la terminal veían carpetas distintas. `migrar.ts` la copia a la nueva.
+ */
+export const TRABAJO_DEV_VIEJO = join(process.env.LOCALAPPDATA || join(homedir(), '.local', 'share'), 'vid-koldgold-dev', 'trabajo')
+/**
+ * Donde trabaja la copia del repo: fuera de él y, en Windows, fuera de AppData (`C:\vid-datos\trabajo`), para que se vea
+ * igual desde cualquier lado. `VID_TRABAJO` la cambia. Espacio en disco la mira también desde la instalada.
+ */
+export const TRABAJO_DEV = process.env.VID_TRABAJO || (process.platform === 'win32' ? 'C:\\vid-datos\\trabajo' : TRABAJO_DEV_VIEJO)
 
 /**
  * La carpeta donde trabajan los hilos de video y de Ideas: `<app>/trabajo` en la app que se vende. Corriendo desde el

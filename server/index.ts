@@ -48,6 +48,9 @@ import { espacio } from './espacio.ts' // espacio en disco
 import { equipo } from './equipo.ts' // tu equipo
 import { Sessions } from './sessions.ts'
 import { Proyectos } from './proyectos.ts' // proyectos
+import { asignacionAlan, importarUnaVez, SERIES_SLOTH, slothDetectado } from './importar-sloth.ts' // historial de Sloth
+import { carpetaTrabajo } from './trabajo.ts'
+import { homedir } from 'node:os'
 import { agencia } from './agencia/index.ts' // agencia y Social Media
 import { mantenerVoz } from './voz-viva.ts'
 import { avisoDeVideos } from '../shared/limites.ts'
@@ -396,6 +399,29 @@ async function api(req: IncomingMessage, res: ServerResponse, url: URL): Promise
 
   if (path === '/api/opciones' && method === 'GET') {
     send(res, 200, opciones())
+    return true
+  }
+
+  // Opciones → Historial de Sloth (v!d 1.1): copia los hilos y los videos del Sloth original y los suma a la lista.
+  if (path === '/api/importar/sloth' && method === 'POST') {
+    const { carpeta } = await body<{ carpeta?: string }>(req).catch(() => ({ carpeta: undefined }))
+    const sloth = carpeta?.trim() || slothDetectado()
+    if (!sloth) return send(res, 400, { error: 'No encontré el Sloth original en esta computadora. Escribe la carpeta de su app (la que tiene data y trabajo).' }), true
+    try {
+      const r = await importarUnaVez({
+        sloth,
+        datos: join(APP, 'data'),
+        trabajo: carpetaTrabajo(APP),
+        skills: SKILLS,
+        claudeDestino: join(process.env.CLAUDE_CONFIG_DIR || join(homedir(), '.claude'), 'projects'),
+        asignar: asignacionAlan,
+        series: SERIES_SLOTH
+      })
+      sessions.incorporar(r.hilos.map((h) => h.id))
+      send(res, 200, r)
+    } catch (e) {
+      send(res, 400, { error: e instanceof Error ? e.message : String(e) })
+    }
     return true
   }
 

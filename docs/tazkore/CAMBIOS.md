@@ -271,3 +271,49 @@ Se dejan como estaban los créditos a Vancci, LICENSE, NOTICE y los ADR de upstr
   estadísticas de Gemini: igual que los otros agentes, que ya corren sin permisos.
 
 Verificación: `npm run typecheck` sin errores; `npm test` 353/353.
+
+## v1.1 — Historial de Sloth (4 nov 2026)
+
+Los hilos y videos que Alan hizo en el Sloth original ya están en v!d, cada uno en su proyecto.
+
+- `server/importar-sloth.ts`: importa desde la carpeta de app de Sloth (la detectada o la que se diga). COPIA, nunca
+  mueve ni borra: hilos (`.json`/`.jsonl`, sin pisar ids de v!d: si chocan, `<id>-sloth`), sus carpetas de trabajo
+  (`trabajo/<card>`), `attachments`, `miniaturas` y `previas`. Reescribe en los registros las rutas de trabajo,
+  attachments y skills de Sloth a las de v!d (con `\`, `\\` de JSON y `/`). Los enlaces de la copia que apuntaban dentro
+  del trabajo de Sloth se rehacen a la copia (con la ruta real: en el paquete MSIX de Claude, `AppData\Local` está
+  virtualizada). Si la carpeta de etapas de un hilo nunca sale en su historial, se corrige a la que sí sale.
+- La sesión de Claude Code de cada hilo (`projects/<cwd>/<id>.jsonl` y su carpeta) se copia del `~/.claude` de Sloth al
+  `CLAUDE_CONFIG_DIR` de v!d, en la carpeta del cwd nuevo y con las rutas reescritas: el hilo se continúa igual. Sin
+  sesión, el hilo queda como historial y el siguiente mensaje empieza otra con su resumen (`resumir`).
+- Proyecto y serie por hilo (`asignacionAlan`): todo a Kold.Gold salvo el sketch de roast (Tazkore IA); el Radar a la
+  serie `kold-gold-radar`. Series nuevas en Kold.Gold con su memoria: `5-datos` («5 datos que te harán reír de la
+  logística») y `estafas` («Desmontando estafas», la del banco de video-base).
+- `data/importado-de-sloth.json` registra lo importado: volver a correrlo no duplica nada.
+- `POST /api/importar/sloth` (opcional `{ carpeta }`) y `Sessions.incorporar`, que suma los hilos nuevos sin reiniciar.
+- Opciones → «Historial de Sloth» con el botón «Traer historial de Sloth» y el resultado (`web/src/HistorialSloth.tsx`).
+
+Importación hecha en desarrollo (`C:\tazkore-sloth\data` y `%LOCALAPPDATA%\vid-koldgold-dev\trabajo`): 11 hilos, 4
+carpetas de trabajo (kold-gold, reel-collage, video-el-diff, video-explicativo; ~4 GB, 55 mp4) y 15 adjuntos. Los 11
+tenían su sesión de Claude Code: todos se pueden continuar.
+
+Verificación: `npm run typecheck` sin errores; `npm test` 356/356.
+
+### v1.1 — Trabajo de desarrollo fuera de AppData (4 nov 2026)
+
+En Windows, el paquete MSIX de Claude Desktop virtualiza `AppData\Local`: un v!d arrancado desde Claude Desktop veía
+`%LOCALAPPDATA%\vid-koldgold-dev\trabajo` en `AppData\Local\Packages\Claude_…\LocalCache\Local\…`, y uno arrancado desde
+la terminal no lo veía.
+
+- `server/trabajo.ts`: `TRABAJO_DEV` = `VID_TRABAJO`, o en Windows `C:\vid-datos\trabajo` (fuera de Windows, lo de
+  antes). `TRABAJO_DEV_VIEJO` es la de AppData.
+- `server/migrar.ts` (`migrarTrabajo`, desde `migrar-arranque.ts`): al arrancar, si la nueva no existe y la vieja sí, la
+  copia sin borrar nada (`copiarConEnlaces`: los enlaces se recrean, no se copia lo que hay detrás), rehace los enlaces
+  que apuntaban dentro de la vieja (o a su ruta física virtualizada) hacia la copia y deja `migrado-de-appdata.txt`.
+- `reescribirSesiones` ahora también reescribe el registro (`.jsonl`, con respaldo; su vista se rehace), el nombre con
+  guiones de la carpeta, las sesiones de Claude copiadas a la carpeta de `projects` del cwd nuevo y la marca
+  `importado-de-sloth.json`. `cambiosDeRuta`, `repuntarEnlaces` y `recorrer` pasan aquí desde `importar-sloth.ts`.
+- Espacio en disco y `scripts/comprobar-skills.mjs` miran también la carpeta nueva.
+
+Hecho en desarrollo: 12 hilos con su cwd bajo `C:\vid-datos\trabajo` (56 mp4, ~4.3 GB), sus 12 sesiones de Claude en
+`data/claude/projects/C--vid-datos-trabajo-*`, el enlace de «Mito o realidad» apuntando a la copia nueva. La carpeta vieja
+quedó intacta. Verificación: `npm run typecheck` sin errores; `npm test` 357/357.
