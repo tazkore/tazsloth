@@ -14,12 +14,12 @@
  *
  * Lo llama `POST /api/importar/sloth` (Opciones → Historial de Sloth).
  */
-import { type Dirent, existsSync, mkdirSync, readdirSync, readFileSync, readlinkSync, realpathSync, statSync, symlinkSync, unlinkSync, writeFileSync } from 'node:fs'
+import { existsSync, mkdirSync, readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs'
 import { cp, readFile, writeFile } from 'node:fs/promises'
 import { homedir } from 'node:os'
 import { join, relative } from 'node:path'
 import type { SessionMeta } from '../shared/types.ts'
-import { proyectoClaude } from './migrar.ts'
+import { cambiosDeRuta, proyectoClaude, recorrer, repuntarEnlaces } from './migrar.ts'
 
 /** El archivo que deja la importación en `data` de v!d. */
 export const MARCA_IMPORTAR = 'importado-de-sloth.json'
@@ -184,24 +184,6 @@ fuera de ahí, desconfía») y: «Cotiza hoy en kold punto gold. Kold Gold: log�
   }
 ]
 
-const escapar = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
-
-/**
- * Los cambios de ruta de un texto: cada par `de → a` en sus formas (con `\`, con `\\` como va dentro de un JSON, con
- * `\\\\` como va en un JSON dentro de otro, y con `/`). Sin distinguir mayúsculas, como Windows.
- */
-export function cambiosDeRuta(pares: [string, string][]): (texto: string) => string {
-  const reglas: [RegExp, string][] = []
-  for (const [de, a] of [...pares].sort((x, y) => y[0].length - x[0].length)) {
-    const formas = (r: string) => [r.replace(/\//g, '\\'), r.replace(/[\\/]/g, '\\\\'), r.replace(/[\\/]/g, '\\\\\\\\'), r.replace(/\\/g, '/')]
-    const des = formas(de)
-    const as = formas(a)
-    // Las formas más largas primero: `\\\\` contiene a `\\`.
-    for (const k of [2, 1, 0, 3]) reglas.push([new RegExp(escapar(des[k]), 'gi'), as[k]])
-  }
-  return (texto) => reglas.reduce((t, [re, a]) => t.replace(re, () => a), texto)
-}
-
 const leerJson = <T>(archivo: string): T | null => {
   try {
     return JSON.parse(readFileSync(archivo, 'utf8')) as T
@@ -227,25 +209,6 @@ function textos(dir: string): string[] {
     .map((d) => join(d.parentPath, d.name))
 }
 
-/**
- * Recorre una carpeta sin entrar en enlaces (los `node_modules` de los proyectos de Remotion son enlaces a una caché
- * compartida) ni en `node_modules`. Llama a `ver` con cada archivo o enlace.
- */
-function recorrer(dir: string, ver: (ruta: string, d: Dirent) => void) {
-  let hijos: Dirent[]
-  try {
-    hijos = readdirSync(dir, { withFileTypes: true })
-  } catch {
-    return
-  }
-  for (const d of hijos) {
-    const ruta = join(dir, d.name)
-    if (d.isDirectory()) {
-      if (d.name !== 'node_modules') recorrer(ruta, ver)
-    } else ver(ruta, d)
-  }
-}
-
 /** Cuántos mp4 y cuántos bytes hay en una carpeta, sin contar lo enlazado ni `node_modules`. */
 function medir(dir: string): { mp4: number; bytes: number } {
   let mp4 = 0
@@ -258,38 +221,6 @@ function medir(dir: string): { mp4: number; bytes: number } {
     if (/\.mp4$/i.test(d.name)) mp4++
   })
   return { mp4, bytes }
-}
-
-/**
- * Los enlaces de la copia que apuntaban dentro del trabajo de Sloth (un hilo de una card que usa la carpeta de otra)
- * pasan a apuntar a la misma carpeta en v!d. Solo se toca el enlace de la copia: nunca su destino ni el de Sloth.
- */
-function repuntarEnlaces(dir: string, de: string, a: string): number {
-  let n = 0
-  recorrer(dir, (ruta, d) => {
-    if (!d.isSymbolicLink()) return
-    try {
-      const destino = readlinkSync(ruta).replace(/^\\\\\?\\/, '')
-      const dentro = (base: string) => {
-        const rel = relative(base, destino)
-        return rel && !rel.startsWith('..') && !/^[a-zA-Z]:/.test(rel) ? rel : null
-      }
-      // A Sloth, o a v!d pero roto (se hizo con la ruta virtualizada, ver abajo).
-      const rel = dentro(de) ?? (existsSync(ruta) ? null : dentro(a))
-      if (!rel) return
-      const nuevo = join(a, rel)
-      if (!existsSync(nuevo)) return
-      // La ruta real: si v!d corre dentro de un paquete de Windows (MSIX), AppData\Local está virtualizada y un enlace a
-      // la ruta de siempre no lo sigue el sistema.
-      const real = realpathSync.native(nuevo)
-      unlinkSync(ruta)
-      symlinkSync(real, ruta, statSync(real).isDirectory() ? 'junction' : 'file')
-      n++
-    } catch (e) {
-      console.error(`No pude repuntar el enlace ${ruta}: ${e instanceof Error ? e.message : e}`)
-    }
-  })
-  return n
 }
 
 /**
@@ -383,7 +314,7 @@ export async function importarSloth(o: OpcionesImportar): Promise<ResultadoImpor
   }
   // Ya copiadas todas (también las de antes), los enlaces entre ellas apuntan a la copia y no a Sloth.
   if (existsSync(slothTrabajo))
-    for (const card of readdirSync(slothTrabajo)) if (existsSync(join(o.trabajo, card))) r.enlaces += repuntarEnlaces(join(o.trabajo, card), slothTrabajo, o.trabajo)
+    for (const card of readdirSync(slothTrabajo)) if (existsSync(join(o.trabajo, card))) r.enlaces += repuntarEnlaces(join(o.trabajo, card), [slothTrabajo], o.trabajo)
   if (nuevos.length) {
     for (const d of ['attachments', 'miniaturas', 'previas']) {
       const de = join(o.sloth, 'data', d)

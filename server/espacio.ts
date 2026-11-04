@@ -7,7 +7,7 @@ import { dirname, isAbsolute, join, relative, resolve } from 'node:path'
 import type { Card, Espacio, GrupoEspacio, IdEspacio } from '../shared/types.ts'
 import { carpetasDe, folderOf, terminados } from './etapas.ts'
 import type { Sessions } from './sessions.ts'
-import { TRABAJO_DEV } from './trabajo.ts'
+import { TRABAJO_DEV, TRABAJO_DEV_VIEJO } from './trabajo.ts'
 
 /**
  * Opciones → Espacio en disco: lo que v!d y sus estilos de video dejan y ya no hace falta, y borrarlo. Lo seguro (los
@@ -329,7 +329,7 @@ export function casaDe(skill: string, plantilla: string): string | undefined {
 function enlacesDeOtrasCopias(): string[] {
   // v!d: también la Sloth original instalada y su copia del repo, que comparten sloth-modulos, y las carpetas de TazSloth
   // (antes de la Fase 2), que se copiaron pero no se borran.
-  return [join(LOCAL, 'Programs', 'vid-koldgold', 'app', 'trabajo'), join(LOCAL, 'Programs', 'tazsloth', 'app', 'trabajo'), join(LOCAL, 'tazsloth-dev', 'trabajo'), join(LOCAL, 'Programs', 'sloth', 'app', 'trabajo'), join(LOCAL, 'sloth-dev', 'trabajo'), TRABAJO_DEV]
+  return [join(LOCAL, 'Programs', 'vid-koldgold', 'app', 'trabajo'), join(LOCAL, 'Programs', 'tazsloth', 'app', 'trabajo'), join(LOCAL, 'tazsloth-dev', 'trabajo'), join(LOCAL, 'Programs', 'sloth', 'app', 'trabajo'), join(LOCAL, 'sloth-dev', 'trabajo'), TRABAJO_DEV_VIEJO, TRABAJO_DEV]
     .flatMap((raiz) => listar(raiz).flatMap((card) => listar(join(raiz, card)).map((v) => join(raiz, card, v, 'node_modules'))))
     .map(enlace)
     .filter((e): e is string => !!e)

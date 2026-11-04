@@ -3,8 +3,8 @@ import { existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, realpath
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import test from 'node:test'
-import { asignacionAlan, cambiosDeRuta, importarSloth, MARCA_IMPORTAR, SERIES_SLOTH } from './importar-sloth.ts'
-import { proyectoClaude } from './migrar.ts'
+import { asignacionAlan, importarSloth, MARCA_IMPORTAR, SERIES_SLOTH } from './importar-sloth.ts'
+import { cambiosDeRuta, proyectoClaude } from './migrar.ts'
 
 /** Un Sloth de juguete con dos hilos (uno con su sesión de Claude y otro sin ella) y un v!d con un hilo propio. */
 function armar(raiz: string) {

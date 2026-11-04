@@ -297,3 +297,23 @@ carpetas de trabajo (kold-gold, reel-collage, video-el-diff, video-explicativo; 
 tenían su sesión de Claude Code: todos se pueden continuar.
 
 Verificación: `npm run typecheck` sin errores; `npm test` 356/356.
+
+### v1.1 — Trabajo de desarrollo fuera de AppData (4 nov 2026)
+
+En Windows, el paquete MSIX de Claude Desktop virtualiza `AppData\Local`: un v!d arrancado desde Claude Desktop veía
+`%LOCALAPPDATA%\vid-koldgold-dev\trabajo` en `AppData\Local\Packages\Claude_…\LocalCache\Local\…`, y uno arrancado desde
+la terminal no lo veía.
+
+- `server/trabajo.ts`: `TRABAJO_DEV` = `VID_TRABAJO`, o en Windows `C:\vid-datos\trabajo` (fuera de Windows, lo de
+  antes). `TRABAJO_DEV_VIEJO` es la de AppData.
+- `server/migrar.ts` (`migrarTrabajo`, desde `migrar-arranque.ts`): al arrancar, si la nueva no existe y la vieja sí, la
+  copia sin borrar nada (`copiarConEnlaces`: los enlaces se recrean, no se copia lo que hay detrás), rehace los enlaces
+  que apuntaban dentro de la vieja (o a su ruta física virtualizada) hacia la copia y deja `migrado-de-appdata.txt`.
+- `reescribirSesiones` ahora también reescribe el registro (`.jsonl`, con respaldo; su vista se rehace), el nombre con
+  guiones de la carpeta, las sesiones de Claude copiadas a la carpeta de `projects` del cwd nuevo y la marca
+  `importado-de-sloth.json`. `cambiosDeRuta`, `repuntarEnlaces` y `recorrer` pasan aquí desde `importar-sloth.ts`.
+- Espacio en disco y `scripts/comprobar-skills.mjs` miran también la carpeta nueva.
+
+Hecho en desarrollo: 12 hilos con su cwd bajo `C:\vid-datos\trabajo` (56 mp4, ~4.3 GB), sus 12 sesiones de Claude en
+`data/claude/projects/C--vid-datos-trabajo-*`, el enlace de «Mito o realidad» apuntando a la copia nueva. La carpeta vieja
+quedó intacta. Verificación: `npm run typecheck` sin errores; `npm test` 357/357.
