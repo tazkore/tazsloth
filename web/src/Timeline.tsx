@@ -1,5 +1,6 @@
 import { Fragment, memo, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
-import { proveedorDe } from '../../shared/providers'
+import { HERRAMIENTA_FLOW, hechoDeFlow, MODELOS_IMAGEN } from '../../shared/flow'
+import { NOMBRE_AGENTE, proveedorDe } from '../../shared/providers'
 import type { AgentEvent } from '../../shared/types'
 import { api } from './api'
 import { Arranque } from './Arranque'
@@ -7,7 +8,7 @@ import { useEventos } from './eventos'
 import { Icon } from './Composer'
 import { LINK, LINK_ICON, linkParts, QUOTE, QUOTE_EVENT, QUOTE_ICON, quoteText, THREAD, THREAD_ICON, threadIconOf } from './etiquetas'
 import { imageUrl, Thumbs } from './Images'
-import { buildTimeline, compact, delHilo, duration, errorLlano, REINTENTAR, toolSummary, type Item, type Subagente } from './items'
+import { buildTimeline, compact, delHilo, duration, errorLlano, finDeRuta, REINTENTAR, toolSummary, type Item, type Subagente } from './items'
 import { bloquesDeMarkdown } from './markdown'
 import { BarraSubagente, FilaSubagente, GrupoSubagentes } from './Subagentes'
 
@@ -36,16 +37,18 @@ function onMarkdownClick(e: React.MouseEvent) {
  * en la página tal cual, sin volver a armarlos ni a medirlos, y lo que tengas seleccionado en ellos sigue seleccionado.
  * Van sin envoltorio, como si fueran un solo HTML (el CSS mira a los hijos de `.md`).
  */
-const Markdown = memo(function Markdown({ text }: { text: string }) {
+const Markdown = memo(function Markdown({ text, sessionId }: { text: string; sessionId?: string }) {
   const caja = useRef<HTMLDivElement>(null)
+  const [grande, setGrande] = useState<string>()
   const pintados = useRef<{ html: string; nodos: ChildNode[] }[]>([])
   // Cada bloque de código lleva su botón «Copiar», fuera del <pre> para que no se desplace con él.
   const bloques = useMemo(
     () =>
-      bloquesDeMarkdown(text).map((html) =>
+      // Una imagen del disco (`![](C:\…\perro.jpg)`) se pide al servidor, como las que lee el agente.
+      bloquesDeMarkdown(text, sessionId ? (ruta) => `/api/sessions/${sessionId}/imagen?ruta=${encodeURIComponent(ruta)}` : undefined).map((html) =>
         html.replaceAll('<pre>', '<div class="code-block"><button class="copy" type="button">Copiar</button><pre>').replaceAll('</pre>', '</pre></div>')
       ),
-    [text]
+    [text, sessionId]
   )
   useLayoutEffect(() => {
     const el = caja.current!
@@ -63,7 +66,16 @@ const Markdown = memo(function Markdown({ text }: { text: string }) {
     })
     pintados.current = [...antes.slice(0, k), ...nuevos]
   }, [bloques])
-  return <div className="md" ref={caja} onClick={onMarkdownClick} />
+  return (
+    <>
+      <div className="md" ref={caja} onClick={(e) => (e.target instanceof HTMLImageElement ? setGrande(e.target.src) : onMarkdownClick(e))} />
+      {grande && (
+        <div className="lightbox" onClick={() => setGrande(undefined)}>
+          <img src={grande} alt="" />
+        </div>
+      )}
+    </>
+  )
 })
 
 /** Lo que el agente hizo para llegar a su respuesta (pensar, herramientas…), plegado en una fila, como en T3 Code. */
@@ -470,7 +482,7 @@ const Row = memo(function Row({ item, sessionId, anidado, proveedor, onAbrir, on
     case 'text':
       return (
         <div className={`assistant ${nested}`}>
-          <Markdown text={item.text} />
+          <Markdown text={item.text} sessionId={sessionId} />
           {item.opciones && <Respuestas opciones={item.opciones} onElegir={onResponder} />}
         </div>
       )
@@ -597,7 +609,9 @@ function Tool({ item, nested, sessionId }: { item: Extract<Item, { kind: 'tool' 
   // Una imagen que el agente lee (una captura, un recorte, una hoja de cuadros) se ve aquí: es lo que está mirando.
   const ruta = item.name === 'Read' && typeof item.input?.file_path === 'string' ? (item.input.file_path as string) : ''
   const imagen = sessionId && /\.(png|jpe?g|gif|webp)$/i.test(ruta) ? `/api/sessions/${sessionId}/imagen?ruta=${encodeURIComponent(ruta)}` : ''
-  const { verb, detail } = toolSummary(item.name, item.input)
+  const flow = HERRAMIENTA_FLOW.test(item.name) && item.output ? hechoDeFlow(item.output) : null
+  // Un pedido que tardó sale hecho en su `estado_flow`: esa fila dice qué clip fue, no el id con que se esperó.
+  const { verb, detail } = flow ? { verb: MODELOS_IMAGEN.includes(flow.modelo) ? 'Imagen' : 'Video', detail: finDeRuta(flow.archivo) } : toolSummary(item.name, item.input)
   const state = !item.done ? 'running' : item.error ? 'error' : 'ok'
   // Las salidas largas no vienen con el hilo: se piden al abrir la fila.
   const [pedida, setPedida] = useState<string>()
@@ -619,6 +633,7 @@ function Tool({ item, nested, sessionId }: { item: Extract<Item, { kind: 'tool' 
         <span className="tool-icon">{ICONS[item.name] ?? '⚙'}</span>
         <span className="tool-verb">{verb}</span>
         <span className="tool-detail">{detail}</span>
+        {flow && <FlowHecho h={flow} />}
         <span className={`dot ${state}`} />
       </button>
       {imagen && <Mirada src={imagen} />}
@@ -629,6 +644,22 @@ function Tool({ item, nested, sessionId }: { item: Extract<Item, { kind: 'tool' 
         </div>
       )}
     </div>
+  )
+}
+
+/**
+ * Lo que gastó un pedido de Flow ya hecho y con qué cuenta (`hechoDeFlow`). Lo que les quedó a todas va en su título: el
+ * chat es angosto, y el nombre del clip es lo que más importa de la fila.
+ */
+function FlowHecho({ h }: { h: NonNullable<ReturnType<typeof hechoDeFlow>> }) {
+  if (MODELOS_IMAGEN.includes(h.modelo)) return <span className="tool-flow gris">gratis</span>
+  if (!h.creditos) return <span className="tool-flow gris" title="No cambió nada desde la última vez: no se volvió a pedir">sin gastar</span>
+  const cuenta = h.cuenta?.replace(/@gmail\.com$/, '')
+  const titulo = `${h.modelo}${h.cuenta ? `, con ${h.cuenta}` : ''}${h.quedan === undefined ? '' : `. Les quedaron ${h.quedan} créditos a tus cuentas`}`
+  return (
+    <span className="tool-flow" title={titulo}>
+      {h.creditos} créditos{cuenta ? ` · ${cuenta}` : ''}
+    </span>
   )
 }
 

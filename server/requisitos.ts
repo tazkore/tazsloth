@@ -12,11 +12,13 @@ import { correr } from './version.ts'
 /**
  * Lo que las skills necesitan fuera de v!d: FFmpeg, Python y sus paquetes, el Python de v!d y, opcional, la cuenta de
  * ChatGPT. Quien abre la app por primera vez ve encima del compositor lo que le falta al estilo elegido (de los paquetes,
- * solo los que importa su skill), y «Descargar todo» lo instala uno tras otro con winget y pip, sin permisos de
- * administrador (todo va a su usuario). ChatGPT no se instala: se conecta en Opciones.
+ * solo los que importa su skill), y «Descargar todo» lo instala uno tras otro, sin permisos de administrador (todo va a
+ * su usuario). ChatGPT no se instala: se conecta en Opciones.
  *
- * En Mac y Linux no hay winget: FFmpeg y Python se bajan, ya armados, a `BAJADAS` (que scripts/start.mjs pone primero en
- * el PATH). El Python es siempre el de v!d: el del sistema falta (Mac) o no deja instalar paquetes con pip (Ubuntu).
+ * FFmpeg y el Python de las skills se bajan ya armados a `BAJADAS` (que scripts/start.mjs pone primero en el PATH). El
+ * Python, en Mac y Linux, es siempre ese: el del sistema
+ * falta (Mac) o no deja instalar paquetes con pip (Ubuntu). En Windows sirve el que ya tengas mientras haya paquetes
+ * compilados para él; si no, `paquetes` pasa al de v!d.
  */
 
 /**
@@ -36,8 +38,6 @@ const PAQUETES: Record<string, { pip: string; nombre: string; uso: string; skill
   // El OCR de `ubicar.py` en Mac y Linux (en Windows usa el del sistema). Corre con el onnxruntime que trae rembg[cpu].
   rapidocr: { pip: 'rapidocr', nombre: 'RapidOCR', uso: 'leer texto en imágenes', skills: ['video-el-diff'], fueraDeWindows: true }
 }
-
-const WINGET = '--exact --silent --accept-package-agreements --accept-source-agreements --disable-interactivity'
 
 interface Pieza {
   id: string
@@ -74,9 +74,11 @@ const EXE_PY = WINDOWS ? 'python.exe' : join('bin', 'python3')
 /** Los modelos de la transcripción y de los vectores, en una carpeta por modelo (`modelos_transcripcion.py`). */
 export const MODELOS = join(process.env.APPDATA ?? '', 'youtube', 'modelos')
 export const BANDERAS = ['-E', '-s', '-B', '-X', 'utf8']
-/** Fuera de Windows: lo que v!d baja para las skills (Python, FFmpeg). `bin` va primero en el PATH (scripts/start.mjs). */
+/** Lo que v!d baja para las skills (FFmpeg; fuera de Windows, también Python). `bin` va primero en el PATH (scripts/start.mjs). */
 const BAJADAS = join(process.env.APPDATA ?? '', 'vid-koldgold', 'piezas')
 const BAJADAS_BIN = join(BAJADAS, 'bin')
+/** El Python propio con que corren las skills: en Windows, su carpeta va en el PATH (scripts/start.mjs). */
+const PYTHON_BAJADO = join(BAJADAS, 'python', 'python', EXE_PY)
 
 /**
  * El `python.exe` del Python de v!d, o null. Trae yt-dlp y WhisperX y se lanza siempre con `-E -s -B -X utf8`: sin
@@ -158,9 +160,9 @@ const SISTEMA: Record<string, string> = {
 }
 
 /**
- * Para qué procesador se baja lo de fuera (Python, FFmpeg). La app de Mac es de Intel y en los Mac con Apple Silicon corre
- * con Rosetta (`sysctl.proc_translated` vale 1): ahí se bajan los de ARM, que corren nativos y tienen torch (el de Intel
- * dejó de salir en la 2.3).
+ * Para qué procesador se baja lo de fuera (Python, FFmpeg). La de Mac con Intel, en un Mac con Apple Silicon, corre con
+ * Rosetta (`sysctl.proc_translated` vale 1): ahí se bajan los de ARM, que corren nativos y tienen torch (el de Intel
+ * dejó de salir en la 2.3). La de Apple Silicon ya es de ARM.
  */
 export const ARQUITECTURA = (() => {
   if (process.platform !== 'darwin' || process.arch !== 'x64') return process.arch
@@ -308,29 +310,40 @@ async function pythonStandalone(carpeta: string, app: string): Promise<string> {
 }
 
 /**
- * Fuera de Windows, el Python con que corren los scripts de las skills (`python` en el PATH): uno propio en `BAJADAS`, el
- * mismo de python-build-standalone, con `python`, `python3` y `pip` en `BAJADAS_BIN`.
+ * El Python con que corren los scripts de las skills (`python` en el PATH): uno propio en `BAJADAS`, el mismo de
+ * python-build-standalone. Fuera de Windows, con `python`, `python3` y `pip` en `BAJADAS_BIN`; en Windows, scripts/start.mjs
+ * ya pone su carpeta en el PATH.
  */
 async function instalarPython(app: string) {
   const python = await pythonStandalone(join(BAJADAS, 'python'), app)
-  mkdirSync(BAJADAS_BIN, { recursive: true })
-  for (const [nombre, destino] of [['python', python], ['python3', python], ['pip', join(dirname(python), 'pip3')]]) {
-    rmSync(join(BAJADAS_BIN, nombre), { force: true })
-    symlinkSync(destino, join(BAJADAS_BIN, nombre))
+  if (!WINDOWS) {
+    mkdirSync(BAJADAS_BIN, { recursive: true })
+    for (const [nombre, destino] of [['python', python], ['python3', python], ['pip', join(dirname(python), 'pip3')]]) {
+      rmSync(join(BAJADAS_BIN, nombre), { force: true })
+      symlinkSync(destino, join(BAJADAS_BIN, nombre))
+    }
   }
   return ejecutar(python, ['-m', 'pip', 'install', '--disable-pip-version-check', '--upgrade', 'pip'], app)
 }
 
 /**
- * Fuera de Windows, FFmpeg y FFprobe ya compilados, en `BAJADAS_BIN`: en Mac, los de Martin Riedl (para Apple Silicon o
- * Intel); en Linux, los de BtbN, estáticos. Los dos de la 9.0, como el de Windows (Gyan).
+ * FFmpeg y FFprobe ya compilados, de la 9.0, en `BAJADAS_BIN`: en Mac, los de Martin Riedl (para Apple Silicon o Intel);
+ * en Windows y Linux, los de BtbN, estáticos. En Windows antes iban con winget, pero el que trae un Windows sin
+ * actualizar (la 1.3) no conoce sus opciones y solo enseñaba su ayuda, y hay Windows sin winget.
  */
 async function instalarFfmpeg(app: string) {
   const aparte = join(tmpdir(), `vid-ffmpeg-${Date.now()}`)
   mkdirSync(aparte, { recursive: true })
   mkdirSync(BAJADAS_BIN, { recursive: true })
+  const exe = WINDOWS ? '.exe' : ''
   try {
-    if (process.platform === 'darwin') {
+    if (WINDOWS) {
+      const zip = join(aparte, 'ffmpeg.zip')
+      await bajar(`https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/ffmpeg-n9.0-latest-win${ARQUITECTURA === 'arm64' ? 'arm64' : '64'}-gpl-9.0.zip`, zip)
+      // El `tar` de Windows abre zips; el de Git, si va antes en el PATH, no.
+      const tar = join(process.env.SystemRoot ?? 'C:\\Windows', 'System32', 'tar.exe')
+      await ejecutar(tar, ['-xf', zip, '-C', aparte, '--strip-components=2', '*/bin/ffmpeg.exe', '*/bin/ffprobe.exe'], app)
+    } else if (process.platform === 'darwin') {
       for (const f of ['ffmpeg', 'ffprobe']) {
         const zip = join(aparte, `${f}.zip`)
         await bajar(`https://ffmpeg.martin-riedl.de/redirect/latest/macos/${ARQUITECTURA === 'arm64' ? 'arm64' : 'amd64'}/release/${f}.zip`, zip)
@@ -342,11 +355,11 @@ async function instalarFfmpeg(app: string) {
       await ejecutar('tar', ['-xJf', tar, '-C', aparte, '--strip-components=2', '--wildcards', '*/bin/ffmpeg', '*/bin/ffprobe'], app)
     }
     for (const f of ['ffmpeg', 'ffprobe']) {
-      await copyFile(join(aparte, f), join(BAJADAS_BIN, f))
-      chmodSync(join(BAJADAS_BIN, f), 0o755)
+      await copyFile(join(aparte, f + exe), join(BAJADAS_BIN, f + exe))
+      if (!WINDOWS) chmodSync(join(BAJADAS_BIN, f), 0o755)
     }
   } finally {
-    rmSync(aparte, { recursive: true, force: true })
+    rmSync(aparte, { recursive: true, force: true, ...REINTENTOS })
   }
   return 'listo'
 }
@@ -401,68 +414,6 @@ function ejecutar(exe: string, args: string[], cwd: string, alLeer?: (linea: str
   })
 }
 
-/**
- * En Windows, un Python que ya estaba pero no en el PATH (se instaló sin «Add python.exe to PATH»): `python` es entonces
- * el atajo de la Microsoft Store, y winget no pone otro 3.13 encima (sale con 1638, «ya hay otra versión»). Se busca donde
- * lo registra su instalador y en sus carpetas de siempre, y el más nuevo (3.10 o más) entra en el PATH de este proceso y
- * en el del usuario, como lo habría puesto su instalador. Devuelve su versión, o null.
- */
-export async function pythonFueraDelPath(): Promise<string | null> {
-  const carpetas = new Set(registroPython())
-  const raices = [join(process.env.LOCALAPPDATA ?? '', 'Programs', 'Python'), process.env.ProgramFiles ?? 'C:\\Program Files', 'C:\\']
-  for (const raiz of raices) {
-    try {
-      for (const d of readdirSync(raiz)) if (/^Python3\d+$/i.test(d)) carpetas.add(join(raiz, d))
-    } catch {}
-  }
-  let mejor: { carpeta: string; version: string; orden: number[] } | null = null
-  for (const carpeta of carpetas) {
-    const exe = join(carpeta, 'python.exe')
-    if (!existsSync(exe)) continue
-    const v = await new Promise<string | undefined>((ok) => execFile(exe, ['--version'], { windowsHide: true }, (e, s) => ok(e ? undefined : /Python (3\.\S+)/.exec(s)?.[1])))
-    const orden = v?.split('.').map((n) => parseInt(n)) ?? []
-    if (!v || orden[1] < 10) continue
-    if (!mejor || orden[1] > mejor.orden[1] || (orden[1] === mejor.orden[1] && orden[2] > mejor.orden[2])) mejor = { carpeta, version: v, orden }
-  }
-  if (!mejor) return null
-  const nuevas = [mejor.carpeta, join(mejor.carpeta, 'Scripts')]
-  process.env.PATH = [...nuevas, process.env.PATH].join(';')
-  try {
-    const usuario = execFileSync('powershell.exe', ['-NoProfile', '-Command', "[Environment]::GetEnvironmentVariable('Path', 'User')"], { encoding: 'utf8', windowsHide: true }).trim()
-    const sinBarra = (c: string) => c.toLowerCase().replace(/\\$/, '')
-    const faltan = nuevas.filter((n) => !usuario.split(';').map(sinBarra).includes(sinBarra(n)))
-    if (faltan.length) {
-      const script = "[Environment]::SetEnvironmentVariable('Path', $env:VID_PATH, 'User')"
-      execFileSync('powershell.exe', ['-NoProfile', '-Command', script], { windowsHide: true, env: { ...process.env, VID_PATH: [...faltan, usuario].filter(Boolean).join(';') } })
-    }
-  } catch {
-    // Sin PowerShell, vale para esta vez: al volver a abrir v!d se busca de nuevo.
-  }
-  return mejor.version
-}
-
-/** Las carpetas donde los instaladores de Python dicen que lo pusieron (`HK*\Software\Python\PythonCore\*\InstallPath`). */
-function registroPython(): string[] {
-  const carpetas: string[] = []
-  for (const clave of ['HKCU\\Software\\Python\\PythonCore', 'HKLM\\Software\\Python\\PythonCore', 'HKLM\\Software\\WOW6432Node\\Python\\PythonCore']) {
-    let salida = ''
-    try {
-      salida = execFileSync('reg.exe', ['query', clave, '/s', '/ve'], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'], windowsHide: true })
-    } catch {
-      continue
-    }
-    let enInstallPath = false
-    for (const linea of salida.split(/\r?\n/)) {
-      if (/^HKEY_/.test(linea)) enInstallPath = /\\InstallPath$/i.test(linea.trim())
-      else if (enInstallPath) {
-        const valor = /REG_SZ\s+(.+)$/.exec(linea)?.[1].trim()
-        if (valor) carpetas.push(valor.replace(/\\$/, ''))
-      }
-    }
-  }
-  return carpetas
-}
-
 /** En orden: los paquetes van después de Python. */
 const PIEZAS: Pieza[] = [
   {
@@ -470,23 +421,15 @@ const PIEZAS: Pieza[] = [
     nombre: 'FFmpeg',
     para: 'Arma, mide y comprime los videos. Lo usan todos los estilos.',
     mirar: version('ffmpeg -version', /ffmpeg version n?(\d+(?:\.\d+)+)/),
-    instalar: (app) => (WINDOWS ? correr(`winget install --id Gyan.FFmpeg ${WINGET}`, app) : instalarFfmpeg(app))
+    instalar: instalarFfmpeg
   },
   {
     id: 'python',
     nombre: 'Python',
     para: 'Corre los scripts de los estilos de video.',
     // Sin Python, `python` es el atajo de la Microsoft Store, que sale con 9009. Fuera de Windows cuenta solo el propio.
-    mirar: async (app) =>
-      WINDOWS
-        ? ((await version('python --version', /Python (3\.\S+)/)(app)) ?? pythonFueraDelPath())
-        : existsSync(join(BAJADAS_BIN, 'python'))
-          ? version('python --version', /Python (3\.\S+)/)(app)
-          : null,
-    instalar: (app) =>
-      WINDOWS
-        ? correr(`winget install --id Python.Python.3.13 --scope user ${WINGET} --override "/quiet InstallAllUsers=0 PrependPath=1 Include_launcher=0"`, app)
-        : instalarPython(app)
+    mirar: async (app) => (WINDOWS || existsSync(join(BAJADAS_BIN, 'python')) ? version('python --version', /Python (3\.\S+)/)(app) : null),
+    instalar: instalarPython
   },
   paquetes(Object.keys(PAQUETES)),
   {
@@ -513,6 +456,17 @@ const PIEZAS: Pieza[] = [
   }
 ]
 
+/** Lo que dice pip cuando un paquete no tiene rueda para este Python. */
+export const sinRueda = (error: string) => /No matching distribution found|Could not find a version|ResolutionImpossible/i.test(error)
+
+/**
+ * Lo que pip no compila. Fuera de Windows, numba y llvmlite (de rembg, por pymatting): desde la 0.63 y la 0.46 no salen
+ * para Mac con Intel, y compilar llvmlite pide LLVM. En Windows, nada: el Python puede ser el tuyo, y en uno recién salido
+ * (3.15) pip compilaba scikit-image, también de rembg, y fallaba con un error que nadie entiende. Con esto se queda con la
+ * última versión que trae rueda o, si ninguna la trae para tu Python, `paquetes` sigue con el de v!d.
+ */
+const SOLO_RUEDAS = WINDOWS ? ':all:' : 'numba,llvmlite'
+
 /** Los paquetes de `modulos` en una sola fila, que los baja todos con pip. */
 function paquetes(modulos: string[]): Pieza {
   const y = (xs: string[]) => [...new Set(xs)].join(', ').replace(/, ([^,]*)$/, ' y $1')
@@ -525,11 +479,20 @@ function paquetes(modulos: string[]): Pieza {
       const faltan = await modulosQueFaltan(app, modulos)
       return faltan ? `Faltan ${faltan.map((m) => PAQUETES[m].pip).join(', ')}` : 'Antes hace falta Python'
     },
-    // numba y llvmlite (de rembg, por pymatting) solo de rueda: desde la 0.63 y la 0.46 no salen para Mac con Intel, y
-    // pip compilaba llvmlite, que pide LLVM, y fallaba. Así se queda con la última que trae rueda.
     instalar: async (app) => {
-      const faltan = (await modulosQueFaltan(app, modulos)) ?? modulos
-      return correr(`python -m pip install --disable-pip-version-check --only-binary=numba,llvmlite ${faltan.map((m) => `"${PAQUETES[m].pip}"`).join(' ')}`, app)
+      const pip = async () => {
+        const faltan = (await modulosQueFaltan(app, modulos)) ?? modulos
+        return correr(`python -m pip install --disable-pip-version-check --only-binary=${SOLO_RUEDAS} ${faltan.map((m) => `"${PAQUETES[m].pip}"`).join(' ')}`, app)
+      }
+      try {
+        return await pip()
+      } catch (e) {
+        if (!WINDOWS || existsSync(PYTHON_BAJADO) || !sinRueda(String(e))) throw e
+        paso = 'Bajando Python'
+        await instalarPython(app)
+        paso = 'Instalando los paquetes'
+        return pip()
+      }
     }
   }
 }
@@ -548,7 +511,7 @@ function piezas(app: string, skill?: string): Pieza[] {
 /** La que se está instalando y las que esperan su turno. */
 let instalando: Pieza | null = null
 let cola: Pieza[] = []
-/** Si se está instalando algo: reiniciar el servidor mataría a winget o pip a la mitad. */
+/** Si se está instalando algo: reiniciar el servidor cortaría una descarga o pip a la mitad. */
 export const instalandoAlgo = () => (instalando ? `Se está instalando ${instalando.nombre}. Espera a que termine.` : ytDlp ? `Se está instalando yt-dlp ${YT_DLP}. Espera a que termine.` : null)
 const fallos: Record<string, string> = {}
 /**
@@ -640,7 +603,7 @@ async function siguiente(app: string) {
   }
   paso = undefined
   refrescarPath()
-  // winget sale con error si ya estaba (fuera del PATH de este proceso): lo que cuenta es si ahora se encuentra.
+  // Lo que cuenta es si ahora se encuentra: un instalador puede salir con error si ya estaba (fuera del PATH de este proceso).
   if ((await pieza.mirar(app)) !== null) delete fallos[pieza.id]
   else fallos[pieza.id] ??= 'Se instaló, pero no aparece. Cierra v!d y vuelve a abrirlo.'
   await siguiente(app)
@@ -651,12 +614,13 @@ async function siguiente(app: string) {
  * para encontrarlo sin reiniciar v!d, y así lo heredan también los agentes que se lancen desde ahora.
  */
 function refrescarPath() {
-  // Fuera de Windows, lo que se instala va a `BAJADAS_BIN`, que ya estaba en el PATH.
+  // Fuera de Windows, todo va a `BAJADAS_BIN`, que ya estaba en el PATH.
   if (!WINDOWS) return
   const leer = (de: string) =>
     execFileSync('powershell.exe', ['-NoProfile', '-Command', `[Environment]::GetEnvironmentVariable('Path', '${de}')`], { encoding: 'utf8' }).trim()
   try {
-    const nuevo = [leer('Machine'), leer('User'), process.env.PATH ?? ''].join(';').split(';').filter(Boolean)
+    // Lo de este proceso va primero: el Python de v!d debe seguir delante del que haya en el sistema.
+    const nuevo = [process.env.PATH ?? '', leer('Machine'), leer('User')].join(';').split(';').filter(Boolean)
     process.env.PATH = [...new Set(nuevo)].join(';')
   } catch {
     // Sin PowerShell se queda como estaba: se verá al reiniciar.

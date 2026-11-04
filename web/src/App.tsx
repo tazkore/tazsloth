@@ -16,6 +16,7 @@ import { Composer, Icon, Picker, type Choice, type Draft } from './Composer'
 import { LINK, threadIcons, threadRef } from './etiquetas'
 import { Confirm } from './Confirm'
 import { TusCambios } from './TusCambios'
+import { AvisoAgentes } from './AvisoAgentes' // versiones nuevas de los agentes (no de la app)
 import { TarjetasEnlaces } from './Enlaces' // tarjeta de los enlaces
 import { esDeEstudio, Estudio } from './Estudio' // panel de etapas
 import { BotonNavegador, PanelNavegador, useNavegadorAbierto } from './Navegador' // navegador de cada hilo
@@ -39,6 +40,8 @@ import { SelectorVoz, useVoz } from './Voz' // voz de AI Studio
 import { lineaVoz } from '../../shared/voz'
 import { lineaAvatar } from '../../shared/avatar' // motor de avatar
 import { SelectorAvatar, useAvatar } from './Avatar' // motor de avatar
+import { SelectorImagenes, useChatGPT, useFlow } from './Flow' // Google Flow
+import { imagenPosible, lineaImagenes } from '../../shared/flow'
 import { Timeline } from './Timeline'
 import { compact, duration } from './items'
 import './Barra.css'
@@ -637,6 +640,7 @@ export function App() {
         )}
         {newCard && draftId && (
           <div className="avisos-nuevo">
+            <AvisoAgentes /> {/* versiones nuevas de los agentes */}
             <AvisoEquipo /> {/* tu equipo */}
           </div>
         )}
@@ -841,6 +845,11 @@ function NewSession(props: {
   const avatar = useAvatar()
   const [avatares, setAvatares] = useStored<Record<string, string>>('avatar', {})
   const avatarElegido = avatares[card.id] ?? ''
+  // Las imágenes: con ChatGPT o con un modelo de Google Flow (`Flow.tsx`), según lo que tengas conectado.
+  const hayChatGPT = useChatGPT()
+  const [imagenes, setImagenes] = useStored<string>('imagenes', '')
+  const flow = useFlow()
+  const imagenElegida = imagenPosible(imagenes, { chatgpt: hayChatGPT, google: !!voz.estado?.cuenta || !!flow.estado?.cuentas.length })
   // Un archivo o un enlace soltado en cualquier parte del inicio va al mensaje.
   const soltar = useSoltar()
 
@@ -894,6 +903,7 @@ function NewSession(props: {
             )}
             {conFormato && <SelectorVoz card={card} voz={voz} valor={vozElegida} onCambio={(v) => setVoces({ ...voces, [card.id]: v })} />}
             {conFormato && card.voz !== false && <SelectorAvatar avatar={avatar} valor={avatarElegido} onCambio={(m) => setAvatares({ ...avatares, [card.id]: m })} />}
+            {conFormato && <SelectorImagenes valor={imagenElegida} hayChatGPT={hayChatGPT} voz={voz} flow={flow} onCambio={setImagenes} />}
             {card.lote && enlaces.length > 1 && (
               <Segmento
                 label="Lote"
@@ -924,6 +934,7 @@ function NewSession(props: {
             conFormato && !formatoEscrito && `Formato: ${formato}`,
             conFormato && lineaVoz(card, vozElegida),
             conFormato && card.voz !== false && lineaAvatar(avatarElegido),
+            conFormato && lineaImagenes(imagenElegida),
             // El modelo de cada subagente: lo medido, o lo que elegiste en «Avanzado». La skill lo lee aquí.
             lineaSubagentes(tareas)
           ]
@@ -1179,6 +1190,11 @@ const SessionView = memo(function SessionView({ id, session, card, models }: { i
           {totals.sinCosto ? '≥ ' : ''}${totals.cost.toFixed(2)}
         </span>
       )}
+      {totals.flowCreditos > 0 && (
+        <span className="muted small" title={`${totals.flowVideos} ${totals.flowVideos === 1 ? 'video' : 'videos'} de Google Flow en este chat`}>
+          {totals.flowCreditos} créditos de Flow
+        </span>
+      )}
       {totals.read > 0 && <span className="muted small">{compact(totals.read)} tokens leídos</span>}
       {totals.out > 0 && <span className="muted small">{compact(totals.out)} tokens escritos</span>}
       {/* El símbolo del agente del hilo. Solo el símbolo: el encabezado de un video va justo. */}
@@ -1231,6 +1247,8 @@ const SessionView = memo(function SessionView({ id, session, card, models }: { i
           background={!!session.background?.length}
           lockModel={!!session.background?.length}
           context={totals.context}
+          flow={{ videos: totals.flowVideos, creditos: totals.flowCreditos }}
+          onCompactar={() => api(`/api/sessions/${session.id}/compactar`, {})}
           placeholder="Responde, pide un cambio, pega una imagen o suelta un archivo…"
           draft={leerRespuesta(session.id)}
           onDraft={(d) => guardarRespuesta(session.id, d)}

@@ -28,6 +28,12 @@ if (process.platform !== 'win32') {
   camino.push(join(process.env.APPDATA, 'vid-koldgold', 'piezas', 'bin'), ...(mac ? ['/opt/homebrew/bin', '/usr/local/bin'] : []))
   // Las llaves de Opciones (vid-koldgold/variables.json, cifradas) las pasa al entorno el servidor mismo (server/opciones.ts).
 }
+// En Windows, el Python solo existe si el tuyo no servía (server/requisitos.ts): entonces va delante del que haya en el
+// sistema. En `bin`, el FFmpeg que baja v!d.
+else {
+  const piezas = join(process.env.APPDATA ?? '', 'vid-koldgold', 'piezas')
+  camino.push(join(piezas, 'python', 'python'), join(piezas, 'python', 'python', 'Scripts'), join(piezas, 'bin'))
+}
 process.env.PATH = [...camino, process.env.PATH].join(delimiter)
 
 /**

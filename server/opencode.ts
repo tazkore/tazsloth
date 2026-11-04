@@ -10,6 +10,7 @@ import { asegurarAgente, rutaAgente } from './agentes.ts'
 import { INSTRUCCIONES } from './instrucciones.ts'
 import { navegadorAgente } from './navegador-agente.ts'
 import { mcpVoz } from './voz/index.ts'
+import { mcpFlow } from './flow/index.ts'
 import { SKILLS } from './skills.ts'
 
 /**
@@ -247,7 +248,7 @@ export function startOpenCode(opts: AgentOptions, conectar: () => Promise<Servid
   // El nombre de los MCP del hilo: `vid-<hilo>-<nombre>`. OpenCode esconde los nombres de más de 64 letras.
   const mcp = `vid-${(opts.hilo ?? randomBytes(4).toString('hex')).replace(/[^a-zA-Z0-9-]/g, '-').slice(0, 24)}`
   // El navegador y la voz: las herramientas de Ideas corren dentro del servidor de v!d (como con Codex, no llegan).
-  const servidoresMcp = { ...navegadorAgente(opts.lote, opts.hilo), ...mcpVoz() }
+  const servidoresMcp = { ...navegadorAgente(opts.lote, opts.hilo), ...mcpVoz(), ...mcpFlow() }
   const reglas = [...REGLAS, { action: 'vid-*', resource: '*', effect: 'deny' as const }, { action: `${mcp}-*`, resource: '*', effect: 'allow' as const }]
   const emit = opts.onEvent
   // Lo que va llegando a trozos, por id; las herramientas, con su nombre hasta que llega su entrada.
@@ -361,8 +362,8 @@ export function startOpenCode(opts: AgentOptions, conectar: () => Promise<Servid
         if (!propio) return
         if (compactando) {
           compactando = false
-          terminar(e.type === 'session.compaction.ended', e.type === 'session.compaction.failed' ? 'OpenCode no pudo compactar el contexto.' : undefined)
-        } else if (e.type === 'session.compaction.ended') emit({ t: 'info', text: 'OpenCode compactó el contexto para continuar.' })
+          terminar(e.type === 'session.compaction.ended', e.type === 'session.compaction.failed' ? 'OpenCode no pudo resumir el chat.' : undefined)
+        } else if (e.type === 'session.compaction.ended') emit({ t: 'info', text: 'OpenCode resumió lo antiguo del chat para seguir.' })
         return
       case 'form.created':
         // Un formulario que pide elegir algo (un buscador, una respuesta): la interfaz no sabe contestarlo y el turno se

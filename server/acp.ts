@@ -7,10 +7,11 @@ import { conSkill, INSTRUCCIONES, mcpVid } from './instrucciones.ts'
 import { RpcLineas } from './rpc-lineas.ts'
 
 /**
- * Los agentes que hablan ACP (Agent Client Protocol) por stdio: Grok (`grok agent stdio`) y Antigravity (el servidor ACP
- * de Google). Como lo hace T3 Code (`packages/provider-acp`), pero solo lo que usa v!d: sin permisos (se acepta cada
- * herramienta, como con los demás agentes), sin terminal ni escritura de archivos del lado de v!d (el agente las hace
- * él mismo) y un proceso por hilo, salvo los `compartido`: uno para todos sus hilos, cada uno en su sesión.
+ * Los agentes que hablan ACP (Agent Client Protocol) por stdio: Grok (`grok agent stdio`), Antigravity (el servidor ACP
+ * de Google) y Gemini CLI (`gemini --acp`). Como lo hace T3 Code (`packages/provider-acp`), pero solo lo que usa v!d:
+ * sin permisos (se acepta cada herramienta, como con los demás agentes), sin terminal ni escritura de archivos del lado
+ * de v!d (el agente las hace él mismo) y un proceso por hilo, salvo los `compartido`: uno para todos sus hilos, cada
+ * uno en su sesión.
  *
  * ACP no tiene instrucciones de sistema: las de v!d van al principio del primer mensaje de cada proceso. El modelo y su
  * esfuerzo se eligen con las opciones de la sesión (`configOptions`), o con `session/set_model` si no las trae.
@@ -29,12 +30,16 @@ export interface SaborAcp {
   leeArchivos?: boolean
   /** Inicia sesión antes de abrirla, cada vez (Antigravity). */
   autenticar?: string
-  /** El modo que se elige al abrir la sesión, si lo tiene como opción (`yolo` en Antigravity: sin preguntar). */
+  /** El modo que se elige al abrir la sesión, como opción o con `session/set_mode` (`yolo`: sin preguntar). */
   modo?: string
+  /** No sabe compactar cuando se le pide (Gemini comprime solo). */
+  sinCompactar?: boolean
   /** Lo que lleva `session/cancel` (Grok: `ctrl_c`, que no deja que las tareas de fondo lo despierten). */
   cancelarMeta?: Record<string, unknown>
   /** Un error que dice que falta iniciar sesión, en palabras de v!d. */
   sinCuenta: string
+  /** El error de un turno en palabras de v!d, si lo reconoce. */
+  traducir?(mensaje: string): string | undefined
   /** Los modelos que dio la sesión, para guardarlos (Antigravity no tiene otra forma de listarlos). */
   alVerModelos?(opciones: OpcionAcp[]): void
   /**
@@ -48,6 +53,12 @@ export interface SaborAcp {
   arranque?: { dura(): number; medido(ms: number): void }
   /** Una línea que no es del protocolo. */
   alTexto?(linea: string): void
+  /** Un error que llega como si fuera su respuesta (Antigravity: un texto y `end_turn`). `relevo`: esa sesión ya no sirve. */
+  errorDe?(texto: string): { error: string; relevo?: boolean } | undefined
+  /** Cuánto se le aguanta callado en un turno, en ms, sin herramientas abiertas y con ellas. Sin esto, se le espera siempre. */
+  mudo?: { sin: number; con: number }
+  /** Ni compacta ni dice de verdad cuánto lleva (Antigravity): sin anillo, y `/compact` lo pasa a otra sesión con un resumen. */
+  contextoOpaco?: boolean
 }
 
 export interface OpcionAcp {
@@ -205,13 +216,42 @@ export function startAcp(sabor: SaborAcp, opts: AgentOptions): AgentRun {
   let pendiente: { text: string; images: string[] }[] = []
   let tokens = CERO
   let costo = 0
+  /** Lo que escribió desde su última herramienta: un error de `errorDe` es todo su último mensaje. */
+  let ultimo = ''
+  let mudez: ReturnType<typeof setTimeout> | undefined
 
-  const terminar = (ok: boolean, error?: string) => {
+  const terminar = (ok: boolean, error?: string, extra?: { caida?: boolean; relevo?: 'sigue' | 'espera' }) => {
     if (!busy) return
     busy = false
-    emit({ t: 'turn_end', at: Date.now(), ok, error, tokens, ...(costo ? { costUsd: costo } : {}) })
+    clearTimeout(mudez)
+    emit({ t: 'turn_end', at: Date.now(), ok, error, tokens, ...(costo ? { costUsd: costo } : {}), ...extra })
     tokens = CERO
     costo = 0
+  }
+
+  /** Cierra el turno con lo que diga `errorDe`, si su último mensaje es un error. */
+  function cerrarConError() {
+    const malo = sabor.errorDe?.(ultimo)
+    if (!malo) return false
+    pendiente = []
+    terminar(false, malo.error, malo.relevo ? { caida: true, relevo: 'sigue' } : undefined)
+    return true
+  }
+
+  // `session/prompt` no tiene plazo: con un turno largo no se sabe cuánto tardará. Pero Antigravity puede no contestar
+  // nunca (dos hilos de un cliente, una hora y media cada uno), y solo una sesión nueva lo saca de ahí.
+  function escuchar() {
+    clearTimeout(mudez)
+    if (!sabor.mudo) return
+    mudez = setTimeout(() => {
+      if (!busy || !pidiendo) return
+      pidiendo = false
+      turno++
+      pendiente = []
+      con?.rpc.notify('session/cancel', { sessionId: sesion, ...(sabor.cancelarMeta ? { _meta: sabor.cancelarMeta } : {}) })
+      terminar(false, `${sabor.nombre} dejó de contestar.`, { caida: true, relevo: 'sigue' })
+    }, abiertas.size ? sabor.mudo.con : sabor.mudo.sin)
+    mudez.unref()
   }
 
   function oir(method: string, p: any) {
@@ -224,6 +264,7 @@ export function startAcp(sabor: SaborAcp, opts: AgentOptions): AgentRun {
       busy = true
       turno++
       abiertas.clear()
+      ultimo = ''
       emit({ t: 'turn_start', at: Date.now() })
     }
     if (u.sessionUpdate === 'tool_call' || u.sessionUpdate === 'tool_call_update') {
@@ -231,17 +272,20 @@ export function startAcp(sabor: SaborAcp, opts: AgentOptions): AgentRun {
       else if (u.sessionUpdate === 'tool_call') abiertas.add(u.toolCallId)
     }
     if (busy && !pidiendo) vigilar()
+    if (pidiendo) escuchar()
     const total = u._meta?.totalTokens
-    if (typeof total === 'number' && ventana) emit({ t: 'context', used: total, max: ventana })
+    if (typeof total === 'number' && ventana && !sabor.contextoOpaco) emit({ t: 'context', used: total, max: ventana })
     switch (u.sessionUpdate) {
       case 'agent_message_chunk':
       case 'agent_thought_chunk': {
         const texto = u.content?.type === 'text' ? u.content.text : ''
+        if (texto && u.sessionUpdate === 'agent_message_chunk') ultimo += texto
         if (texto) emit({ t: u.sessionUpdate === 'agent_message_chunk' ? 'text' : 'thinking', id: `${turno}:${parte}${u.sessionUpdate === 'agent_thought_chunk' ? ':pensamiento' : ''}`, delta: texto })
         return
       }
       case 'tool_call': {
         parte++
+        ultimo = ''
         const h = herramienta(u)
         emit({ t: 'tool', id: u.toolCallId, name: h.name, input: h.input })
         if (u.status === 'completed' || u.status === 'failed') emit({ t: 'tool_update', id: u.toolCallId, done: true, error: u.status === 'failed', output: salida(u) })
@@ -259,17 +303,17 @@ export function startAcp(sabor: SaborAcp, opts: AgentOptions): AgentRun {
       case 'usage_update':
         if (typeof u.used === 'number' && typeof u.size === 'number') {
           ventana = u.size
-          emit({ t: 'context', used: u.used, max: u.size })
+          if (!sabor.contextoOpaco) emit({ t: 'context', used: u.used, max: u.size })
         }
         return
     }
   }
 
-  /** Los tokens y el costo de un turno, como los da Grok. */
+  /** Los tokens y el costo de un turno, como los dan Grok y Gemini (que cuenta aparte lo que piensa). */
   function contar(u: any) {
     if (!u) return
     const cache = (u.cachedReadTokens ?? 0) + (u.cacheCreationTokens ?? 0)
-    tokens = { input: tokens.input + Math.max(0, (u.inputTokens ?? 0) - cache) + (u.cacheCreationTokens ?? 0), output: tokens.output + (u.outputTokens ?? 0), cacheRead: tokens.cacheRead + (u.cachedReadTokens ?? 0) }
+    tokens = { input: tokens.input + Math.max(0, (u.inputTokens ?? 0) - cache) + (u.cacheCreationTokens ?? 0), output: tokens.output + (u.outputTokens ?? 0) + (u.thoughtTokens ?? 0), cacheRead: tokens.cacheRead + (u.cachedReadTokens ?? 0) }
     // Grok cuenta el costo en diezmilmillonésimas de dólar.
     if (typeof u.costUsdTicks === 'number') costo += u.costUsdTicks / 10_000_000_000
   }
@@ -277,6 +321,7 @@ export function startAcp(sabor: SaborAcp, opts: AgentOptions): AgentRun {
   /** Cierra un turno que el agente abrió solo. Lo que escribiste mientras va después, como en `mandar`. */
   function cerrarSolo(fin?: string) {
     clearTimeout(reloj)
+    if (cerrarConError()) return
     const siguiente = pendiente.shift()
     if (siguiente && !detenido) return void mandar(siguiente.text, siguiente.images)
     const fallo = fin === 'error'
@@ -319,7 +364,7 @@ export function startAcp(sabor: SaborAcp, opts: AgentOptions): AgentRun {
     const ini = await c.ini
     // Los MCP de v!d, como los pide ACP 1: `env` es una lista.
     const mcpServers = Object.entries(mcpVid(opts.lote, opts.hilo)).map(([name, s]) => ({ name, command: s.command, args: s.args ?? [], env: Object.entries(s.env ?? {}).map(([n, value]) => ({ name: n, value })) }))
-    let abierta: { sessionId?: string; configOptions?: OpcionAcp[]; models?: { availableModels?: { modelId: string; _meta?: any }[] } } | undefined
+    let abierta: { sessionId?: string; configOptions?: OpcionAcp[]; modes?: { currentModeId?: string; availableModes?: { id: string }[] }; models?: { availableModels?: { modelId: string; _meta?: any }[] } } | undefined
     if (opts.resume) {
       const cap = ini?.agentCapabilities ?? {}
       const metodo = cap.sessionCapabilities?.resume ? 'session/resume' : cap.loadSession ? 'session/load' : ''
@@ -354,7 +399,13 @@ export function startAcp(sabor: SaborAcp, opts: AgentOptions): AgentRun {
       config = res?.configOptions ?? config
       return true
     }
-    if (sabor.modo) await elegir('mode', sabor.modo).catch(() => {})
+    const modos = abierta!.modes
+    if (sabor.modo && !(await elegir('mode', sabor.modo).catch(() => false)) && modos?.currentModeId !== sabor.modo && modos?.availableModes?.some((m) => m.id === sabor.modo)) {
+      // Gemini lo confirma con un mensaje suyo (`[MODE_UPDATE] yolo`), que abriría un turno.
+      cargando = true
+      await r.request('session/set_mode', { sessionId: sesion, modeId: sabor.modo }).catch(() => {})
+      cargando = false
+    }
     if (!(await elegir('model', modelo).catch(() => false)) && modelo) await r.request('session/set_model', { sessionId: sesion, modelId: modelo }).catch(() => {})
     if (opts.effort) await elegir('thought_level', opts.effort).catch(() => {})
     ventana = abierta!.models?.availableModels?.find((m) => m.modelId === modelo)?._meta?.totalContextTokens ?? ventana
@@ -390,12 +441,17 @@ export function startAcp(sabor: SaborAcp, opts: AgentOptions): AgentRun {
     const mio = ++turno
     parte = 0
     pidiendo = true
+    abiertas.clear()
+    ultimo = ''
+    escuchar()
     try {
       const res = await con!.rpc.request('session/prompt', { sessionId: sesion, prompt: bloques(text, images) }, 0)
       pidiendo = false
       // Uno que se dio por detenido sin que el agente cortara (`interrupt`): lo de ahora ya es de otro turno.
       if (turno !== mio) return
-      contar(res?._meta?.usage)
+      contar(res?._meta?.usage ?? res?.usage)
+      // Antes que lo pendiente: mandárselo a una sesión que acaba de fallar es lo que la deja colgada.
+      if (cerrarConError()) return
       const siguiente = pendiente.shift()
       if (siguiente && !detenido) return void (await mandar(siguiente.text, siguiente.images))
       const fin = res?.stopReason
@@ -404,7 +460,8 @@ export function startAcp(sabor: SaborAcp, opts: AgentOptions): AgentRun {
       pidiendo = false
       if (turno !== mio) return
       pendiente = []
-      terminar(false, detenido ? 'lo detuviste' : e?.code === -32000 ? sabor.sinCuenta : e instanceof Error ? e.message : String(e))
+      const mensaje = e instanceof Error ? e.message : String(e)
+      terminar(false, detenido ? 'lo detuviste' : (sabor.traducir?.(mensaje) ?? (e?.code === -32000 ? sabor.sinCuenta : mensaje)))
     }
   }
 
@@ -425,8 +482,10 @@ export function startAcp(sabor: SaborAcp, opts: AgentOptions): AgentRun {
       if (busy) pendiente.push({ text, images })
       else void mandar(text, images)
     },
-    compact() {
-      void mandar('/compact', [])
+    compact: sabor.sinCompactar ? undefined : () => {
+      if (!sabor.contextoOpaco) return void mandar('/compact', [])
+      busy = true
+      terminar(true, undefined, { relevo: 'espera' })
     },
     async interrupt() {
       detenido = true
@@ -435,12 +494,12 @@ export function startAcp(sabor: SaborAcp, opts: AgentOptions): AgentRun {
       if (!con || !sesion) return
       con.rpc.notify('session/cancel', { sessionId: sesion, ...(sabor.cancelarMeta ? { _meta: sabor.cancelarMeta } : {}) })
       // Si en 15 segundos no corta, se cierra su proceso y el siguiente mensaje retoma la sesión. El compartido no, que
-      // cortaría a los demás hilos: el turno se da por detenido.
+      // cortaría a los demás hilos: el turno se da por detenido y esa sesión, colgada, se deja.
       const c = con
       const mio = turno
       setTimeout(() => {
         if (!busy || turno !== mio || cerrado) return
-        if (sabor.compartido) terminar(false, 'lo detuviste')
+        if (sabor.compartido) terminar(false, 'lo detuviste', { relevo: 'espera' })
         else c.rpc.close()
       }, 15_000).unref()
     },

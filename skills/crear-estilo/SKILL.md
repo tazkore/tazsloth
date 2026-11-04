@@ -10,7 +10,7 @@ lo que comparten. El estilo nuevo es otra carpeta ahí, `<skills>/<id>/`, y su c
 v!d la enseña en el inicio en cuanto ese archivo cambia, y enlaza la skill donde la buscan Claude y Codex.
 
 **No cambies los estilos de v!d** (`video-el-diff`, `video-explicativo`, `reel-collage`, `video-documental`,
-`video-base`, `modelos-3d` y esta): cada versión de v!d los vuelve a poner como venían. Para partir de uno, cópialo.
+`frutinovela`, `video-base`, `modelos-3d` y esta): cada versión de v!d los vuelve a poner como venían. Para partir de uno, cópialo.
 
 ## Pasos
 
@@ -27,6 +27,7 @@ v!d la enseña en el inicio en cuanto ese archivo cambia, y enlaza la skill dond
    - `reel-collage`: sketch de comedia con recortes de la persona sobre fotos reales y voz de `edge-tts`.
    - `video-documental`: una toma hablando a cámara, cubierta de material real que cambia cada segundo.
    - `video-el-diff`: noticiero seco con material original de una noticia.
+   - `frutinovela`: personajes generados que hablan con sus voces, clip por clip en Google Flow, sin Remotion.
    `<id>` va en minúsculas y con guiones (`receta-rapida`), y no es el de ningún estilo que ya exista. En la copia,
    busca el nombre del original (`video-documental`, `reel-collage`…) en todos los archivos y cámbialo por `<id>`:
    algunos scripts se buscan a sí mismos por él, y si no, seguirían usando el original. `video-base` se queda igual.

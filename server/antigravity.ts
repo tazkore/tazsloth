@@ -27,6 +27,8 @@ const AJUSTES = join(DATOS, 'antigravity-acp', 'settings.json')
 const TOKEN = join(DATOS, 'antigravity-acp', 'acp_token.json')
 const MODELOS = join(DATOS, 'modelos.json')
 const ARRANQUE = join(DATOS, 'arranque.json')
+/** Lo que escribió Antigravity en el último inicio de sesión que falló: dice por qué. */
+const REGISTRO = join(DATOS, 'inicio-de-sesion.log')
 /** Con la cuenta personal de Google. */
 const METODO = 'oauth-personal'
 /** El aviso con que pide abrir el navegador para iniciar sesión. */
@@ -83,6 +85,25 @@ function lanzar(exe: string) {
   return { command: exe, args: process.platform === 'linux' ? ['--uid='] : [], env, alCerrar }
 }
 
+/** En un turno: diez minutos sin decir nada ya no es pensar; con una herramienta abierta, una hora, por los renders. */
+const MUDO = { sin: 10 * 60_000, con: 60 * 60_000 }
+
+/**
+ * Antigravity convierte en texto los errores del modelo y cierra el turno con `end_turn`, como si fueran su respuesta.
+ * Se conoce por ser todo su último mensaje y empezar así. La cuota es semanal y por grupo: los Gemini, y Claude con GPT.
+ */
+export function errorAntigravity(texto: string): { error: string; relevo?: boolean } | undefined {
+  const t = texto.trim()
+  if (t.length > 2000) return
+  if (/^Usage Limit Reached\b/i.test(t)) {
+    const cuando = /reset in ([^.\n]+)/i.exec(t)?.[1].replace(/\bdays?\b/g, (d) => (d === 'day' ? 'día' : 'días')).replace(/\bhours?\b/g, (h) => (h === 'hour' ? 'hora' : 'horas')).replace(/\bminutes?\b/g, (m) => (m === 'minute' ? 'minuto' : 'minutos'))
+    return { error: `Se acabó tu cuota de este grupo de modelos.${cuando ? ` Se renueva en ${cuando}.` : ''} Mientras, elige abajo un modelo del otro grupo (Gemini, o Claude y GPT) y pulsa «Reintentar».` }
+  }
+  if (/^(?:Error:?\s*)?(?:Requested token count|The input\b|Prompt is too long|Input length)/i.test(t) && /\btokens?\b/i.test(t) && /exceed|too long|maximum/i.test(t)) {
+    return { error: 'La conversación se pasó del tamaño que aguanta el modelo.', relevo: true }
+  }
+}
+
 /** Lo que la sesión dice de los modelos, como los guarda v!d para el catálogo. */
 function guardarModelos(opciones: OpcionAcp[]) {
   const modelo = opciones.find((o) => o.category === 'model' || o.id === 'model')
@@ -120,6 +141,7 @@ const SABOR: SaborAcp = {
     return lanzar(exe)
   },
   alTexto(linea) {
+    if (login && login.lineas.length < 400) login.lineas.push(linea)
     const m = ENLACE.exec(linea)
     if (!m || !login) return
     login.url = m[1]
@@ -133,7 +155,10 @@ const SABOR: SaborAcp = {
   modo: 'yolo',
   sinCuenta: 'Conecta tu cuenta de Google en Opciones → Antigravity.',
   alVerModelos: guardarModelos,
-  compartido: true
+  compartido: true,
+  errorDe: errorAntigravity,
+  mudo: MUDO,
+  contextoOpaco: true
 }
 
 const SIN_CUENTA = SABOR.sinCuenta
@@ -150,8 +175,8 @@ export async function modelosAntigravity(): Promise<Model[]> {
   }
 }
 
-/** Mientras se inicia sesión: el enlace de Google, si ya lo dio, y el proceso que espera. */
-type Login = { url?: string; c?: Conexion }
+/** Mientras se inicia sesión: el enlace de Google, si ya lo dio, el proceso que espera y lo que va escribiendo. */
+type Login = { url?: string; c?: Conexion; lineas: string[] }
 let login: Login | undefined
 let fallo = ''
 
@@ -170,7 +195,7 @@ export const conectandoAntigravity = () => (login ? 'Se está conectando la cuen
  */
 export async function conectarAntigravity(): Promise<CuentaClaude> {
   if (login) return cuentaAntigravity()
-  const este: Login = (login = {})
+  const este: Login = (login = { lineas: [] })
   fallo = ''
   void (async () => {
     await asegurarAgente('antigravity')
@@ -185,8 +210,17 @@ export async function conectarAntigravity(): Promise<CuentaClaude> {
     }
   })()
     .catch((e) => {
-      // Si lo cancelaste, no hay nada que avisar.
-      if (login === este) fallo = este.c?.rpc.terminado && !existsSync(TOKEN) ? 'No se terminó de iniciar sesión. Vuelve a intentarlo.' : e instanceof Error ? e.message : String(e)
+      // Si lo cancelaste, no hay nada que avisar. Si no, el porqué va en el mensaje y, entero, en `REGISTRO`: «No se
+      // terminó» a secas no decía nada de lo que pasa en las computadoras donde no entra.
+      if (login !== este) return
+      const porque = e instanceof Error ? e.message : String(e)
+      fallo = este.c?.rpc.terminado && !existsSync(TOKEN) ? `No se terminó de iniciar sesión (${porque}). Vuelve a intentarlo.` : porque
+      try {
+        mkdirSync(DATOS, { recursive: true })
+        guardar(REGISTRO, [new Date().toISOString(), porque, '', ...este.lineas].join('\n'))
+      } catch {
+        // Sin registro: el mensaje basta.
+      }
     })
     .finally(() => {
       if (login === este) login = undefined

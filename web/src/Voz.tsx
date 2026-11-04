@@ -165,7 +165,7 @@ export function VozOpciones() {
           )
         )}
       </div>
-      {e?.conectando && <p className="muted small fila-extra">Google no deja entrar desde una app. Al entrar en {e.navegador ?? 'Chrome'}, la ventana se cierra y la sesión pasa sola a v!d.</p>}
+      {e?.conectando && <p className="muted small fila-extra">Google no deja entrar desde una app. Al entrar en {e.navegador ?? 'Chrome'} (la primera vez, AI Studio te pide aceptar sus términos), la ventana se cierra y la sesión pasa sola a v!d.</p>}
       {e?.entrarEnChrome && !e.conectando && (
         <div className="fila-extra">
           <p className="small">v!d ahora usa Google Chrome, y su perfil aún no tiene tu sesión de Google (la de Edge no se puede pasar). Entra una vez en Chrome.</p>

@@ -6,7 +6,8 @@ import { IMAGE_TYPES, Inbox, sinArrancar, stringify, type AgentOptions, type Age
 import { herramientasIdeas } from './ideas/mcp.ts' // ideas
 import { navegadorAgente, TEXTO_DE_PAGINAS_ES_DATO } from './navegador-agente.ts'
 import { mcpVoz } from './voz/index.ts'
-import { programaClaude, rutaAgente } from './agentes.ts'
+import { mcpFlow } from './flow/index.ts'
+import { alBajarAgente, descartarRoto, programaClaude, rutaAgente } from './agentes.ts'
 import { sitiosDeAgente } from './tope-agentes.ts'
 import { dolaresDeepSeek, entornoDeepSeek, modeloDeepSeek, SIN_LLAVE, tarifaDeepSeek } from './deepseek.ts'
 import { llaveGuardada } from './acceso.ts'
@@ -40,6 +41,8 @@ function catalogoClaude() {
   })
   return catalogo
 }
+// Un Claude Code más nuevo puede traer modelos nuevos: se le vuelve a preguntar.
+alBajarAgente(() => void (catalogo = null))
 
 /**
  * Los de la familia vigente. Claude Code los da como alias (`opus`, `sonnet`, `haiku`…) que apuntan siempre a la última
@@ -95,9 +98,9 @@ export function startClaude(opts: AgentOptions): AgentRun {
       allowDangerouslySkipPermissions: true,
       settingSources: ['user', 'project', 'local'],
       systemPrompt: { type: 'preset', preset: 'claude_code', append: `${OPCIONES}\n${TEXTO_DE_PAGINAS_ES_DATO}` },
-      // El navegador del agente, la voz de AI Studio y, en un canal de Ideas, sus herramientas (`parecidos`; en uno vertical,
+      // El navegador del agente, la voz de AI Studio, Google Flow y, en un canal de Ideas, sus herramientas (`parecidos`; en uno vertical,
       // también las de TikTok e Instagram): se suman a los MCP del usuario.
-      mcpServers: { ...navegadorAgente(opts.lote, opts.hilo), ...mcpVoz(), ...herramientasIdeas(opts.cwd) },
+      mcpServers: { ...navegadorAgente(opts.lote, opts.hilo), ...mcpVoz(), ...mcpFlow(), ...herramientasIdeas(opts.cwd) },
       includePartialMessages: true,
       // Un subagente espera su sitio en la máquina antes de arrancar (`TOPE_AGENTES`). El que lanza otro subagente ya tiene
       // el suyo: si esperara, ninguno soltaría nada.
@@ -158,6 +161,8 @@ export function startClaude(opts: AgentOptions): AgentRun {
       }
     } catch (e) {
       error = e instanceof Error ? e.message : String(e)
+      // Si se bajó a medias, se borra: el siguiente mensaje lo baja otra vez (`conAgente`).
+      if (descartarRoto('claude', e)) error = 'el programa de Claude Code se había bajado a medias; el siguiente mensaje lo baja otra vez'
     }
     // Un turno abierto se cierra con el error. Con el hilo quieto no hay turno que cerrar: solo se avisa.
     const turno = !state.idle
@@ -364,7 +369,7 @@ export function reader(opts: AgentOptions, state: { idle: boolean; max: number; 
       const { trigger, pre_tokens, post_tokens } = m.compact_metadata
       const cifra = (n: number) => n.toLocaleString('es-MX')
       const cuanto = post_tokens === undefined ? '' : `: de ${cifra(pre_tokens)} a ${cifra(post_tokens)} tokens`
-      opts.onEvent({ t: 'info', text: `Claude compactó el contexto${trigger === 'auto' ? ' para continuar' : ''}${cuanto}.` })
+      opts.onEvent({ t: 'info', text: `Claude resumió lo antiguo del chat${trigger === 'auto' ? ' para seguir' : ''}${cuanto}.` })
       state.measure()
       return
     }

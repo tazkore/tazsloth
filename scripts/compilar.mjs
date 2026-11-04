@@ -121,6 +121,9 @@ if (faltan.size) throw new Error(`El servidor importa paquetes que no van en la 
 cpSync(join(REPO, 'server', 'motor-pagina.jsx'), join(APP, 'server', 'motor-pagina.jsx'))
 // El MCP de la voz lo lanza cada agente con el Node de v!d: va tal cual, sin paquetes.
 cpSync(join(REPO, 'server', 'voz', 'mcp.mjs'), join(APP, 'server', 'voz', 'mcp.mjs'))
+// El de Google Flow (server/flow/), igual.
+mkdirSync(join(APP, 'server', 'flow'), { recursive: true })
+cpSync(join(REPO, 'server', 'flow', 'mcp.mjs'), join(APP, 'server', 'flow', 'mcp.mjs'))
 // El del avatar (server/avatar/), igual, y los flujos de ComfyUI que trae la app (flujos.ts los busca junto al servidor).
 mkdirSync(join(APP, 'server', 'avatar'), { recursive: true })
 cpSync(join(REPO, 'server', 'avatar', 'mcp.mjs'), join(APP, 'server', 'avatar', 'mcp.mjs'))

@@ -13,6 +13,7 @@ import { startCodex } from './codex.ts'
 import { startOpenCode } from './opencode.ts'
 import { OTROS } from './proveedores.ts'
 import { guardar } from './disco.ts'
+import { resumenDelHilo } from './relevo.ts'
 
 /**
  * Cuántos agentes trabajan a la vez mientras un lote espera: uno por cada 3 hilos de CPU (un render ya abre un Chrome por
@@ -262,8 +263,10 @@ export class Sessions {
         console.error(`No se pudo leer la memoria del proyecto de ${meta.id}: ${error instanceof Error ? error.message : error}`)
       }
     }
+    // Un chat que se pasó del tamaño del modelo sigue en una sesión nueva con el resumen de lo hablado (upstream).
+    const antes = meta.resumir ? `${resumenDelHilo(this.load(meta.id), meta.carpeta ?? meta.lote?.carpeta)}\n\n` : ''
     this.emit(meta.id, { t: 'turn_start', at: Date.now() })
-    this.runFor(meta).send(contexto + conRutas(text, images), pide, images)
+    this.runFor(meta).send(contexto + antes + conRutas(text, images), pide, images)
   }
 
   /** Mover el hilo a otro proyecto o serie (o a ninguno). Sin tocar `updatedAt`: no lo sube en la lista. */
@@ -367,6 +370,24 @@ export class Sessions {
   }
 
   /**
+   * Una sesión del agente que ya no sirve: se pasó del tamaño del modelo o se colgó, y retomarla no la arregla. El hilo
+   * sigue en otra, que empieza con el resumen de lo hablado. Si el fallo cortó el trabajo (`seguir`), arranca sola.
+   */
+  private relevar(meta: SessionMeta, seguir: boolean) {
+    this.cerrar(meta.id)
+    delete meta.providerSessionId
+    meta.resumir = true
+    const sola = seguir && (meta.retomas ?? 0) < RETOMAS
+    if (sola) {
+      meta.retomas = (meta.retomas ?? 0) + 1
+      meta.pendiente = { text: 'Sigue con lo que estabas haciendo, sin preguntar si no hace falta.' }
+    }
+    this.save(meta)
+    this.emit(meta.id, { t: 'info', text: sola ? 'v!d abrió una sesión nueva con un resumen de lo hablado, y sigue desde ahí.' : 'Tu próximo mensaje abre una sesión nueva con un resumen de lo hablado.' })
+    if (sola) setTimeout(() => this.repartir())
+  }
+
+  /**
    * Un video que acaba con error (se cortó, el proveedor falló, llegaste al límite) para el lote: los que esperan no
    * arrancan hasta que digas «Seguir». Así un límite de uso no quema la cola entera en errores.
    */
@@ -401,13 +422,13 @@ export class Sessions {
     if (this.compactando.has(id) || this.compactarPendiente.has(id)) return
     if (meta.running || meta.background?.length) {
       this.compactarPendiente.add(id)
-      this.emit(id, { t: 'info', text: 'Se compactará el contexto cuando termine el trabajo en curso.' })
+      this.emit(id, { t: 'info', text: 'Se resumirá lo antiguo del chat cuando termine el trabajo en curso.' })
       return
     }
     const run = this.runFor(meta)
     if (!run.compact) throw new Error('Este agente no admite compactación manual.')
     this.compactando.add(id)
-    this.emit(id, { t: 'info', text: `Compactando el contexto de ${proveedorDe(meta.model) === 'codex' ? 'Codex' : NOMBRE_AGENTE[proveedorDe(meta.model)]}…` })
+    this.emit(id, { t: 'info', text: `${proveedorDe(meta.model) === 'codex' ? 'Codex' : NOMBRE_AGENTE[proveedorDe(meta.model)]} está resumiendo lo antiguo del chat…` })
     this.emit(id, { t: 'turn_start', at: Date.now() })
     try { run.compact() }
     catch (error) {
@@ -623,6 +644,7 @@ export class Sessions {
       onProviderSession: (providerId) => {
         meta.providerSessionId = providerId
         meta.conLlave = conLlave || undefined
+        delete meta.resumir
         this.save(meta)
       }
     })
@@ -666,6 +688,7 @@ export class Sessions {
     this.ocioso(id, meta, event)
     this.avisarFondo(id, meta, event, habia)
     this.sinAcabar(id, meta, event)
+    if (event.t === 'turn_end' && event.relevo) this.relevar(meta, event.relevo === 'sigue')
     // Un agente que deja de trabajar libera sitio.
     if (event.t === 'turn_end' || event.t === 'background') setTimeout(() => this.repartir())
   }

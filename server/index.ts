@@ -16,7 +16,7 @@ import { IMAGE_TYPES, nombreAdjunto } from './agent.ts'
 import { avances } from './avances.ts'
 import { claudeModels, tituloCorto } from './claude.ts'
 import { codexModels } from './codex.ts'
-import { alBajarAgente, asegurarAgente, bajandoAgente, estadoAgentes, programaClaude, rutaAgente } from './agentes.ts'
+import { actualizarAgentes, agentesAlDia, alBajarAgente, asegurarAgente, bajandoAgente, estadoAgentes, programaClaude, rutaAgente } from './agentes.ts'
 import { opencodeModels } from './opencode.ts'
 import { conectandoOtro, OTROS, sinLimites } from './proveedores.ts'
 import { PROVEEDORES, type Proveedor, proveedorDe } from '../shared/providers.ts'
@@ -40,6 +40,7 @@ import { redes } from './redes/index.ts' // redes
 import { voz } from './voz/index.ts' // voz de AI Studio
 import { avatar } from './avatar/index.ts' // motor de avatar
 import { DATOS } from './secretos.ts'
+import { flow } from './flow/index.ts' // Google Flow
 import { youtube } from './youtube.ts'
 import { peticionDeConfianza } from './origen.ts'
 import { asegurarYtDlp, instalandoAlgo, instalar, pythonVidEntero, requisitos, rutaPythonVid } from './requisitos.ts'
@@ -238,6 +239,8 @@ const maquina = equipo({ app: APP, ocupado }) // tu equipo
 const narrar = voz(APP) // voz de AI Studio
 // El motor de avatar (ComfyUI, nube gratis, HeyGen, Codex) y la voz de ElevenLabs: llaves cifradas en data/avatar.
 const animar = avatar({ datos: DATOS, codexListo: async () => (await cuentaCodex().catch(() => null))?.conectada ?? false })
+// Las imágenes y videos de Google Flow, con esa misma cuenta y en ese mismo navegador.
+const generarFlow = flow(APP, narrar.google) // Google Flow
 
 // Si el agente (o tú) edita cards.json, las cards se actualizan solas.
 watch(CARDS, () => broadcast({ type: 'cards', cards: cards() }))
@@ -256,6 +259,7 @@ function ocupado(): string | null {
   if (idear?.ocupado()) return idear.ocupado() // ideas: una investigación en curso
   if (narrar.ocupado()) return narrar.ocupado() // voz de AI Studio: una a medias
   if (animar.ocupado()) return animar.ocupado() // avatar: una instalación o un video a medias
+  if (generarFlow.ocupado()) return generarFlow.ocupado() // Google Flow: un pedido a medias
   return maquina.ocupado() ?? instalandoAlgo() ?? bajandoAgente() ?? conectando() ?? conectandoCodex() ?? conectandoOpenCode() ?? conectandoOtro()
 }
 
@@ -388,6 +392,7 @@ async function api(req: IncomingMessage, res: ServerResponse, url: URL): Promise
   if (await maquina.api(req, res, path)) return true // tu equipo
   if (await narrar.api(req, res, path)) return true // voz de AI Studio
   if (await animar.api(req, res, path)) return true // motor de avatar
+  if (await generarFlow.api(req, res, path)) return true // Google Flow
 
   if (path === '/api/opciones' && method === 'GET') {
     send(res, 200, opciones())
@@ -476,14 +481,15 @@ async function api(req: IncomingMessage, res: ServerResponse, url: URL): Promise
   }
 
   // Pagar con la cuenta o con una llave de API (`server/acceso.ts`). Devuelve la cuenta como queda.
-  const acceso = /^\/api\/(claude|codex|deepseek)\/acceso$/.exec(path)
+  const acceso = /^\/api\/(claude|codex|deepseek|gemini)\/acceso$/.exec(path)
   if (acceso && method === 'POST') {
     const { api, llave } = await body<{ api: boolean; llave?: string | null }>(req)
     const p = acceso[1] as Proveedor
     try {
       await cambiarAcceso(p, !!api, llave)
-      send(res, 200, await (p === 'codex' ? cuentaCodex() : p === 'deepseek' ? OTROS.deepseek!.cuenta() : cuentaClaude(APP, true)))
-      if (p === 'deepseek') pedirModelos()
+      const soloLlave = p === 'deepseek' || p === 'gemini'
+      send(res, 200, await (p === 'codex' ? cuentaCodex() : soloLlave ? OTROS[p]!.cuenta() : cuentaClaude(APP, true)))
+      if (soloLlave) pedirModelos()
     } catch (error) {
       send(res, 400, { error: error instanceof Error ? error.message : String(error) })
     }
@@ -522,7 +528,10 @@ async function api(req: IncomingMessage, res: ServerResponse, url: URL): Promise
   }
 
   const ver = /^\/api\/(\w+)\/version$/.exec(path)
-  if (ver && PROVEEDORES.includes(ver[1] as Proveedor) && method === 'GET') return send(res, 200, version(APP, ver[1] as Agente)), true
+  if (ver && PROVEEDORES.includes(ver[1] as Proveedor) && method === 'GET') return send(res, 200, version(ver[1] as Agente)), true
+  // «Actualizar los agentes», arriba del hilo nuevo: Claude Code, Codex y OpenCode en su versión más nueva.
+  if (path === '/api/agentes/al-dia' && method === 'GET') return send(res, 200, await agentesAlDia()), true
+  if (path === '/api/agentes/actualizar' && method === 'POST') return send(res, 200, await actualizarAgentes()), true
 
   // Las series de la skill de una card, para elegir una al crear un video. Se leen cada vez: viven en las skills, y
   // todo estilo de video (la card con `etapas`) tiene las de video-base.

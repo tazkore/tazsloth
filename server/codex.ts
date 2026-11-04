@@ -9,6 +9,7 @@ import { rutaAgente } from './agentes.ts'
 import { CodexRpc } from './codex-rpc.ts'
 import { navegadorAgente, USA_EL_NAVEGADOR } from './navegador-agente.ts'
 import { mcpVoz } from './voz/index.ts'
+import { mcpFlow } from './flow/index.ts'
 import { costoCodex } from './precios.ts'
 import { SKILLS } from './skills.ts'
 
@@ -140,7 +141,7 @@ export function startCodex(opts: AgentOptions, connect: Conectar = (notify, exit
     if (item.type === 'subAgentActivity') actividad(item, parent, hijo)
     else if (done && item.type === 'agentMessage') completo(item.id, item.text ?? '')
     else if (done && item.type === 'reasoning') completo(`${item.id}:pensamiento`, (item.summary ?? []).join('\n'), true)
-    else if (item.type === 'contextCompaction' && done) emit({ t: 'info', text: 'Codex compactó el contexto para continuar.' })
+    else if (item.type === 'contextCompaction' && done) emit({ t: 'info', text: 'Codex resumió lo antiguo del chat para seguir.' })
     else if (!['agentMessage', 'reasoning', 'userMessage', 'contextCompaction', 'hookPrompt'].includes(item.type)) {
       if (!herramientas.has(id)) {
         herramientas.add(id)
@@ -205,7 +206,7 @@ export function startCodex(opts: AgentOptions, connect: Conectar = (notify, exit
     padreDe.clear()
     segundoPlano()
   }, {
-    mcp_servers: Object.fromEntries(Object.entries({ ...navegadorAgente(opts.lote, opts.hilo), ...mcpVoz() }).map(([name, server]) => [name, { command: server.command, args: server.args ?? [], ...(server.env ? { env: server.env } : {}) }]))
+    mcp_servers: Object.fromEntries(Object.entries({ ...navegadorAgente(opts.lote, opts.hilo), ...mcpVoz(), ...mcpFlow() }).map(([name, server]) => [name, { command: server.command, args: server.args ?? [], ...(server.env ? { env: server.env } : {}) }]))
   }, llave)
   const ready = (async () => {
     await rpc.ready

@@ -5,9 +5,11 @@ import { dirname, join } from 'node:path'
 import test from 'node:test'
 import type { AgentEvent } from '../shared/types.ts'
 import { startAcp, type SaborAcp } from './acp.ts'
+import { errorAntigravity } from './antigravity.ts'
+import { errorGemini } from './gemini.ts'
 
 /**
- * El cliente ACP (Grok, Antigravity) contra un agente de mentira que contesta como Grok 1.0.70 (el `initialize`, las
+ * El cliente ACP (Grok, Antigravity, Gemini) contra un agente de mentira que contesta como Grok 1.0.70 (el `initialize`, las
  * opciones de la sesión y el uso de `_meta.usage`, vistos en vivo y en las grabaciones de T3 Code). Sin red ni cuenta.
  */
 const AGENTE = `
@@ -203,6 +205,186 @@ test('ACP compartido: dos hilos a la vez van en un solo proceso, cada uno con su
   assert.deepEqual(c.barra, [])
   c.run.close()
   process.kill(Number(pidA))
+})
+
+/** Uno que contesta como Gemini CLI 0.66.0: modo y modelo fuera de `configOptions`, y el uso en `result.usage`. */
+const COMO_GEMINI = `
+let resto = ''
+const decir = (m) => process.stdout.write(JSON.stringify({ jsonrpc: '2.0', ...m }) + '\\n')
+const u = (update) => decir({ method: 'session/update', params: { sessionId: 'g1', update } })
+const pedidos = []
+process.stdin.on('data', (d) => {
+  resto += d
+  let i
+  while ((i = resto.indexOf('\\n')) >= 0) {
+    const m = JSON.parse(resto.slice(0, i))
+    resto = resto.slice(i + 1)
+    pedidos.push(m.method)
+    if (m.method === 'session/new') decir({ id: m.id, result: { sessionId: 'g1', modes: { currentModeId: 'default', availableModes: [{ id: 'default' }, { id: 'yolo' }] }, models: { availableModels: [{ modelId: 'auto' }] } } })
+    else if (m.method === 'session/set_mode') {
+      u({ sessionUpdate: 'agent_message_chunk', content: { type: 'text', text: '[MODE_UPDATE] yolo' } })
+      decir({ id: m.id, result: {} })
+    } else if (m.method === 'session/prompt') {
+      if (process.env.LLAVE_MALA) decir({ id: m.id, error: { code: 400, message: 'API key not valid. Please pass a valid API key.' } })
+      else {
+        u({ sessionUpdate: 'agent_message_chunk', content: { type: 'text', text: pedidos.join(',') } })
+        decir({ id: m.id, result: { stopReason: 'end_turn', usage: { inputTokens: 1000, cachedReadTokens: 600, outputTokens: 20, thoughtTokens: 30 } } })
+      }
+    } else if (m.id !== undefined) decir({ id: m.id, result: {} })
+  }
+})
+`
+const SCRIPT_GEMINI = join(dirname(SCRIPT), 'gemini.mjs')
+writeFileSync(SCRIPT_GEMINI, COMO_GEMINI)
+
+function correrGemini(env: Record<string, string> = {}) {
+  const events: AgentEvent[] = []
+  const sabor: SaborAcp = {
+    nombre: 'Gemini',
+    prefijo: 'gemini',
+    lanzar: () => ({ command: process.execPath, args: [SCRIPT_GEMINI], env: { ...process.env, ...env } }),
+    autenticar: 'gemini-api-key',
+    modo: 'yolo',
+    sinCompactar: true,
+    sinCuenta: 'Pega tu llave.',
+    traducir: errorGemini
+  }
+  let fin!: () => void
+  const listo = new Promise<void>((ok) => (fin = ok))
+  const run = startAcp(sabor, {
+    cwd: tmpdir(),
+    model: 'gemini:auto',
+    onEvent(e) {
+      events.push(e)
+      if (e.t === 'turn_end') fin()
+    },
+    onProviderSession() {}
+  })
+  return { run, events, listo }
+}
+
+test('ACP como Gemini: el modo va con set_mode sin abrir un turno, y cuenta como salida lo que piensa', async () => {
+  const { run, events, listo } = correrGemini()
+  run.send('hola')
+  await listo
+  run.close()
+  assert.deepEqual(events.flatMap((e) => (e.t === 'text' ? [e.delta] : [])), ['initialize,authenticate,session/new,session/set_mode,session/set_model,session/prompt'])
+  assert.equal(events.filter((e) => e.t === 'turn_end').length, 1)
+  const fin = events.find((e) => e.t === 'turn_end')
+  assert.deepEqual(fin && fin.t === 'turn_end' && { ok: fin.ok, tokens: fin.tokens }, { ok: true, tokens: { input: 400, output: 50, cacheRead: 600 } })
+  assert.equal(run.compact, undefined)
+})
+
+test('ACP como Gemini: una llave que Google rechaza acaba el turno en palabras de Sloth', async () => {
+  const { run, events, listo } = correrGemini({ LLAVE_MALA: '1' })
+  run.send('hola')
+  await listo
+  run.close()
+  const fin = events.find((e) => e.t === 'turn_end')
+  assert.deepEqual(fin && fin.t === 'turn_end' && { ok: fin.ok, error: fin.error }, { ok: false, error: 'Google no aceptó tu llave de Gemini. Cámbiala en Opciones.' })
+})
+
+test('Gemini: el límite de la llave se dice en palabras de Sloth, y lo demás no se toca', () => {
+  assert.match(errorGemini('{"error":{"code":429,"status":"RESOURCE_EXHAUSTED"}}') ?? '', /límite de tu llave/)
+  assert.equal(errorGemini('otro fallo'), undefined)
+})
+
+/** Uno como Antigravity: el error del modelo es un texto con `end_turn`, y la sesión que lo dio puede no contestar más. */
+const COLGADO = `
+let resto = '', prompts = 0
+const decir = (m) => process.stdout.write(JSON.stringify({ jsonrpc: '2.0', ...m }) + '\\n')
+process.stdin.on('data', (d) => {
+  resto += d
+  let i
+  while ((i = resto.indexOf('\\n')) >= 0) {
+    const m = JSON.parse(resto.slice(0, i))
+    resto = resto.slice(i + 1)
+    if (m.method === 'initialize') decir({ id: m.id, result: { protocolVersion: 1 } })
+    else if (m.method === 'session/new') decir({ id: m.id, result: { sessionId: 's1' } })
+    else if (m.method === 'session/prompt') {
+      if (++prompts > 1 || process.env.MODO === 'mudo') continue
+      const u = (update) => decir({ method: 'session/update', params: { sessionId: 's1', update } })
+      u({ sessionUpdate: 'usage_update', used: 100, size: 1000 })
+      u({ sessionUpdate: 'agent_message_chunk', content: { type: 'text', text: process.env.MODO === 'bien' ? 'Sobre tu error: The input token count exceeds the maximum.' : 'Requested token count exceeds the model\\'s maximum context length of 131072 tokens.' } })
+      setTimeout(() => decir({ id: m.id, result: { stopReason: 'end_turn' } }), 30)
+    } else if (m.id !== undefined && m.method) decir({ id: m.id, result: {} })
+  }
+})
+`
+const SCRIPT_COLGADO = join(dirname(SCRIPT), 'colgado.mjs')
+writeFileSync(SCRIPT_COLGADO, COLGADO)
+
+function colgado(modo: string, sabor: Partial<SaborAcp> = {}) {
+  const events: AgentEvent[] = []
+  let fin!: () => void
+  const listo = new Promise<void>((ok) => (fin = ok))
+  const run = startAcp({
+    nombre: 'Antigravity',
+    prefijo: 'antigravity',
+    lanzar: () => ({ command: process.execPath, args: [SCRIPT_COLGADO], env: { ...process.env, MODO: modo } }),
+    sinCuenta: 'Conecta tu cuenta.',
+    errorDe: errorAntigravity,
+    contextoOpaco: true,
+    ...sabor
+  }, {
+    cwd: tmpdir(),
+    model: 'antigravity:x',
+    onEvent(e) {
+      events.push(e)
+      if (e.t === 'turn_end') fin()
+    },
+    onProviderSession() {}
+  })
+  const finDe = () => events.find((e): e is Extract<AgentEvent, { t: 'turn_end' }> => e.t === 'turn_end')
+  return { run, events, listo, finDe }
+}
+
+test('ACP: el desborde que llega como texto cierra el turno con relevo, y lo que escribiste no va a esa sesión', async () => {
+  const { run, events, listo, finDe } = colgado('error')
+  run.send('hola')
+  while (!events.some((e) => e.t === 'text')) await new Promise((ok) => setTimeout(ok, 1))
+  run.steer('otro mensaje')
+  await listo
+  await new Promise((ok) => setTimeout(ok, 30))
+  run.close()
+  assert.deepEqual([finDe()?.ok, finDe()?.relevo, finDe()?.caida], [false, 'sigue', true])
+  assert.equal(events.filter((e) => e.t === 'turn_end').length, 1)
+  // El anillo de Antigravity no se presenta: se queda muy por debajo de lo que manda de verdad.
+  assert.ok(!events.some((e) => e.t === 'context'))
+})
+
+test('ACP: un texto que solo habla de tokens no es un error', async () => {
+  const { run, listo, finDe } = colgado('bien')
+  run.send('hola')
+  await listo
+  run.close()
+  assert.equal(finDe()?.ok, true)
+})
+
+test('ACP: si se calla, el turno acaba con relevo en vez de esperar para siempre', async () => {
+  const { run, listo, finDe } = colgado('mudo', { mudo: { sin: 40, con: 1000 } })
+  run.send('hola')
+  await listo
+  run.close()
+  assert.deepEqual([finDe()?.ok, finDe()?.error, finDe()?.relevo], [false, 'Antigravity dejó de contestar.', 'sigue'])
+})
+
+test('ACP: sin `mudo` no hay plazo, y `/compact` de Antigravity es pasar a otra sesión', async () => {
+  const { run, listo, finDe } = colgado('mudo')
+  run.compact!()
+  await listo
+  run.close()
+  assert.deepEqual([finDe()?.ok, finDe()?.relevo], [true, 'espera'])
+})
+
+test('Antigravity: conoce sus errores y deja pasar lo demás', () => {
+  assert.deepEqual(errorAntigravity('Usage Limit Reached\n\nYou have reached your current quota for this period. Your limit will reset in 5 days, 2 hours.'), {
+    error: 'Se acabó tu cuota de este grupo de modelos. Se renueva en 5 días, 2 horas. Mientras, elige abajo un modelo del otro grupo (Gemini, o Claude y GPT) y pulsa «Reintentar».'
+  })
+  assert.equal(errorAntigravity("Requested token count exceeds the model's maximum context length of 131072 tokens. You requested a total of 158550 tokens.")?.relevo, true)
+  assert.equal(errorAntigravity('The input token count exceeds the maximum number of tokens allowed (131072).')?.relevo, true)
+  assert.equal(errorAntigravity('Listo: el video pesa 12 MB y el modelo usó 3000 tokens.'), undefined)
+  assert.equal(errorAntigravity(`The input tokens exceed… ${'x'.repeat(3000)}`), undefined)
 })
 
 test('ACP: sin cuenta, el turno acaba pidiendo conectarla', async () => {

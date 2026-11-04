@@ -22,7 +22,8 @@ export interface Card {
   tuya?: boolean
   /**
    * La voz del video. Sin esto, un estilo (con `etapas`) deja elegir en el compositor entre mandarla tú o que el agente la
-   * genere en AI Studio (`shared/voz.ts`). `false`: no hay qué elegir, la voz es tu grabación a cámara. `propia`: cómo la
+   * genere en AI Studio (`shared/voz.ts`). `false`: no hay qué elegir, la voz es tu grabación a cámara o la de cada clip
+   * de Veo (la frutinovela). `propia`: cómo la
    * hace el estilo si no eliges AI Studio, cuando no es mandándola tú.
    */
   voz?: false | { propia: string }
@@ -243,7 +244,8 @@ export type AgentEvent =
    * turno según el SDK, con los subagentes (con Codex, a precio de la API: server/precios.ts); faltan si no se
    * sabe (se cortó antes de que el SDK lo diera, es el primer turno tras retomar la sesión o el modelo no tiene precio).
    */
-  | { t: 'turn_end'; at: number; ok: boolean; error?: string; costUsd?: number; tokens?: Tokens; caida?: boolean }
+  /** `relevo`: la sesión del agente ya no sirve; el hilo sigue en otra con un resumen, sola (`sigue`) o con el siguiente mensaje. */
+  | { t: 'turn_end'; at: number; ok: boolean; error?: string; costUsd?: number; tokens?: Tokens; caida?: boolean; relevo?: 'sigue' | 'espera' }
   | { t: 'info'; text: string }
   /** El agente tarda en arrancar: `dura`, lo que se espera en ms, desde `desde`. `listo`: ya arrancó. El fin del turno también lo acaba. */
   | { t: 'arranque'; nombre: string; desde: number; dura: number; listo?: boolean }
@@ -297,6 +299,8 @@ export interface SessionMeta {
   retomas?: number
   /** Si su último turno acabó bien: `false` si falló o se cortó. Falta si aún no acabó ninguno. Lo mira el archivado automático. */
   acaboBien?: boolean
+  /** La sesión del agente se cambió por otra: la siguiente que se abra empieza con el resumen del hilo (`relevar` en sessions.ts). */
+  resumir?: boolean
   /**
    * La skill que invoca el primer mensaje. Mientras el agente no haya respondido (sin `providerSessionId`), cada turno la
    * vuelve a pedir: un hilo que se cayó antes de la primera respuesta no la olvida al retomarse.
@@ -399,11 +403,15 @@ export interface RedesDelEstilo {
   tags: string[]
 }
 
-/** El texto de un video antes de programarlo: lo escribe Claude y se puede cambiar. */
+/**
+ * El texto de un video antes de programarlo: lo escribe Claude (u OpenCode, sin Claude) y se puede cambiar. Si ninguno
+ * pudo, va vacío para escribirlo a mano, y `aviso` dice por qué.
+ */
 export interface Borrador {
   ruta: string
   texto: string
   tags: string[]
+  aviso?: string
 }
 
 /**
@@ -486,6 +494,16 @@ export interface TandaRedes {
 /** `GET /api/claude/version` (y la de Codex y OpenCode): la versión que trae v!d. `null` si no está instalado. */
 export interface VersionClaude {
   instalada: string | null
+}
+
+/**
+ * `GET /api/agentes/al-dia`: los agentes ya bajados que tienen versión nueva (`de` → `a`), mientras se ponen al día, en
+ * cuál va (`actualizando`), y lo que falló la última vez. Lo enseña «Actualizar los agentes», arriba del hilo nuevo.
+ */
+export interface AgentesAlDia {
+  nuevos: { id: string; nombre: string; de: string; a: string; pesa: string }[]
+  actualizando?: string
+  error?: string
 }
 
 /**
@@ -1118,6 +1136,79 @@ export interface TrabajoVoz {
   palabras: number
   archivo?: string
   segundos?: number
+  error?: string
+}
+
+/**
+ * `GET /api/flow`: la cuenta de Google con que v!d genera en Google Flow (la de la voz), cuántos pedidos esperan y si
+ * deja que Google use lo generado («Ayudar a mejorar Flow», apagado salvo que lo enciendas). `derechos`: si confirmó que
+ * tiene los derechos de lo que manda de referencia; sin eso, Flow solo recibe texto.
+ */
+/**
+ * `GET /api/flow`. `cuentas`: las de Google con que genera, primero la de la voz; `agregando`, si hay una ventana abierta
+ * para entrar con otra. `error`: por qué no se pudo agregar la última. `uso`: los videos hechos hoy y este mes, entre
+ * todas. `quedan`: los créditos que les quedan a las que tienen su saldo al día. `leyendo`: si se está leyendo el saldo
+ * de las cuentas (`POST /api/flow/saldos`).
+ */
+export interface EstadoFlow {
+  cuentas: CuentaEnFlow[]
+  uso: { hoy: GastoFlow; mes: GastoFlow }
+  quedan: number
+  leyendo: boolean
+  agregando: boolean
+  /** Donde se entra con Google: el navegador elegido en Opciones (Chrome por omisión) o Edge. */
+  navegador: string
+  enFila: number
+  aportar: boolean
+  derechos: boolean
+  error?: string
+}
+
+/**
+ * Una cuenta de Google en Flow. `descansa`: hasta cuándo no genera (ms) y por qué (`Motivo` de `shared/flow.ts`).
+ * `saldo`: lo que le quedaba al leerlo, sin él si aún no se leyó. `hoy`: sus videos de hoy.
+ */
+export interface CuentaEnFlow {
+  correo: string
+  deLaVoz: boolean
+  generando: boolean
+  descansa?: { hasta: number; motivo: 'creditos' | 'frenada' | 'sesion' }
+  saldo?: SaldoFlow
+  hoy: GastoFlow
+}
+
+/**
+ * Los créditos que le quedaban a una cuenta en Flow, cuándo se leyeron y, si se renuevan cada día, cuándo (todo en ms).
+ * `maximo`: lo más que se le ha leído, para dibujar cuánto le queda (Flow no dice de cuánto).
+ */
+export interface SaldoFlow {
+  creditos: number
+  renueva?: number
+  leido: number
+  maximo?: number
+}
+
+/** Los videos que se hicieron en Flow y los créditos que gastaron. */
+export interface GastoFlow {
+  videos: number
+  creditos: number
+}
+
+/**
+ * Un pedido a Flow (`POST /api/flow/generar`). `archivo`: lo generado ya en su sitio; `creditos`, lo que gastó. `error`:
+ * por qué no salió, dicho para el agente.
+ */
+export interface TrabajoFlow {
+  id: string
+  estado: 'en-fila' | 'generando' | 'lista' | 'error'
+  tipo: 'imagen' | 'video'
+  modelo: string
+  /** La cuenta de Google con que se genera o se generó. */
+  cuenta?: string
+  archivo?: string
+  creditos?: number
+  /** En un video ya hecho: lo que les queda a las cuentas con su saldo al día (`EstadoFlow.quedan`). */
+  quedan?: number
   error?: string
 }
 

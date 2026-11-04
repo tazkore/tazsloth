@@ -19,6 +19,7 @@ import { YoutubeOpciones } from './Youtube'
 import { VozOpciones } from './Voz' // voz de AI Studio
 import { AgenciaOpciones } from './AgenciaOpciones' // agencia
 import { AvatarOpciones } from './Avatar' // avatares y voz
+import { FlowOpciones } from './Flow' // Google Flow
 import { VENTA } from '../../shared/venta'
 import './Opciones.css'
 
@@ -88,6 +89,12 @@ function Ajustes({ onDone, iniciando, onIniciando }: { onDone(): void; iniciando
       </Grupo>
       <Grupo titulo="Avatares y voz" nota="Cómo se anima el personaje de tus videos y con qué voz habla. Nada se descarga ni se paga sin que pulses el botón: ComfyUI son unos 2 GB y cada modelo, de 5 a 35 GB. En «Avatar» del compositor eliges el motor de cada video.">
         <AvatarOpciones />
+      </Grupo>
+      <Grupo
+        titulo="Google Flow"
+        nota="Los agentes generan imágenes y videos con tus cuentas de Google: la de la Voz y las que agregues aquí, hasta 50. Las imágenes son gratis; los videos gastan créditos de Flow, y si una cuenta se queda sin ellos, v!d sigue con otra. Agrega solo cuentas tuyas: Google puede limitar o bloquear las que usa de más."
+      >
+        <FlowOpciones />
       </Grupo>
       {/* Solo sirven a Ideas: sin la de YouTube, las recomendaciones van con el canal conectado. */}
       {!VENTA && (
@@ -606,14 +613,15 @@ export function CuentaOpenCode({ aviso = false, onFalta }: { aviso?: boolean; on
 }
 
 /** Los agentes que llegaron después de Claude, Codex y OpenCode (`server/proveedores.ts`), en el orden de Opciones. */
-export const OTROS_AGENTES = ['deepseek', 'grok', 'antigravity', 'cursor', 'muse', 'pi'] as const satisfies readonly Proveedor[]
+export const OTROS_AGENTES = ['deepseek', 'grok', 'antigravity', 'gemini', 'cursor', 'muse', 'pi'] as const satisfies readonly Proveedor[]
 type OtroAgente = (typeof OTROS_AGENTES)[number]
 
 /**
  * Cómo se conecta cada uno y qué hay que saber antes, a la vista. `ventana`: el agente abre su propia ventana para
  * iniciar sesión; `navegador`: da un enlace que se autoriza en el navegador; `llave`: se pega una llave de API.
  */
-const OTROS: Record<OtroAgente, { titulo: string; logo: string; como: 'ventana' | 'navegador' | 'llave'; texto: ReactNode; ayuda?: ReactNode; uso?: string; abreSolo?: string; beta?: boolean }> = {
+/** `salir`: el de ventana que sabe cerrar su sesión (los de navegador y llave siempre pueden). */
+const OTROS: Record<OtroAgente, { titulo: string; logo: string; como: 'ventana' | 'navegador' | 'llave'; texto: ReactNode; ayuda?: ReactNode; uso?: string; abreSolo?: string; beta?: boolean; salir?: true }> = {
   deepseek: {
     titulo: 'DeepSeek · con tu llave de API',
     logo: 'deepseek',
@@ -636,7 +644,8 @@ const OTROS: Record<OtroAgente, { titulo: string; logo: string; como: 'ventana' 
     como: 'ventana',
     beta: true,
     texto: 'v!d trabaja con tu cuenta de Grok. Al conectar se abre una ventana de Grok que te lleva a autorizarla en el navegador.',
-    uso: 'https://grok.com'
+    uso: 'https://grok.com',
+    salir: true
   },
   antigravity: {
     titulo: 'Antigravity · Google',
@@ -645,6 +654,22 @@ const OTROS: Record<OtroAgente, { titulo: string; logo: string; como: 'ventana' 
     beta: true,
     abreSolo: 'Abriendo Antigravity: al terminar se abre sola la página de Google',
     texto: 'v!d trabaja con tu cuenta de Google en Antigravity, con sus modelos de Gemini. La cuenta se autoriza en el navegador.'
+  },
+  gemini: {
+    titulo: 'Gemini · con tu llave de API',
+    logo: 'gemini',
+    como: 'llave',
+    beta: true,
+    texto: 'Trabaja con Gemini CLI y tu llave de AI Studio: no con tu cuenta ni tu plan de Google, que Gemini CLI ya no acepta. La llave gratis alcanza para probar; para trabajar, actívale la facturación.',
+    ayuda: (
+      <>
+        Créala en{' '}
+        <a href="https://aistudio.google.com/apikey" target="_blank" rel="noreferrer">
+          aistudio.google.com
+        </a>
+        . Se guarda solo en v!d, en esta computadora.
+      </>
+    )
   },
   cursor: {
     titulo: 'Cursor',
@@ -731,7 +756,7 @@ export function CuentaAgente({ p, aviso = false, onFalta }: { p: OtroAgente; avi
                   options: [
                     ...(cuenta.uso || o.uso ? [{ value: 'uso', label: o.como === 'llave' ? 'Ver tu saldo ↗' : 'Ver tu uso ↗' }] : []),
                     { value: 'cambiar', label: o.como === 'llave' ? 'Cambiar de llave' : 'Cambiar de cuenta' },
-                    ...(o.como !== 'ventana' ? [{ value: 'quitar', label: o.como === 'llave' ? 'Quitar la llave' : 'Cerrar sesión' }] : []),
+                    ...(o.como !== 'ventana' || o.salir ? [{ value: 'quitar', label: o.como === 'llave' ? 'Quitar la llave' : 'Cerrar sesión' }] : []),
                   ],
                 },
               ]}

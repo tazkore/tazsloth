@@ -3,7 +3,7 @@
 Cada módulo explica lo suyo en su comentario de cabecera, y los campos de una card están en `Card` (`shared/types.ts`).
 Este es el mapa:
 
-- `server/index.ts`: un solo servidor Node (en `$PORT`; 4850 en la app instalada; 4848 es la Sloth original) con la API en `/api/*`, el WebSocket en `/ws` y Vite como
+- `server/index.ts`: un solo servidor Node (en `$PORT`; 4850 en la app instalada; 4848 es la v!d original) con la API en `/api/*`, el WebSocket en `/ws` y Vite como
   middleware para la interfaz.
 - `server/claude.ts`: Claude con `@anthropic-ai/claude-agent-sdk`, en streaming; la sesión sigue viva entre turnos y
   carga las skills y el CLAUDE.md del usuario. Lo traduce todo a `AgentEvent`, lo único que conoce la interfaz; otro
@@ -19,10 +19,12 @@ Este es el mapa:
 - `server/agentes.ts`: el programa de cada agente no viene en el instalador: se baja al elegirlo (bienvenida, Opciones o
   el primer mensaje de un hilo suyo, `conAgente`) a `%APPDATA%\vid-koldgold\piezas\agentes`. En el repo, Claude Code, Codex y
   OpenCode ya están en node_modules. Un proveedor nuevo es una entrada más en `AGENTES` y en `PROVEEDORES`
-  (`shared/providers.ts`).
+  (`shared/providers.ts`). «Actualizar los agentes», arriba a la derecha del hilo nuevo (`AvisoAgentes`), baja la versión
+  más nueva de npm de Claude Code, Codex y OpenCode a `<agente>/versiones/<versión>` (`AL_DIA`); se usa siempre la más
+  nueva, la de la app o la bajada.
 - Los demás agentes, como en T3 Code (ADR 0012), cada uno con su cuenta y su catálogo en `server/proveedores.ts` y su fila
-  en Opciones (`CuentaAgente`): DeepSeek es Claude Code con la API de DeepSeek (`server/deepseek.ts`); Grok y
-  Antigravity hablan ACP (`server/acp.ts`, `grok.ts`, `antigravity.ts`; Antigravity, un proceso para todos sus hilos); Cursor corre su SDK en un puente aparte
+  en Opciones (`CuentaAgente`): DeepSeek es Claude Code con la API de DeepSeek (`server/deepseek.ts`); Grok,
+  Antigravity y Gemini CLI hablan ACP (`server/acp.ts`, `grok.ts`, `antigravity.ts`, `gemini.ts`; Antigravity, un proceso para todos sus hilos; Gemini, con llave de API, ADR 0013); Cursor corre su SDK en un puente aparte
   (`cursor.ts`, `cursor-puente.mjs`); Muse Code, su MSP (`muse.ts`); Pi, su RPC con una extensión que le pasa los MCP de
   v!d (`pi.ts`). Lo que comparten (las instrucciones, la skill por su ruta, los MCP del hilo) está en
   `server/instrucciones.ts`; el JSON-RPC por líneas, en `server/rpc-lineas.ts`.
@@ -30,6 +32,8 @@ Este es el mapa:
   del proveedor tras reiniciar, reparte los lotes según la máquina y cierra el proceso de un video del lote al acabar.
   Un chat de Claude, DeepSeek, Codex u OpenCode con su sesión guardada suelta el proceso a la media hora; los demás
   agentes lo conservan hasta comprobar que retoman. `npm run hilo -- <id>` (`scripts/hilo.mjs`) resume un hilo desde esos archivos.
+  Una sesión de Antigravity que se desborda o se calla no se recupera, ni retomándola: el turno acaba con `relevo` y el hilo
+  sigue en otra, con el resumen que v!d saca de su historial (`relevar`, `server/relevo.ts`). `/compact` hace lo mismo.
 - Lo que aguanta la máquina (ADR 0011): el aviso antes de pasar de dos videos a la vez (`shared/limites.ts`,
   `web/src/AvisoVideos.tsx`), el tope de subagentes de Claude (`server/tope-agentes.ts`), el de navegadores (`turnoNavegador` en `video-base/scripts/chrome.mjs`),
   Whisper cargado mientras trabaja un video (`server/voz-viva.ts`) y la fila de la GPU, con la voz primero (`vid.py`).
@@ -79,6 +83,12 @@ Este es el mapa:
   `Avatar:` del primer mensaje (`shared/avatar.ts`) la documenta `skills/video-base/AVATAR.md`; las skills oficiales de
   HeyGen están en `skills/heygen-*`. Nada que baje gigas o gaste créditos corre solo: lo pide un botón de Opciones →
   Avatares y voz o el agente.
+- `server/flow/` y `web/src/Flow.tsx`: imágenes (Nano Banana) y videos (Veo) de Google Flow, con la cuenta de la voz (en
+  su Edge y su turno, `voz().google`) y las que se agregan en Opciones (`cuentas.ts`, cada una en su Edge), hasta tres a la
+  vez. `elegirCuenta` y los descansos están en `shared/flow.ts`. `pagina.ts` maneja la página, por sus iconos: texto,
+  referencias («Ingredientes») o fotogramas. Los agentes piden con el MCP `flow` (`mcp.mjs`, `skills/video-base/FLOW.md`).
+  Lee el costo antes de generar y no pasa del tope. «Ayudar a mejorar Flow» se apaga para todos y se cambia en Opciones →
+  Google Flow. El menú «Imágenes» del compositor manda la línea `Imágenes:` (ChatGPT o un modelo de Flow). ADR 0014 y 0015.
 - El navegador de cada hilo (`electron/navegador.ts`, el globo de `web/src/Navegador.tsx`): el Playwright MCP del agente
   (`server/navegador-agente.ts`, lanzado a demanda por `server/navegador-mcp.mjs`) entra en él por CDP si Opciones → Navegador
   está en «Integrado». Con Chrome (lo normal) o Edge, entra a una ventana de ese navegador por el relevo `server/chrome-agente.ts`
@@ -113,7 +123,7 @@ Este es el mapa:
   archivos de su skill (y de video-base) ya no son como los trae la versión, y vuelve a la original, entera o uno a uno.
   Lo que se pisa, también al actualizar (`prepararSkills`), se copia antes a `data/skills-tuyas`.
 - `server/requisitos.ts`: lo que las skills necesitan fuera de v!d. Cada card pide solo los paquetes de su skill
-  (`PAQUETES` dice cuáles). Instala automáticamente el Python de v!d en `%APPDATA%\youtube\piezas\python`,
+  (`PAQUETES` dice cuáles), siempre ya compilados; si tu Python de Windows no los tiene (uno recién salido), baja el suyo. Instala automáticamente el Python de v!d en `%APPDATA%\youtube\piezas\python`,
   sus paquetes y los modelos; elige CUDA y Whisper si hay una NVIDIA que lo aguante (`aguantaCuda`) y, si no, CPU y
   Parakeet (`MotorVoz`, ADR 0007). Una instalación interrumpida se puede reanudar. Si hay varios, v!d y `vid.py`
   usan el mismo (`elegirPython`).

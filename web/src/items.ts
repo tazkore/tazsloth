@@ -372,6 +372,7 @@ export function errorLlano(error = '', caida = false, agente: Proveedor = 'claud
   if (agente === 'opencode' && /modelo gratis|rate.?limit|too many requests|\b429\b/i.test(error)) {
     return { titulo: 'El modelo gratis está saturado', ayuda: 'Espera unos minutos y pulsa «Reintentar», o elige otro modelo gratis.', reintentar: true }
   }
+  if (agente === 'antigravity' && /^Se acabó tu cuota/.test(error)) return { titulo: 'Se acabó tu cuota de Antigravity', ayuda: error, reintentar: true }
   if (/hit your .*limit|usage limit|rate.?limit|out of usage|spend limit|credit balance|\b429\b/i.test(error)) {
     const cuando = reinicio(error)
     return { titulo: `Llegaste al límite de tu plan de ${nombre}`, ayuda: `${cuando ? `Se reinicia: ${cuando}.` : 'En Opciones ves cuándo se reinicia.'} Entonces pulsa «Reintentar».`, reintentar: true }
@@ -422,6 +423,9 @@ const CON_SUBAGENTES: Record<string, string> = {
   listAgents: 'Mira sus subagentes'
 }
 
+/** El final de una ruta, que es lo que cambia de un clip a otro (`clips/esc-03.mp4`). */
+export const finDeRuta = (ruta: string) => ruta.split(/[\\/]/).slice(-2).join('/')
+
 /** Una línea que dice qué hizo la herramienta, como en T3 Code: el verbo y su objeto. */
 export function toolSummary(name: string, input: any): { verb: string; detail: string } {
   const i = input ?? {}
@@ -459,6 +463,11 @@ export function toolSummary(name: string, input: any): { verb: string; detail: s
       const s = Number(i.delaySeconds) || 0
       return { verb: 'Vuelve en', detail: `${s < 60 ? `${s} s` : `${Math.round(s / 60)} min`}${i.reason ? ` · ${i.reason}` : ''}` }
     }
+    case 'mcp__flow__generar_video':
+    case 'mcp__flow__generar_imagen':
+      return { verb: name.endsWith('video') ? 'Video' : 'Imagen', detail: finDeRuta(String(i.salida ?? '')) }
+    case 'mcp__flow__estado_flow':
+      return i.id ? { verb: 'Espera en Flow', detail: `pedido ${i.id}` } : { verb: 'Créditos de Flow', detail: 'lo que les queda a tus cuentas' }
     case 'ToolSearch':
       // `select:WebSearch,WebFetch` dice qué herramientas carga.
       return { verb: 'Carga herramientas', detail: String(i.query ?? '').replace(/^select:/, '').replaceAll(',', ', ') }

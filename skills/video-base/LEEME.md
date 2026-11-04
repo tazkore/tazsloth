@@ -4,7 +4,8 @@ Lo que comparten los estilos de vídeo: el lote, los errores ya vistos y los scr
 `SKILL.md` ni card): la leen y la usan las skills de cada estilo, que se quedan solo con lo suyo.
 
 - **La usan:** `reel-collage` y `video-explicativo` (sus scripts, `LOTE.md` y este archivo; `video-explicativo`, también
-  las huellas), `video-documental` (`vid.py`, `chrome.mjs`, la hoja, masterizar y comprobar), los estilos que hace
+  las huellas), `video-documental` (`vid.py`, `chrome.mjs`, la hoja, masterizar y comprobar), `frutinovela`
+  (`FLOW.md`, `vid.py`, la hoja, masterizar, comprobar y la portada), los estilos que hace
   cada quien con `crear-estilo` y los procesos de Python de v!d (`vid.py`).
 - **`video-el-diff`** es un estilo propio que el usuario afina a mano: ni lo toques desde aquí ni le muevas nada. Solo
   toma prestados `chrome.mjs`, `recorte.py` y la portada (`PORTADA.md`, `portada.mjs`), así que un cambio en ellos
@@ -19,6 +20,7 @@ Lo que comparten los estilos de vídeo: el lote, los errores ya vistos y los scr
 | [AVATAR.md](AVATAR.md) | El motor que anima al personaje o presentador (`Avatar:` del mensaje): sprites, ComfyUI local, nube gratis, HeyGen o Codex, con el MCP `avatar` |
 | [SERIES.md](SERIES.md) | Las series (`series/`), formatos fijos del canal para todo estilo: v!d las ofrece al crear un vídeo; solo se lee si el mensaje trae `Serie:` |
 | [PROYECTOS.md](PROYECTOS.md) | El proyecto y la serie del hilo (`Proyecto:`, `MemoriaProyecto:`, `MemoriaSerie:` del mensaje): leer su memoria, respetarla y proponer al final qué agregar |
+| [FLOW.md](FLOW.md) | La línea `Imágenes:` (con ChatGPT o con Google Flow) y los clips de Flow, con lo que gastan |
 | `scripts/` | Las herramientas (abajo) |
 
 `<base>` es esta carpeta, `video-base`, junto a las skills de cada estilo.

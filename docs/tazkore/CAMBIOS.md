@@ -218,3 +218,56 @@ El staff usa Mac, donde casi nunca hay Edge: el navegador de v!d pasa a ser Goog
 | Agente | Navegador integrado de la ventana | Ventana nativa de Chrome por el relevo `server/chrome-agente.ts`: bloquea `file:`/`chrome:`/`javascript:`, cancela descargas ejecutables, confirma publicar/pagar/borrar en la página; «Integrado» como antes | `server/chrome-agente.ts`, `server/navegador-agente.ts`, `docs/agents/navegador-seguridad.md` |
 | Skills | `buscarChrome` sin `~/Applications` ni `google-chrome-stable` | Con ellos (Chrome antes que Edge, como ya era) | `skills/video-base/scripts/chrome.mjs` |
 | Versión | 1.0.0 | 1.0.1 (dispara «Compilar v!d para Mac») | `package.json` |
+
+## Sincronización con Sloth 2026-11-03 (upstream 7d50117)
+
+Merge (sin rebase) de `upstream/main` (24 commits, de `a90083e` a `7d50117`) en `tazkore`. Conflictos resueltos
+conservando siempre el branding v!d by Kold.Gold y las funciones propias (proyectos, agencia, avatares, 3D, Chrome nativo,
+Feedback, secretos cifrados, token local).
+
+### Qué se integró
+
+| Qué | Archivos | Ajuste para v!d |
+| --- | --- | --- |
+| Google Flow: imágenes (Nano Banana) y videos (Veo/Omni) con la cuenta de la voz y hasta 50 cuentas más, créditos en Opciones y en el chat, menú «Imágenes» del compositor | `server/flow/*`, `shared/flow.ts`, `web/src/Flow.tsx`, `skills/video-base/FLOW.md`, ADR 0014 y 0015 | Las cuentas abren el navegador elegido en Opciones → Navegador (Chrome por omisión) con `--remote-debugging-address=127.0.0.1`; archivo de puerto `puerto-vid`; el MCP `flow` usa `VID_URL` y manda `x-vid-token` (sin él, el servidor lo rechazaba); `compilar.mjs` copia `server/flow/mcp.mjs`. «Ayudar a mejorar Flow» sigue apagado por omisión |
+| Frutinovela (card y skill) | `cards.json`, `skills/frutinovela/*` | `from vid import transcribir`; textos con v!d |
+| Gemini CLI por ACP con llave de AI Studio | `server/gemini.ts`, `server/acp.ts`, ADR 0013 | MCP de v!d (`mcpVid`), etiqueta `<vid>` |
+| Antigravity: errores de cuota en español, relevo a una sesión nueva con resumen | `server/antigravity.ts`, `server/relevo.ts`, `server/sessions.ts` | El resumen va después de la memoria del proyecto (`contexto + antes + mensaje`) |
+| Círculo de contexto → botón «Uso» (chat, plan y créditos de Flow), compactar | `web/src/LimitesContexto.tsx`, `web/src/styles.css`, `web/src/App.tsx` | - |
+| Botón «Actualizar los agentes» (Claude Code, Codex, OpenCode; solo agentes, no la app) | `server/agentes.ts`, `server/index.ts`, `web/src/AvisoAgentes.tsx` (nuevo) | Se sacó de `Actualizar.tsx` a su propio archivo: el actualizador de la app sigue quitado. Carpeta `vid-koldgold/piezas/agentes(-arm64)` |
+| Claude Code bajado a medias (EFTYPE), binario de Mac que falta | `server/agentes.ts`, `server/claude.ts` | - |
+| FFmpeg en Windows sin winget (BtbN), Python propio cuando el del sistema no tiene ruedas | `server/requisitos.ts`, `scripts/start.mjs` | Se mantiene `YT_DLP` fijado (Fase 1) y `vid-koldgold/piezas`; se retiró `pythonFueraDelPath` (upstream ya no lo usa) |
+| AI Studio: espera la bienvenida/términos, sesión vieja | `server/voz/index.ts`, `web/src/Voz.tsx` | Se conserva `navegador-seguro.ts` (puerto al azar, 127.0.0.1, Chrome/Edge según Opciones, perfiles `-chrome`) en vez del puerto fijo 9336 y `chromiumDelSistema` de Sloth; se conservan ElevenLabs y `entrarEnChrome` |
+| Clic derecho (Cortar, Copiar, Pegar, Seleccionar todo) | `electron/clic-derecho.ts`, `electron/main.ts` | - |
+| Grok «Cerrar sesión» | `server/grok.ts`, `web/src/Opciones.tsx` | Texto con v!d |
+| Mac Apple Silicon: agentes aparte (`agentes-arm64`), `open -n` para traer la ventana al frente | `server/agentes.ts`, `server/chromium.ts` | El build arm64 ya lo hace `.github/workflows/compilar-mac.yml` del fork |
+| Chat, markdown, eventos | `web/src/Timeline.tsx`, `markdown.ts`, `eventos.ts`, `items.ts`, `Composer.tsx` | - |
+
+Textos nuevos que decían «Sloth» como nombre de la app pasan a «v!d» (código, interfaz, skills y `docs/agents/mapa.md`).
+Se dejan como estaban los créditos a Vancci, LICENSE, NOTICE y los ADR de upstream.
+
+### Qué se descartó y por qué
+
+| Qué | Por qué |
+| --- | --- |
+| `licencias/` (cupos de la comunidad, migración `0012_cupos.sql`), `server/licencia.ts`, `server/comunidad.ts`, `web/src/Licencia.tsx`, `web/src/Liberar.tsx` | Cobro y comunidad del creador, quitados en Fase 1 |
+| `web/src/Actualizar.tsx` (actualizador de la app), canal `latest-arm64` y `publish` en `compilar.mjs`, `SO`/`/ultima`/`/descargar` en `electron/main.ts` | Actualizador automático del creador (habla con `api.sloth.vancci.org`) |
+| `scripts/publicar.mjs`, `.github/workflows/venta.yml`, flujo de venta de `docs/agents/publicacion.md`, descargas del README | Flujo de venta del creador |
+| Tipos de comunidad y `VersionLiberable` en `shared/types.ts` | Solo servían a lo anterior |
+| Versión `0.3.44`/nombre `sloth-2` de `package.json` | v!d sigue en `vid-koldgold` 1.0.1 |
+| `macos-15` en `.github/workflows/comprobar.yml` | Cambiar workflows pide el permiso `workflow` del token; el build Apple Silicon ya lo hace `compilar-mac.yml` |
+
+### Seguridad
+
+- Sin telemetría, backdoors ni dominios nuevos del creador en el código integrado. Lo nuevo solo habla con Google
+  (Flow, AI Studio, `generativelanguage.googleapis.com`), `registry.npmjs.org` (versiones de agentes), GitHub (FFmpeg de
+  BtbN) y los proveedores de IA que ya había. Todo lo que apuntaba a `api.sloth.vancci.org` venía del actualizador y del
+  cobro, y se descartó.
+- Upstream abría los navegadores de la voz, las redes y Flow con `--remote-debugging-port` sin `--remote-debugging-address`
+  y en puertos fijos (9334, 9336). v!d conserva el lanzador seguro (puerto al azar, solo 127.0.0.1) en voz y redes, y a
+  las cuentas de Flow se les agregó `--remote-debugging-address=127.0.0.1`.
+- El MCP `flow` de upstream no mandaba credencial: ahora manda `x-vid-token` como los demás clientes locales.
+- Gemini CLI corre con `GEMINI_CLI_TRUST_WORKSPACE` (confía en la carpeta del hilo) y sin el actualizador ni las
+  estadísticas de Gemini: igual que los otros agentes, que ya corren sin permisos.
+
+Verificación: `npm run typecheck` sin errores; `npm test` 353/353.

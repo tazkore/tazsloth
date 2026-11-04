@@ -8,6 +8,7 @@ import { dirname, isAbsolute, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import type { McpStdioServerConfig } from '@anthropic-ai/claude-agent-sdk'
 import type { Browser, Page } from 'playwright-core'
+import { WebSocket } from 'ws'
 import { conectarCDP } from '../playwright.ts'
 import { type EstadoVoz, NAVEGADOR_VOZ, type TrabajoVoz, type VozStudio } from '../../shared/types.ts'
 import { VENTA } from '../../shared/venta.ts'
@@ -43,6 +44,12 @@ import { leerLlave } from '../avatar/llaves.ts'
  */
 
 const URL_VOZ = 'https://aistudio.google.com/generate-speech'
+/**
+ * La bienvenida de AI Studio («Welcome to AI Studio»): la primera vez que una cuenta entra, la página la manda ahí a
+ * aceptar sus términos, y hasta entonces no deja generar. Solo se aceptan a mano, en la ventana donde se entra.
+ */
+const BIENVENIDA = /^https:\/\/aistudio\.google\.com\/(onboarding|welcome)\b/
+const SIN_BIENVENIDA = 'AI Studio te pide aceptar sus términos la primera vez. Pulsa «Conectar con Google» (Opciones → Voz) y acéptalos en la ventana que se abre: se cierra sola al terminar.'
 const ENTRAR = `https://accounts.google.com/ServiceLogin?continue=${encodeURIComponent(URL_VOZ)}`
 /** El navegador instalado (Chrome o Edge) del perfil de la voz, mientras v!d lo tiene abierto. */
 const edgeVoz = nuevoNavegador()
@@ -93,10 +100,27 @@ export function voz(app: string) {
 
   // ── El navegador instalado (Chrome o Edge; las funciones guardan el nombre «Edge» de antes) ──────────────────────────────────────────────────────────────────────────
 
+  // v!d: el puerto es el que `navegador-seguro.ts` eligió al azar (solo 127.0.0.1), no el 9336 fijo de Sloth.
   const responde = () => fetch(`http://127.0.0.1:${edgeVoz.valor}/json/version`).then((r) => r.ok, () => false)
+  /** ¿Le queda alguna ventana? En Mac, cerrar la ventana no cierra el navegador. */
+  const conVentana = () =>
+    fetch(`http://127.0.0.1:${edgeVoz.valor}/json/list`)
+      .then((r) => r.json() as Promise<{ type: string }[]>)
+      .then((l) => l.some((t) => t.type === 'page'), () => false)
+  /**
+   * ¿Ya volvió a AI Studio, y no a su bienvenida? Google pone la sesión antes de llegar ahí, y lo que falta lo pone al
+   * llegar.
+   */
+  const enAIStudio = () =>
+    fetch(`http://127.0.0.1:${edgeVoz.valor}/json/list`)
+      .then((r) => r.json() as Promise<{ type: string; url: string }[]>)
+      .then((l) => l.some((t) => t.type === 'page' && t.url.startsWith('https://aistudio.google.com/') && !BIENVENIDA.test(t.url)), () => false)
 
-  /** El navegador del perfil: el que ya está abierto o uno nuevo. `ventana`, para entrar; si no, sin ventana ni sonido. */
-  async function abrirEdge(ventana: boolean): Promise<Browser> {
+  /**
+   * Abre Edge con el perfil, si no lo estaba. `ventana`, con `url`, para entrar: ahí no se engancha Playwright (que toca
+   * cada pestaña y Google lo nota), y es un Edge como cualquiera. Si no, sin ventana ni sonido.
+   */
+  async function lanzarEdge(ventana: boolean, url = ENTRAR) {
     const { marca, exe } = navegadorExterno()
     // Cambiaste de navegador en Opciones: el abierto se cierra y se abre el elegido, con su perfil.
     if (edgeVoz.exe && edgeVoz.exe !== exe) {
@@ -104,28 +128,49 @@ export function voz(app: string) {
       for (let i = 0; i < 20 && (await responde()); i++) await espera(250)
     }
     if (await responde()) {
-      const b = await conectarCDP(`http://127.0.0.1:${edgeVoz.valor}`)
-      if (!ventana) return b
+      if (!ventana) return
       // Para entrar hace falta la ventana: se cierra el de sin ventana (la sesión vive en el perfil).
-      await cerrarEdge(b)
+      await cerrarEdge()
     }
     mkdirSync(perfil(marca), { recursive: true })
-    const extra = ventana ? [ENTRAR] : ['--headless=new', '--mute-audio', 'about:blank']
+    const extra = ventana ? [url] : ['--headless=new', '--mute-audio', 'about:blank']
     await lanzarNavegador(edgeVoz, exe, [`--user-data-dir=${perfil(marca)}`, ...extra])
     await esperarQueResponda(edgeVoz)
+  }
+
+  /** El navegador sin ventana, con Playwright, para trabajar en él. */
+  async function abrirEdge(): Promise<Browser> {
+    await lanzarEdge(false)
     return conectarCDP(`http://127.0.0.1:${edgeVoz.valor}`)
   }
 
-  async function cerrarEdge(b: Browser) {
-    const cdp = await b.newBrowserCDPSession().catch(() => null)
-    await cdp?.send('Browser.close').catch(() => {})
+  async function cerrarEdge() {
+    await alNavegador('Browser.close').catch(() => {})
     for (let i = 0; i < 20 && (await responde()); i++) await espera(250)
   }
 
+  /** Un comando a Edge por CDP, sin Playwright ni tocar sus pestañas. */
+  async function alNavegador<T>(metodo: string): Promise<T> {
+    const { webSocketDebuggerUrl } = (await (await fetch(`http://127.0.0.1:${edgeVoz.valor}/json/version`)).json()) as { webSocketDebuggerUrl: string }
+    const ws = new WebSocket(webSocketDebuggerUrl)
+    try {
+      return await new Promise<T>((ok, mal) => {
+        ws.once('open', () => ws.send(JSON.stringify({ id: 1, method: metodo })))
+        ws.on('message', (d) => {
+          const m = JSON.parse(String(d)) as { id?: number; result?: T; error?: { message: string } }
+          if (m.id === 1) m.error ? mal(new Error(m.error.message)) : ok(m.result as T)
+        })
+        ws.once('error', mal)
+        ws.once('close', () => mal(new Error('Edge se cerró.')))
+      })
+    } finally {
+      ws.close()
+    }
+  }
+
   /** Las cookies de Google del Edge, y si tienen la sesión. */
-  async function cookiesDeEdge(b: Browser): Promise<{ cookies: Cookie[]; sesion: boolean }> {
-    const cdp = await b.newBrowserCDPSession()
-    const { cookies } = (await cdp.send('Storage.getCookies')) as { cookies: Cookie[] }
+  async function cookiesDeEdge(): Promise<{ cookies: Cookie[]; sesion: boolean }> {
+    const { cookies } = await alNavegador<{ cookies: Cookie[] }>('Storage.getCookies')
     const deGoogle = cookies.filter((c) => /(^|\.)google\.com$/.test(c.domain.replace(/^\./, '')) && !c.partitionKey)
     const sesion = deGoogle.some((c) => c.name === 'SAPISID')
     // El perfil de Chrome ya tiene la sesión: Opciones deja de pedir que entres en Chrome.
@@ -138,15 +183,15 @@ export function voz(app: string) {
    * genera). `false` si Edge no la tiene. Antes abre AI Studio en Edge, para que Google renueve lo que haga falta.
    */
   async function copiarSesion(): Promise<boolean> {
-    const b = await abrirEdge(false)
+    const b = await abrirEdge()
     let leidas: Awaited<ReturnType<typeof cookiesDeEdge>>
     try {
       const page = await b.contexts()[0].newPage()
       await page.goto(URL_VOZ, { waitUntil: 'domcontentloaded', timeout: 30_000 }).catch(() => {})
       await page.waitForLoadState('networkidle', { timeout: 10_000 }).catch(() => {})
-      leidas = await cookiesDeEdge(b)
+      leidas = await cookiesDeEdge()
     } finally {
-      await cerrarEdge(b)
+      await cerrarEdge()
     }
     if (!leidas.sesion) return false
     const ventana = integrado()
@@ -196,14 +241,14 @@ export function voz(app: string) {
         }
       }
     }
-    const b = await abrirEdge(false)
+    const b = await abrirEdge()
     const page = await b.contexts()[0].newPage()
     return {
       page,
       bajarA: async (c) => void (await (await b.newBrowserCDPSession()).send('Browser.setDownloadBehavior', { behavior: 'allowAndName', downloadPath: c, eventsEnabled: true })),
       soltar: async () => {
         await page.close().catch(() => {})
-        if (!fila.length) await cerrarEdge(b)
+        if (!fila.length) await cerrarEdge()
       }
     }
   }
@@ -226,6 +271,12 @@ export function voz(app: string) {
     for (let intento = 0; ; intento++) {
       await page.goto(URL_VOZ, { waitUntil: 'domcontentloaded', timeout: 60_000 })
       await page.waitForLoadState('networkidle', { timeout: 20_000 }).catch(() => {})
+      // Con la sesión, pero sin aceptar la bienvenida: pasarla otra vez no sirve.
+      if (BIENVENIDA.test(page.url())) {
+        cuenta = null
+        guardarCuenta()
+        throw new Error(SIN_BIENVENIDA)
+      }
       const correo = page.url().startsWith('https://accounts.google.com/') ? null : await correoDe(page)
       if (correo) {
         if (correo !== cuenta) (cuenta = correo), guardarCuenta()
@@ -297,20 +348,25 @@ export function voz(app: string) {
     conectando = true
     error = undefined
     try {
-      if (!(await enTurno(copiarSesion))) {
-        const b = await abrirEdge(true)
+      // Una sesión vieja en el perfil también se copia, pero AI Studio no abre con ella: entonces se entra otra vez.
+      const lista = (await enTurno(copiarSesion)) && (await enTurno(leerVoces).then(() => !!cuenta, () => false))
+      if (!lista) {
+        await lanzarEdge(true)
+        // Se cierra cuando lleva unos 4 s en AI Studio con la sesión: a una cuenta nueva, AI Studio la abre y un momento
+        // después la manda a su bienvenida, que hay que aceptar antes (cerrarla ahí la dejaba sin conectar). En esos
+        // segundos Google pone lo que falta después de entrar.
         let sesion = false
-        for (let i = 0; i < 400 && b.isConnected() && !sesion; i++) {
+        for (let i = 0, seguidas = 0; i < 400 && !sesion; i++) {
           await espera(1500)
-          sesion = await cookiesDeEdge(b).then((c) => c.sesion, () => false)
+          if (!(await conVentana())) break
+          seguidas = (await enAIStudio()) && (await cookiesDeEdge().then((c) => c.sesion, () => false)) ? seguidas + 1 : 0
+          sesion = seguidas >= 3
         }
-        // Lo que Google pone justo después de entrar.
-        if (sesion) await espera(3000)
-        await cerrarEdge(b)
+        await cerrarEdge()
         if (!sesion) throw new Error(`No entraste con Google en ${nombre()}. Vuelve a intentarlo.`)
         if (!(await enTurno(copiarSesion))) throw new Error(`${nombre()} no guardó la sesión de Google. Vuelve a intentarlo.`)
+        await enTurno(leerVoces)
       }
-      await enTurno(leerVoces)
       if (!cuenta) throw new Error('AI Studio no abrió con tu cuenta de Google.')
     } catch (e) {
       error = mensaje(e)
@@ -530,7 +586,21 @@ export function voz(app: string) {
   return {
     api,
     /** Por qué no se puede reiniciar el servidor: cortaría una voz a medias. */
-    ocupado: () => (trabajando ? 'v!d está generando una voz en AI Studio. Espera a que termine.' : null)
+    ocupado: () => (trabajando ? 'v!d está generando una voz en AI Studio. Espera a que termine.' : null),
+    /** Lo que Flow (`server/flow/`) toma de aquí: la cuenta y el Edge con la sesión, en el turno de la voz (ver `enTurno`). */
+    google: {
+      cuenta: () => cuenta,
+      enEdge: <T>(fn: (b: Browser) => Promise<T>) =>
+        enTurno(async () => {
+          const b = await abrirEdge()
+          try {
+            return await fn(b)
+          } finally {
+            await cerrarEdge()
+          }
+        }),
+      abrirEnEdge: (url: string) => enTurno(() => lanzarEdge(true, url))
+    }
   }
 }
 
