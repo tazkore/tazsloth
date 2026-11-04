@@ -416,3 +416,18 @@ diferencias con Sloth, a Codex y a los scripts (`VID_SKILLS`) les llegaban las d
 - Pruebas nuevas en `server/skills.test.ts` (la de v!d gana a la de otra app, uniones rotas, la carpeta de la 1.1.0).
 
 Verificación: `npm run typecheck` sin errores; `npm test` 379/379.
+
+## v1.1.2 — La instalada no se engancha al v!d del repo (4 nov 2026)
+
+La instalada y el repo en desarrollo usan el puerto 4850. Si el repo ya corría, la instalada veía que «v!d ya corre»
+(`scripts/start.mjs`) y abría la interfaz del repo, con sus datos (13 hilos en vez de 12).
+
+- `electron/puerto.ts` (`elegirPuerto`, `consultarPuerto`, `puertoLibre`): antes de levantar el servidor, la ventana
+  instalada (`electron/main.ts`, `ponerPuerto`) pregunta `/api/state` en su puerto. Si contesta un v!d de su misma carpeta
+  de app, se engancha como siempre. Si contesta uno de otra carpeta (o con otro token, o cualquier otro programa), prueba
+  el siguiente puerto libre, saltando los que Windows reserva (en esta PC, 4851–4869): en la de Alan, el 4870. El
+  servidor, `start.mjs` y la ventana lo toman de `PORT`. Queda anotado en `data\vid.log`.
+- El repo en desarrollo no cambia.
+- Pruebas: `electron/puerto.test.ts`.
+
+Verificación: `npm run typecheck` sin errores; `npm test` 386/386.

@@ -25,11 +25,13 @@ import { archivos, huella, huellas, nombreCopia, quitarViejos, respaldar } from 
 import { MODELOS_VIEJOS } from './modelos-viejos.ts'
 import { migrarCarpeta, reescribirSesiones } from '../server/migrar.ts'
 import { enlazarFuera } from '../server/datos-fuera.ts'
+import { consultarPuerto, elegirPuerto, puertoLibre } from './puerto.ts'
 import { iniciarNavegador, ventanaDelNavegador } from './navegador.ts'
 
 /** En el repo: la dirección del servidor que ya levantó `npm start`. */
 const SOLO_VENTANA = process.env.VID_VENTANA ?? process.env.SLOTH_VENTANA
-const URL_VID = SOLO_VENTANA ?? `http://localhost:${process.env.PORT ?? '4850'}`
+/** La dirección de la interfaz. En la instalada, el puerto puede cambiar al arrancar (`ponerPuerto`, electron/puerto.ts). */
+let URL_VID = SOLO_VENTANA ?? `http://localhost:${process.env.PORT ?? '4850'}`
 const WINDOWS = process.platform === 'win32'
 const MAC = process.platform === 'darwin'
 /** Fuera de Windows, dónde viven v!d y lo tuyo: la app no se puede escribir. */
@@ -106,7 +108,27 @@ async function iniciar() {
   } catch (e) {
     anotar(`No se pudo poner esta versión de v!d: ${e instanceof Error ? e.message : e}`)
   }
+  await ponerPuerto()
   arrancar()
+}
+
+/**
+ * Si en el puerto de v!d ya contesta otro v!d (de otra carpeta: el repo en desarrollo), esta usa el siguiente libre y
+ * levanta ahí su servidor; si contesta el suyo, se engancha (electron/puerto.ts). El servidor y start.mjs lo leen de PORT.
+ */
+async function ponerPuerto() {
+  try {
+    const archivo = join(APP, 'data', 'servidor-token')
+    const token = process.env.VID_TOKEN || (existsSync(archivo) ? readFileSync(archivo, 'utf8').trim() : '')
+    const inicial = Number(process.env.PORT ?? 4850)
+    const { puerto, propio } = await elegirPuerto({ inicial, app: APP, consultar: (p) => consultarPuerto(p, token), libre: puertoLibre })
+    if (puerto !== inicial) anotar(`En el puerto ${inicial} ya hay otro v!d (de otra carpeta): esta usa el ${puerto}.`)
+    else if (propio) anotar(`v!d ya corría en el puerto ${puerto}: me engancho a ella.`)
+    process.env.PORT = String(puerto)
+    URL_VID = `http://localhost:${puerto}`
+  } catch (e) {
+    anotar(`No pude elegir puerto; sigo con el ${process.env.PORT ?? 4850}: ${e instanceof Error ? e.message : e}`)
+  }
 }
 
 /** La ventana, o al frente si ya está. Se enseña en cuanto se pide y carga la interfaz cuando el servidor contesta. */
