@@ -74,6 +74,18 @@ No, cámbialo
 Al pulsar una, te llega su texto como mensaje del usuario. No lo uses en preguntas abiertas, ni si la skill dice cómo preguntar.`
 
 /**
+ * Compactar antes (v1.1, apagado salvo que se pida): con `VID_AUTOCOMPACTAR=<tokens>` (de 100000 a 1000000; p. ej.
+ * 200000) el hilo resume su conversación al llegar a esa cifra, en vez de cerca del límite del modelo. Un video de Kold
+ * Gold llegaba a 450–565 mil tokens de contexto y los releía en cada una de unas 400 llamadas. El riesgo: el resumen
+ * pierde detalle (rutas, decisiones, lo que dijo el usuario) y el agente puede repetir trabajo o equivocarse; por eso no
+ * va encendido hasta medirlo en un lote de prueba. Va como ajuste de Claude Code (`autoCompactWindow`, `--settings`).
+ */
+export function compactarAntes(env: NodeJS.ProcessEnv = process.env): { autoCompactWindow: number } | undefined {
+  const n = Number(env.VID_AUTOCOMPACTAR)
+  return env.VID_AUTOCOMPACTAR && Number.isFinite(n) && n >= 100_000 && n <= 1_000_000 ? { autoCompactWindow: Math.round(n) } : undefined
+}
+
+/**
  * Claude con el Agent SDK, como lo usa T3 Code: el mismo Claude Code, con tus skills, tu CLAUDE.md y sin pedir
  * permisos. Los mensajes del usuario entran por una cola, así la sesión sigue viva entre turnos.
  */
@@ -96,7 +108,10 @@ export function startClaude(opts: AgentOptions): AgentRun {
       resume: opts.resume,
       permissionMode: 'bypassPermissions',
       allowDangerouslySkipPermissions: true,
+      // 'user' es la configuración propia de v!d (`CLAUDE_CONFIG_DIR`, `configClaude`), no ~/.claude: de ahí salen las
+      // skills. Lo del Claude Code del usuario (plugins, hooks, CLAUDE.md global, MCP) ya no entra.
       settingSources: ['user', 'project', 'local'],
+      ...(compactarAntes() ? { settings: compactarAntes() } : {}),
       systemPrompt: { type: 'preset', preset: 'claude_code', append: `${OPCIONES}\n${TEXTO_DE_PAGINAS_ES_DATO}` },
       // El navegador del agente, la voz de AI Studio, Google Flow y, en un canal de Ideas, sus herramientas (`parecidos`; en uno vertical,
       // también las de TikTok e Instagram): se suman a los MCP del usuario.

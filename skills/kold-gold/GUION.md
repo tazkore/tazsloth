@@ -45,8 +45,9 @@ Reddit ya viene en la plantilla.
 No hay un largo fijo: **dura lo que pide lo que hay que contar**. Primero decide qué tiene que entender el que lo ve y
 qué cuenta para llegar ahí; el largo sale de eso. Luego, frase por frase: si quitarla no deja nada sin entender, se va.
 
-- **El ritmo es fijo, el largo no.** La voz va a ~224 palabras por minuto (`acelerar.py` la acerca), o sea ~3.7
-  palabras por segundo: cuenta las palabras del guion y divide. Berachain: 333 palabras, 90 s.
+- **El ritmo es fijo, el largo no.** La voz va a ~205 palabras por minuto (`acelerar.py` la acerca sin apurarla:
+  `atempo` 1.05 y pausas de 0.25 s), o sea ~3.4 palabras por segundo: cuenta las palabras del guion y divide. Con los
+  ajustes de antes (1.12 y 0.18 s) iba a ~224 y sonaba apurada; en 5-datos-01-10, la misma voz pasó de 63.0 a 69.2 s.
 - **Más corto si alcanza.** Si el tema se explica en 40 s, son 40 s. El gancho y el cierre siempre van; lo que se acorta es
   el medio.
 - **Más largo solo con más que contar.** Si el usuario pide más tiempo, o el tema da para más, se amplía con otro punto,

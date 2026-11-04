@@ -271,3 +271,34 @@ Se dejan como estaban los créditos a Vancci, LICENSE, NOTICE y los ADR de upstr
   estadísticas de Gemini: igual que los otros agentes, que ya corren sin permisos.
 
 Verificación: `npm run typecheck` sin errores; `npm test` 353/353.
+
+## v1.1 — Optimización (tokens, NVENC, música, voz) (4 nov 2026)
+
+Base: auditoría de 12 videos reales (202 USD en total). Kold Gold promediaba 21.5 USD y ~56 min por video, con el render
+en solo 3–5 min: lo caro era el contexto del hilo (450–565 mil tokens, releído en ~400 llamadas), la configuración
+global de Claude que se colaba, las imágenes leídas por el hilo principal, Opus high para todo y 216 `tsc`.
+
+| Qué | Antes | Ahora | Medido / archivos |
+| --- | --- | --- | --- |
+| Configuración de Claude | La app instalada usaba `~/.claude`: plugins (ECC y su hook GateGuard, que bloqueó ~90 llamadas), CLAUDE.md global, MCP y agentes del usuario en cada hilo | Siempre la propia de v!d, `<app>/data/claude` (`CLAUDE_CONFIG_DIR`), también en la que se vende: solo `skills` (unión a `~/.claude/skills` en la que se vende, a las del repo en desarrollo) y `projects` (unión a `~/.claude/projects`, para seguir los hilos de antes). La primera vez copia solo `.credentials.json` y la cuenta (`oauthAccount`, `userID`) de `.claude.json`; nunca settings, plugins, hooks ni MCP. `settingSources` sigue con `'user'`, que ahora es la de v!d (de ahí salen las skills) | Contexto al arrancar un hilo (`getContextUsage`, mismo proyecto, sin los MCP de v!d): **63 959 → 18 130 tokens (−72 %)**; se van «Custom agents» 22 274, «MCP server instructions» 12 746 y «MCP tools» 8 437. `server/skills.ts` (`configClaude`, `heredarSesion`), `server/index.ts`, `server/claude.ts`, `server/cuenta.ts` |
+| Modelos por tarea | Solo El Diff tenía bloque `modelos`; Kold Gold y el explicativo lanzaban subagentes «con tu mismo modelo» (Opus high) | `modelos` en `kold-gold` y `video-explicativo`: hilo Opus 5.5 **medium**; subagentes `modelos` (3D) Sonnet high, `subtítulos` Haiku, `imágenes` (vistas, hojas, parecidos) Sonnet medium. Las skills leen la línea `Subagentes:` y, sin ella, usan esos mismos | Sin medir aún (marcado así en `medido`). `cards.json`, `skills/{kold-gold,video-explicativo}/SKILL.md` |
+| Imágenes | El hilo abría `vista.webp` (224 veces en un video), las hojas del borrador, `parecidos.jpg` y las fotos | Las mira un subagente `imágenes` que devuelve texto; `modelos.py buscar` ya no imprime la ruta de la vista (con `--rutas`, sí, para el subagente) y `vitrina.mjs` imprime «<id>: vista lista»; `final.py` y `PORTADA.md` piden subagente | `skills/modelos-3d/scripts/{modelos.py,vitrina.mjs}`, `skills/modelos-3d/SKILL.md`, `skills/*/scripts/final.py`, `skills/video-base/PORTADA.md` |
+| `tsc` | `npx tsc --noEmit -p .` tras cada cambio (216 en un video) | Una vez por tanda de cambios, incremental (`out/tsc.tsbuildinfo`, también en el `tsconfig.json` de las plantillas) | En 5-datos-01-10 (con `npx`): 7.0 s en frío → 3.8 s sin cambios y 4.8 s tras un cambio. `skills/{kold-gold,video-explicativo}/SKILL.md`, `plantilla/tsconfig.json` |
+| Videos a la vez (`CABEN`) | min(hilos/3, RAM/4 GB): 8 en esta PC | También 1 por cada 4 GB de VRAM de la NVIDIA (`nvidia-smi`, una vez al arrancar): **2** con la RTX 4060 de 8 GB | `server/tope-agentes.ts` (`cabenALaVez`, `vramNvidia`), `server/sessions.ts` |
+| Subagentes a la vez (`TOPE_AGENTES`) | 1 por cada 2 GB, sin techo (16 en 32 GB) | Entre 3 y **6** | `server/tope-agentes.ts` (`topeAgentes`); pruebas en `server/tope-agentes.test.ts` |
+| Portada sin recodificar | Nunca se lograba con un render de Remotion: su H.264 marca `chroma_location=center` y el cuadro de la portada no; ningún preset daba las mismas cabeceras y se recodificaba todo el video con x264 medium | `portada.mjs` pasa `-x264-params chromaloc=N`: pega la portada sin recodificar | Final de 80 s (1920×1080): **13 s recodificando → 2.9 s**, los 2411 cuadros idénticos (framemd5). `skills/video-base/scripts/portada.mjs` |
+| NVENC con respaldo | x264 en todo | `codificadorH264()` prueba `h264_nvenc` con un cuadro (caché de un día en `%TEMP%/vid-h264.json`; `VID_SIN_NVENC=1` lo apaga); `-preset p5 -rc vbr -cq 19 -b:v 0`, y si falla, libx264. Lo usan `portada.mjs` (cuando tiene que recodificar) y `frutinovela/unir.py` | Recodificar un final de 66 s 1080×1920: NVENC **6.4 s** contra x264 12.7 s; SSIM 0.9982 contra 0.9986 (frente al original); pesa 96 MB contra 64 MB. `skills/video-base/scripts/ffmpeg.mjs`, `skills/frutinovela/scripts/unir.py`. El render de Remotion sigue en x264 (su FFmpeg no trae NVENC) |
+| Música en Kold Gold | Solo si había pista en `fuentes/musica/` (nunca) | Siempre: la de `fuentes/musica/` o una sintetizada del largo del video (`video-base/scripts/musica.py`: 92 BPM, pad, bajo, arpegio y batería suave; senos, ruido y filtros, sin muestras), a −34 LUFS, con ducking (`sidechaincompress`) bajo la voz y limitador; solo audio (`-c:v copy`). `--sin-musica` la quita | En un final de 80 s: 4.7 s; `comprobar.mjs` en verde (−14.2 LUFS, −4.1 dBTP) y la portada se sigue pegando sin recodificar. `skills/kold-gold/scripts/final.py`, `skills/kold-gold/KOLD-GOLD.md` |
+| Voz | `acelerar.py` con `atempo` 1.12 y pausas de 0.18 s (sonaba apurada) | 1.05 y 0.25 s | Misma voz (5-datos-01-10): 63.0 s → 69.2 s, 182 → 166 palabras por minuto en esa voz. `skills/kold-gold/plantilla/scripts/acelerar.py`, `GUION.md` (~205 ppm, ~3.4 palabras/s) |
+| Compactar antes | Al llegar cerca del límite del modelo | Opción **apagada**: `VID_AUTOCOMPACTAR=200000` (100 000–1 000 000) pasa `autoCompactWindow` a Claude Code. Riesgo: el resumen pierde detalle (rutas, decisiones, lo que dijo el usuario); encenderla solo tras un lote de prueba | `server/claude.ts` (`compactarAntes`) |
+| Python de las skills | — | Sin cambio: el Python de v!d (`%APPDATA%\youtube\piezas\python\3.12.15-cu128-sloth`) no trae rembg, cv2 ni soundfile, que las skills usan; el del sistema (3.14) sí. v!d ya pone delante su Python propio (`%APPDATA%\vid-koldgold\piezas\python`) cuando instala uno porque el del sistema no servía | `scripts/start.mjs`, `server/requisitos.ts` |
+
+Ahorro estimado por video de Kold Gold (base 21.5 USD y ~56 min; **estimado, no medido en un video completo**):
+- Configuración aislada: ~46 mil tokens menos en cada una de ~400 llamadas (~18 M tokens, casi todos de caché) y sin
+  las ~90 llamadas que GateGuard bloqueaba.
+- `tsc`: de 216 a una o dos decenas; cada llamada que no se hace es una relectura menos del contexto.
+- Imágenes fuera del hilo y subagentes en Sonnet/Haiku: el contexto del hilo deja de crecer con cada vista y hoja.
+- Con todo, se espera bajar de 21.5 a unos 10–13 USD (−40 a −55 %) y unos 10–15 min; hay que confirmarlo con el
+  primer lote de v1.1 (gasto por hilo en v!d). Portada: −10 s por final; NVENC: −50 % cuando hay que recodificar.
+
+Pendiente de medir: el efecto de Opus medium en la calidad del hilo de Kold Gold, y `VID_AUTOCOMPACTAR`.

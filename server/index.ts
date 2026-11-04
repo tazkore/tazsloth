@@ -53,7 +53,7 @@ import { mantenerVoz } from './voz-viva.ts'
 import { avisoDeVideos } from '../shared/limites.ts'
 import { eventosEnVivo } from './eventos-en-vivo.ts'
 import { enviarCliente } from './enviar-cliente.ts'
-import { cambiosDeCard, carpetaSkill, configClaudeDev, duplicateCard, enlazarSkills, enlazarSkillsCodex, guardarSkillTuya, readCards, removeCard, seriesDe, SKILLS, skillRef, volverAOriginal } from './skills.ts'
+import { cambiosDeCard, carpetaSkill, configClaude, duplicateCard, enlazarSkills, enlazarSkillsCodex, guardarSkillTuya, readCards, removeCard, seriesDe, SKILLS, skillRef, volverAOriginal } from './skills.ts'
 import { estaticos } from './estaticos.ts'
 import { type Agente, version } from './version.ts'
 import { cargarPreciosCodex } from './precios.ts'
@@ -88,15 +88,15 @@ process.env.VID_TOKEN = TOKEN
 // Fuera de Windows, las llaves de Opciones guardadas (cifradas) pasan al entorno.
 cargarVariables()
 if (VENTA) {
-  // La app que se vende trae sus skills: las enlaza en ~/.claude/skills, donde las busca Claude, y Codex las lee de esas
-  // mismas carpetas, no de copias suyas.
+  // La app que se vende trae sus skills: las enlaza en ~/.claude/skills, y Codex las lee de esas mismas carpetas, no de
+  // copias suyas.
   enlazarSkills(APP)
   enlazarSkillsCodex(APP)
-} else {
-  // Desde el repo, Claude usa su propia configuración con las skills del repo (`SKILLS`), y ~/.claude queda para la
-  // v!d instalada en esta computadora. A Codex se le pasa siempre la ruta de la skill.
-  process.env.CLAUDE_CONFIG_DIR ??= configClaudeDev(APP)
 }
+// Claude usa siempre la configuración propia de v!d (`configClaude`): solo las skills (las del repo, o las de
+// ~/.claude/skills en la que se vende) y la sesión, sin los plugins, hooks, CLAUDE.md ni MCP del Claude Code del usuario.
+// Un `CLAUDE_CONFIG_DIR` ya puesto manda. A Codex se le pasa siempre la ruta de la skill.
+process.env.CLAUDE_CONFIG_DIR ??= configClaude(APP)
 
 const clients = new Set<WebSocket>()
 const suscripciones = new Map<WebSocket, string | null>()

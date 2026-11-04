@@ -53,8 +53,9 @@ Mírala (paso 4) y sigue en el paso 5. **Con ella:**
    (tarda 30–85 s; varias se piden a la vez). Si no copió el archivo, no la pidas otra vez: en Windows el sandbox de
    Codex suele fallar al copiar («setup refresh had errors»), pero la imagen ya está en
    `~/.codex/generated_images/<id>/` (la más nueva): cópiala de ahí (25 de octubre). Muévela a `portada.png`.
-4. **Mírala** entera y en chico (`-vf scale=120:-2`): que el título diga exactamente lo pedido, con sus acentos, que
-   se lea en chico y que nada importante quede en los bordes. Si falla, pídela otra vez diciendo qué corregir: lo que
+4. **Que la mire un subagente** (con Sonnet, `effort: "medium"`, o el `imágenes` de la línea `Subagentes:`), entera y
+   en chico (`-vf scale=120:-2`), y te conteste en texto: que el título diga exactamente lo pedido, con sus acentos, que
+   se lea en chico y que nada importante quede en los bordes. Abierta en tu hilo, se relee en cada llamada que sigue. Si falla, pídela otra vez diciendo qué corregir: lo que
    más falla es el título o el protagonista demasiado grandes (se salen por arriba o bajan a la zona del texto).
    Con Flow, pedirla otra vez corrige el título y los lados, pero el piso se queda donde lo trae la referencia (1 de
    noviembre). Si lo de abajo pasa poco de los 1350 px y arriba sobra aire, súbela sin generar otra: 60 px, con la calle
@@ -63,8 +64,9 @@ Mírala (paso 4) y sigue en el paso 5. **Con ella:**
 5. `node <base>/scripts/portada.mjs out/<video>.mp4 portada.png`. La pone como primer fotograma, en el mismo archivo;
    correrlo otra vez cambia la portada, no suma otra. El `final.py` de cada estilo la vuelve a poner sola si
    `portada.png` ya existe, así que un render nuevo no la pierde. Codifica solo ese fotograma, con los mismos ajustes
-   de x264 que el vídeo, y lo pega delante sin recodificar el resto (un segundo, sin segunda compresión); si el vídeo no
-   lo deja, lo recodifica entero, como antes, y lo dice. El Diff no usa `portada.mjs`: su `final.py` la renderiza como
+   de x264 que el vídeo (también dónde va su color, `chromaloc`: sin eso, hasta la v1.1, ningún render de Remotion lo
+   dejaba), y lo pega delante sin recodificar el resto (unos 3 s, sin segunda compresión); si el vídeo no lo deja, lo
+   recodifica entero con NVENC si hay NVIDIA (o x264, como antes) y dice con cuál. El Diff no usa `portada.mjs`: su `final.py` la renderiza como
    un tramo más.
 
 ## En horizontal: la miniatura de YouTube
@@ -85,4 +87,4 @@ estilo no la pega. v!d la ofrece al programar el vídeo en YouTube. Se hace como
   ```
 
   Y se recorta a 16:9: `ffmpeg -nostdin -v error -i <la generada>.png -vf "scale=1280:-2,crop=1280:720" portada.png`.
-- **Mírala** entera y en chico (`-vf scale=240:-2`), como en el paso 4.
+- **Que la mire un subagente** entera y en chico (`-vf scale=240:-2`), como en el paso 4.

@@ -9,11 +9,13 @@ import { Inbox } from './agent.ts'
 import { asegurarAgente, descartarRoto, programaClaude, rutaAgente } from './agentes.ts'
 
 /**
- * La cuenta de Claude con la que trabaja v!d. Es la del Claude Code que trae el SDK, que la guarda en `~/.claude`: si ya
- * usas Claude Code en esta computadora, ya está conectada. Si no, «Conectar con Claude» abre `claude auth login` en su
- * propia ventana, que abre el navegador para autorizarla, como `/login` en la terminal. Si el navegador no se abre, esa
- * ventana da el enlace y pide ahí el código. v!d no toca ni el código ni la sesión: Anthropic pide que el inicio de
- * sesión se complete en su propio flujo, sin que una app lo maneje por el usuario.
+ * La cuenta de Claude con la que trabaja v!d. Es la del Claude Code que trae el SDK, que la guarda en la configuración
+ * propia de v!d (`CLAUDE_CONFIG_DIR`, `configClaude` en skills.ts): si ya usabas Claude Code en esta computadora, la
+ * primera vez se copia de ~/.claude su archivo de credenciales (`heredarSesion`) y ya está conectada. Si no,
+ * «Conectar con Claude» abre `claude auth login` en su propia ventana, que abre el navegador para autorizarla, como
+ * `/login` en la terminal. Si el navegador no se abre, esa ventana da el enlace y pide ahí el código. v!d no toca el
+ * código ni hace el inicio de sesión: Anthropic pide que se complete en su propio flujo, sin que una app lo maneje por el
+ * usuario.
  */
 
 

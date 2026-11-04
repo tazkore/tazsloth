@@ -11,9 +11,12 @@ lo pone encima en bloques de hasta tres palabras, con la más larga en amarillo.
 """
 
 import json
+import os
 import re
 import subprocess
 import sys
+import tempfile
+import time
 from pathlib import Path
 
 sys.stdout.reconfigure(encoding="utf-8")
@@ -32,6 +35,49 @@ MINIMO = 2.0
 def ffmpeg(*args: str) -> None:
     # -nostdin: dentro de un ciclo de la shell, ffmpeg se come la entrada del ciclo.
     subprocess.run(["ffmpeg", "-nostdin", "-y", "-v", "error", *args], check=True)
+
+
+def codificador_h264() -> str:
+    """
+    `h264_nvenc` (la NVIDIA, varias veces más rápido que x264 en el procesador) si FFmpeg lo trae y codifica de verdad
+    (una prueba de un cuadro), o `libx264`. Se recuerda un día en %TEMP%/vid-h264.json, el mismo que `ffmpeg.mjs` de
+    video-base. `VID_SIN_NVENC=1` lo apaga.
+    """
+    if os.environ.get("VID_SIN_NVENC"):
+        return "libx264"
+    cache = Path(tempfile.gettempdir()) / "vid-h264.json"
+    try:
+        c = json.loads(cache.read_text("utf-8"))
+        if time.time() * 1000 - c["t"] < 86_400_000 and c["cod"] in ("h264_nvenc", "libx264"):
+            return c["cod"]
+    except (OSError, ValueError, KeyError):
+        pass
+    r = subprocess.run(["ffmpeg", "-hide_banner", "-nostdin", "-v", "error", "-f", "lavfi", "-i", "color=c=black:s=256x256:r=30:d=0.2",
+                        "-c:v", "h264_nvenc", "-preset", "p5", "-f", "null", "-"], capture_output=True, timeout=20)
+    cod = "h264_nvenc" if r.returncode == 0 else "libx264"
+    try:
+        cache.write_text(json.dumps({"cod": cod, "t": int(time.time() * 1000)}), "utf-8")
+    except OSError:
+        pass
+    return cod
+
+
+def ajustes_h264(cod: str, crf: int) -> list[str]:
+    """Con la calidad de x264 `crf`: en NVENC, calidad constante con cq = crf + 3, que se ve parecido."""
+    if cod == "h264_nvenc":
+        return ["-c:v", "h264_nvenc", "-preset", "p5", "-rc", "vbr", "-cq", str(crf + 3), "-b:v", "0"]
+    return ["-c:v", "libx264", "-crf", str(crf), "-preset", "medium"]
+
+
+def con_h264(armar, crf: int, **kw) -> str:
+    """Corre `armar(ajustes)` con NVENC y, si falla (la tarjeta ocupada, sin memoria), con libx264. Dice cuál lo hizo."""
+    cod = codificador_h264()
+    if cod == "h264_nvenc":
+        if subprocess.run(armar(ajustes_h264(cod, crf)), **kw).returncode == 0:
+            return cod
+        print("NVENC no pudo: sigo con libx264.", file=sys.stderr)
+    subprocess.run(armar(ajustes_h264("libx264", crf)), check=True, **kw)
+    return "libx264"
 
 
 def con_audio(clip: Path) -> bool:
@@ -71,7 +117,8 @@ def unir(clips: list[Path], cortes: list[float], ancho: int, alto: int, salida: 
             filtros.append(f"[{entradas.count('-i')}:a]anull[a{i}]")
             entradas += ["-f", "lavfi", "-t", f"{fin:.3f}", "-i", "anullsrc=r=48000:cl=stereo"]
     filtros.append("".join(f"[v{i}][a{i}]" for i in range(n)) + f"concat=n={n}:v=1:a=1[v][a]")
-    ffmpeg(*entradas, "-filter_complex", ";".join(filtros), "-map", "[v]", "-map", "[a]", "-c:v", "libx264", "-crf", "16", "-preset", "medium", "-c:a", "pcm_s16le", str(salida))
+    con_h264(lambda h264: ["ffmpeg", "-nostdin", "-y", "-v", "error", *entradas, "-filter_complex", ";".join(filtros), "-map", "[v]", "-map", "[a]",
+                           *h264, "-c:a", "pcm_s16le", str(salida)], 16)
 
 
 def tiempo(s: float) -> str:
@@ -158,11 +205,11 @@ def main() -> None:
     if video:
         (revision / "subtitulos.ass").write_text(ass(bloques(segmentos), ancho, alto), encoding="utf-8", newline="\n")
     # Desde revision/: la ruta del filtro `subtitles` en Windows (C:\…) rompe su sintaxis.
-    subprocess.run(
-        ["ffmpeg", "-nostdin", "-y", "-v", "error", "-i", crudo.name, "-i", audio.name, "-map", "0:v", "-map", "1:a", *video,
-         "-c:v", "libx264", "-crf", "18", "-preset", "medium", "-pix_fmt", "yuv420p", "-color_primaries", "bt709", "-color_trc", "bt709", "-colorspace", "bt709",
-         "-c:a", "aac", "-b:a", "192k", "-movflags", "+faststart", str(final)],
-        cwd=revision, check=True,
+    con_h264(
+        lambda h264: ["ffmpeg", "-nostdin", "-y", "-v", "error", "-i", crudo.name, "-i", audio.name, "-map", "0:v", "-map", "1:a", *video,
+                      *h264, "-pix_fmt", "yuv420p", "-color_primaries", "bt709", "-color_trc", "bt709", "-colorspace", "bt709",
+                      "-c:a", "aac", "-b:a", "192k", "-movflags", "+faststart", str(final)],
+        18, cwd=revision,
     )
     print(f"Listo: {final}")
     print(f"Transcripción, para compararla con el guion: {revision / 'transcripcion.txt'}")

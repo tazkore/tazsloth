@@ -190,6 +190,19 @@ La plantilla trae el motor y un ejemplo; lo de cada video es poco. Cómo se arma
 Los tiempos de los pasos son de una computadora con NVIDIA. En otra tardan más, sobre todo la voz y el render: sus
 scripts dicen al empezar cuánto tardarán aquí y luego cuánto falta. Lánzalos en segundo plano y dile al usuario esa cifra.
 
+**Subagentes y sus modelos.** Si el mensaje trae una línea `Subagentes:` (la pone v!d: lo del bloque `modelos` de la
+card, o lo que eligió el usuario), lanza cada subagente con el `model` y el `effort` que dice: `modelos` son los de los
+modelos 3D (paso 5), `subtítulos` el que marca los subtítulos (paso 3) e `imágenes` el que mira por ti (abajo). Sin esa
+línea, los mismos: `modelos` en Sonnet con `effort: "high"`, `subtítulos` en Haiku e `imágenes` en Sonnet con
+`effort: "medium"`. Ninguno va con tu modelo: lo creativo (el enfoque, el guion, el mundo) es tuyo.
+
+**Las imágenes no las abres tú.** Cada imagen que lees se queda en tu contexto y se vuelve a leer en cada llamada que
+sigue: en un video de Kold Gold (este mismo estilo), una vista de la biblioteca se leyó 224 veces y el contexto llegó a
+medio millón de tokens. Las vistas de los modelos (`vista.webp`), las hojas del borrador (`revision/borrador-*.png`),
+`revision/parecidos.jpg`, la hoja de logos y las fotos de `fotos.mjs` las mira un subagente `imágenes`: le das las
+rutas y la pregunta concreta (qué tiene que verse, qué reglas revisar) y te devuelve solo texto, con lo que falla y
+dónde (el segundo o la celda). Tú decides con eso. Si son varias preguntas que no dependen una de otra, varios a la vez.
+
 1. **Proyecto y marca.** `python <skill>/scripts/nuevo.py <nombre>` (con `--formato horizontal` si el mensaje trae
    `Formato: horizontal`: ver "Formato"), **en segundo plano** (tarda un minuto y medio:
    deja el proyecto empaquetado, con la marca aplicada, y el modelo de vectores de `huellas.py` cargado), y a la vez
@@ -211,7 +224,7 @@ scripts dicen al empezar cuánto tardarán aquí y luego cuánto falta. Lánzalo
    guion). Antes, tú mismo (son segundos) corre `python -B -X utf8 <skill>/scripts/subtitulos.py` (parte
    `guion.md` en renglones y pone las cifras como se ven y como se dicen) y escribe los nombres del tema en
    `terminos.txt`, uno por renglón: con eso ya se puede alinear la voz en cuanto llegue. Y lanza en segundo plano:
-   - un subagente con tu mismo modelo para marcar los subtítulos, con este encargo: «en `<proyecto>`, marca
+   - un subagente `subtítulos` (ver «Subagentes y sus modelos») para marcar los subtítulos, con este encargo: «en `<proyecto>`, marca
      `subtitulos.txt` según "Los subtítulos" de `<skill>/GUION.md`: negritas, una caja por frase, íconos, las cifras
      o fechas que el script no juntó y los cortes feos; luego los logos con
      `<skill>/scripts/logos.py <nombre>[=x:<cuenta>|sitio:<dominio>]…` (mira `fuentes/logos/hoja.png`). No cambies
@@ -238,10 +251,11 @@ scripts dicen al empezar cuánto tardarán aquí y luego cuánto falta. Lánzalo
    `src/datos/voz.json` trae cada palabra del guion y cada frase de `subtitulos.txt` encontró su lugar.
 5. **Material.** Los logos reales, si falta alguno, con `logos.py` (todos en una llamada; Reddit ya viene en la
    plantilla y los logos de las redes del cierre los dibuja su tarjeta). Los objetos 3D que pide el guion, de la biblioteca: `modelos.py buscar` con varias palabras
-   por cada uno, mira su vista y `usar` (la skill [`modelos-3d`](../modelos-3d/SKILL.md)). **Lo que no esté o haya
+   por cada uno, elige por su ficha (qué es, qué hace, sus etiquetas; si dudas entre dos, que un subagente `imágenes`
+   compare sus vistas con `buscar --rutas`) y `usar` (la skill [`modelos-3d`](../modelos-3d/SKILL.md)). **Lo que no esté o haya
    que mejorar lo hacen subagentes, uno por modelo y todos a la vez, en segundo plano**, mientras tú sigues con el
-   paso 6: hacer un modelo es probar y mirar su vista muchas veces, y en fila se comía doce minutos. Cada uno con tu
-   mismo modelo (o el de la línea `Subagentes:` si el mensaje la trae) y este encargo: qué es y qué representa en el
+   paso 6: hacer un modelo es probar y mirar su vista muchas veces, y en fila se comía doce minutos. Cada uno es un
+   subagente `modelos` (ver «Subagentes y sus modelos»: Sonnet, no tu modelo) con este encargo: qué es y qué representa en el
    video, qué tiene que poder hacer y con qué props (`abre`, `lleno`, `gris`…), cuánto mide y dónde va su origen, y
    «sigue la skill modelos-3d (4 y 5): escríbelo en `src/modelos/<id>.tsx` de `<proyecto>`. **Primero, en unos 10
    minutos, una versión que compile con todas sus props, aunque sea sencilla**: el video se arma con ella mientras
@@ -255,10 +269,13 @@ scripts dicen al empezar cuánto tardarán aquí y luego cuánto falta. Lánzalo
    `public/img/moneda_frente.png` y `moneda_atras.png`, que se le pasan a `Moneda` (mientras, lleva unas lisas; sin
    con qué generar, en su cara va el logo real del tema). Las poses del personaje que falten, con Codex ("Poses nuevas"); sin
    con qué generar, la más parecida de las que tiene. Listo cuando cada cosa que nombra el guion tiene su imagen o su modelo y
-   los miraste.
-6. **El mundo.** Arma `guion.ts`, `Escena3D.tsx`, los capítulos 2D y las poses según [`MUNDO.md`](MUNDO.md). Corre
-   `npx tsc --noEmit -p .`, con la primera versión de cada modelo de los subagentes. Cuando llegue la final, compila y
-   mírala en su lugar. Listo cuando compila, cada cosa entra en la palabra que la nombra y lo nuevo está guardado.
+   sabes cómo se ve (por su ficha o por lo que te dijo un subagente `imágenes`).
+6. **El mundo.** Arma `guion.ts`, `Escena3D.tsx`, los capítulos 2D y las poses según [`MUNDO.md`](MUNDO.md). Compila
+   con `npx tsc -p . --incremental --tsBuildInfoFile out/tsc.tsbuildinfo` (guarda lo ya revisado: la segunda vez solo
+   mira lo que cambió), con la primera versión de cada modelo de los subagentes. **Compila una vez por tanda de
+   cambios, no después de cada archivo**: en un video de Kold Gold se compiló 216 veces; `npm run encuadre` y el
+   borrador ya empaquetan y dicen lo que no cuadra. Cuando llegue la final, compila y que un subagente `imágenes` la
+   mire en su lugar (una foto de `fotos.mjs` en su segundo). Listo cuando compila, cada cosa entra en la palabra que la nombra y lo nuevo está guardado.
 7. **Encuadre.** Las tomas van en `TOMAS` de `src/mundo/guion.ts` (qué tiene que verse en cada una y desde dónde) y
    `encuadra.ts` saca de ellas los planos, con la cámara más cercana que deja los objetos y las tarjetas entre el texto
    y el personaje (en horizontal, arriba a la izquierda de los dos): no copies cámaras a mano. `npm run encuadre -- --revisa` (vuelve a empaquetar cada vez) dice
@@ -267,15 +284,17 @@ scripts dicen al empezar cuánto tardarán aquí y luego cuánto falta. Lánzalo
 8. **Revisión, con un borrador.** El borrador es la primera vez que se ve el video entero, sin fotos antes (cuestan lo
    mismo y no miden nada), a media resolución y en dos mitades: `python -B <skill>/scripts/final.py --borrador 1`
    (~45 s) deja la hoja de la primera, un cuadro cada 2 s, en `revision/borrador-1.png`; lanza en seguida
-   `final.py --borrador 2` en segundo plano y, mientras, mira la hoja 1 y anota sus arreglos (hazlos cuando termine:
-   antes se colarían a medias en la segunda mitad). El 2 junta las mitades, mide el ritmo, deja `-2.png` y arma
-   `revision/parecidos.jpg` con la pregunta para un subagente. Lánzalo en cuanto salga, sin el enfoque (juzga lo que
-   ve, no lo que querías hacer), y mira las hojas enteras: cada momento cuando ya terminó de entrar, cada
-   flecha cuando termina de dibujarse, nada tapado, cortado ni asomando antes de tiempo. Si el subagente dice que se
+   `final.py --borrador 2` en segundo plano y, mientras, un subagente `imágenes` revisa la hoja 1 entera y te
+   devuelve sus arreglos por celda (hazlos cuando termine el 2: antes se colarían a medias en la segunda mitad). El 2
+   junta las mitades, mide el ritmo, deja `-2.png` y arma `revision/parecidos.jpg` con la pregunta para un subagente
+   `imágenes`. Lánzalo en cuanto salga, sin el enfoque (juzga lo que ve, no lo que querías hacer), y otro `imágenes`
+   con la hoja 2. A los dos de las hojas, esta revisión: cada momento cuando ya terminó de entrar, cada flecha cuando
+   termina de dibujarse, nada tapado, cortado ni asomando antes de tiempo, y "Las reglas de la imagen" (pásales esa
+   lista); que contesten en texto, celda por celda, solo lo que falla. Si el subagente dice que se
    parece, cambia lo que nombra (los colores, el lugar, los objetos, dónde está el protagonista, el primer cuadro).
    **Todos los arreglos de una vez, y los de ritmo con margen** (un 10 % mejor que el mínimo: nuevo-4 quedó en 2.47
    contra 2.5 y costó dos borradores más). Lo que arregles, compruébalo con `fotos.mjs` en esos segundos (8 como
-   mucho); otro borrador solo si cambiaste planos, tiempos o lo que dijo el subagente. Listo cuando el borrador sale
+   mucho, y las mira un subagente `imágenes`); otro borrador solo si cambiaste planos, tiempos o lo que dijo el subagente. Listo cuando el borrador sale
    sin ✘, el subagente contestó que no se parece, cada celda cumple "Las reglas de la imagen" y nada queda tapado o
    cortado. **Hasta entonces no hay render final**: en el de Celsius se renderizó tres veces por cosas que se veían
    en el borrador.
