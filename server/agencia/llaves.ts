@@ -56,7 +56,10 @@ export class LlavesAgencia {
   guardar(proyecto: string | null | undefined, llave: string | null | undefined, url?: string) {
     if (proyecto && !ID.test(proyecto)) throw new Error('Ese proyecto no existe.')
     const limpia = (llave ?? '').trim()
-    if (limpia && !/^[\w.-]{16,200}$/.test(limpia)) throw new Error('Esa llave no parece una llave de vid-api (kg_live_…).')
+    if (limpia && /^pit-/i.test(limpia)) {
+      throw new Error('Eso es un token de integración privada de GoHighLevel (pit-…), no la llave de v!d. Emite la «Llave API de v!d» en kold.gold (empieza con kg_live_) y pégala aquí.')
+    }
+    if (limpia && !/^kg_(live|test)_[0-9a-f]{48}$/.test(limpia)) throw new Error('Esa llave no parece una llave de vid-api: empieza con kg_live_ y lleva 48 caracteres más.')
     const u = (url ?? '').trim() || URL_VID_API
     if (!/^https:\/\/[^\s]+$/i.test(u)) throw new Error('La URL de vid-api tiene que empezar con https://.')
     const s = this.leer()

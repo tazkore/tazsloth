@@ -153,6 +153,8 @@ test('llaves de agencia: cifradas por proyecto, con la por defecto, y exportadas
   assert.equal(entorno.VID_AGENCIA_LLAVE, undefined)
   assert.equal(entorno.VID_API_URL, URL_VID_API)
   assert.throws(() => llaves.guardar(null, 'corta'), /no parece una llave/)
+  // El token de integración privada de GHL (pit-…) no es la llave de v!d: se rechaza con un aviso claro.
+  assert.throws(() => llaves.guardar(null, 'pit-us-' + 'a1b2c3d4-'.repeat(4)), /integración privada de GoHighLevel/)
   assert.throws(() => llaves.guardar(null, LLAVE, 'http://inseguro'), /https/)
 })
 
