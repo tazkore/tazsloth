@@ -2,7 +2,8 @@
 
 Qué protege cada capa y qué queda fuera. Código: `shared/navegador-politica.ts` (la política, para cambiarla sin tocar el
 navegador), `electron/navegador.ts` (la aplica), `electron/confirmacion.ts` (la confirmación humana), `electron/relevo.ts`
-(el relevo CDP por donde pasa el agente) y `server/edge-seguro.ts` (los Edge de las redes, Ideas y la voz).
+(el relevo CDP por donde pasa el agente) `server/navegador-seguro.ts` (los Chrome o Edge de las redes, Ideas, la voz y el agente) y `server/chrome-agente.ts` (el
+agente en Chrome).
 
 ## Lista blanca por perfil
 
@@ -38,11 +39,41 @@ Lo que NO cubre:
 - Un botón cuyo texto no diga nada (un ícono sin `aria-label` ni `title`).
 - Las pestañas que abre la persona: son suyas.
 
-## Edge del depurador (redes, Ideas, voz)
+## Chrome o Edge del depurador (redes, Ideas, voz, agente)
 
-Edge se lanza con `--remote-debugging-address=127.0.0.1` y un puerto libre al azar (`lanzarEdge`), no uno fijo. El puerto
-vive en memoria del servidor: tras reiniciar el servidor se abre un Edge nuevo. Se cierran con el servidor (salida normal,
+Desde la 1.0.1 el navegador es Google Chrome instalado (Opciones → Navegador: `chrome` por omisión, `edge`, o `integrado`,
+que solo cambia al agente). Lo detecta `server/navegador-sistema.ts` (Program Files, (x86), `%LOCALAPPDATA%`, el registro
+App Paths; `/Applications` y `~/Applications` en Mac; las rutas y el PATH en Linux); sin Chrome, Edge. En Mac nada depende
+de Edge.
+
+Todos se lanzan por `lanzarNavegador` (`server/navegador-seguro.ts`): `--remote-debugging-address=127.0.0.1`, un puerto
+libre al azar, `--no-first-run --no-default-browser-check` y siempre `--user-data-dir` con un perfil de v!d (sin él no se
+lanza; nunca el tuyo). Un perfil por navegador: el de Chrome es `<base>-chrome` (`data/voz/perfil-chrome`,
+`data/redes/perfil-chrome`, `data/investigacion/perfil-chrome`, `data/navegador-chrome`); el de Edge sigue donde estaba.
+Las cookies de Edge no pasan a Chrome (cada uno las cifra con su llave): al cambiar se inicia sesión una vez, y Voz y Redes
+lo piden («Iniciar sesión en Chrome») hasta que v!d ve la sesión en el perfil nuevo (`.vid-sesion`). La copia de cookies
+de Google a `persist:voz` es `Storage.getCookies` por CDP: igual desde Chrome que desde Edge.
+
+El puerto vive en memoria del servidor: tras reiniciarlo se abre uno nuevo. Se cierran con el servidor (salida normal,
 Ctrl+C, SIGTERM). Un cierre brusco (kill -9, apagón) los deja vivos, pero su puerto ya no lo sabe nadie.
+
+## El agente en Chrome (ventana externa)
+
+Con `chrome` o `edge`, Playwright MCP entra por el relevo `server/chrome-agente.ts` (127.0.0.1, secreto en la ruta), que
+abre el navegador con `data/navegador-chrome` y pasa todo salvo:
+- `Page.navigate` y `Target.createTarget` a `file:`, `chrome:`, `javascript:`… (la política de `persist:navegador`);
+- un clic izquierdo o Enter del agente en publicar/pagar/comprar/borrar/enviar (o un formulario POST): la lógica de
+  `electron/confirmacion.ts`, con el aviso Permitir / Bloquear dentro de la misma página (mundo aislado, shadow root
+  cerrado, solo clics `isTrusted`, 90 s y se bloquea; si la página lo quita, se bloquea). Mientras pregunta, el relevo no
+  deja pasar más clics ni teclas del agente;
+- las descargas ejecutables: se cancelan en `Browser.downloadWillBegin`.
+
+Diferencias con el integrado: no hay lista blanca de sitios (el del agente tampoco la tenía); lo que hace la persona en
+esa ventana es suyo y no se revisa; las navegaciones que la página misma lanza (un enlace) no pasan por `Page.navigate`
+(Chrome ya no deja ir de una web a `file:` ni a `chrome:`); una descarga ejecutable muy chica puede acabar antes de
+cancelarse, con el nombre por `guid` (sin extensión) en la carpeta de Playwright; y siguen los huecos de arriba (scripts
+del agente, iframes de otro origen, botones sin texto). Varios hilos: el primero usa el perfil; los demás, mientras ese
+trabaja, un contexto limpio (`--isolated`).
 
 ## El texto de las páginas es dato
 

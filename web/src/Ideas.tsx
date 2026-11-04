@@ -961,12 +961,12 @@ const ICONO: Record<PasoYT['tipo'], string> = { buscar: '🔎', canal: '📺', f
 
 /**
  * Las cuentas con que se investiga (buscan y leen comentarios), nunca las que publican: una de TikTok y una de Instagram,
- * en el mismo Edge. Sin sesión, «Iniciar sesión» abre ese Edge en el login de su red; mientras está abierto y falta
+ * en el mismo Chrome (o Edge). Sin sesión, «Iniciar sesión» lo abre en el login de su red; mientras está abierto y falta
  * alguna, se vuelve a mirar cada pocos segundos.
  */
 function CuentasInvestigacion({ canal, trabajando }: { canal: Canal; trabajando: boolean }) {
   const [c, setC] = useState<CuentaInvestigacion | null>(null)
-  // La red cuyo login se abrió desde aquí: a esa le toca la indicación de la ventana de Edge.
+  // La red cuyo login se abrió desde aquí: a esa le toca la indicación de la ventana del navegador.
   const [abierta, setAbierta] = useState<RedVertical | null>(null)
   const [error, setError] = useState('')
   const leer = () => api<CuentaInvestigacion>(`/api/ideas/${canal.id}/tiktok`).then((r) => (setC(r), setError('')), (e) => setError(e.message))
@@ -980,7 +980,7 @@ function CuentasInvestigacion({ canal, trabajando }: { canal: Canal; trabajando:
   }, [c?.abierto, falta])
   const abrir = (red: RedVertical) => (setError(''), setAbierta(red), api(`/api/ideas/${canal.id}/navegador`, { red }).then(leer, (e) => setError(e.message)))
   if (!c) return error ? <p className="bad small">{error}</p> : null
-  // Con su Edge cerrado no se puede preguntar por la sesión: se abre solo al investigar, con las sesiones de su perfil.
+  // Con su navegador cerrado no se puede preguntar por la sesión: se abre solo al investigar, con las sesiones de su perfil.
   if (!c.abierto)
     return (
       <div className="cuentas-investigacion small">
@@ -1000,12 +1000,12 @@ function CuentasInvestigacion({ canal, trabajando }: { canal: Canal; trabajando:
     {
       red: 'tiktok' as const,
       usuario: c.cuenta,
-      pista: c.abierto && abierta !== 'instagram' ? 'Inicia sesión con el QR en la ventana de Edge.' : 'Con ella busca v!d y lee los comentarios.'
+      pista: c.abierto && abierta !== 'instagram' ? 'Inicia sesión con el QR en la ventana de Chrome (o Edge) que abrió v!d.' : 'Con ella busca v!d y lee los comentarios.'
     },
     {
       red: 'instagram' as const,
       usuario: c.instagram ?? null,
-      pista: `${c.abierto && abierta === 'instagram' ? 'Inicia sesión en la ventana de Edge. ' : ''}Que sea una cuenta desechable, nunca ${tuya}.`
+      pista: `${c.abierto && abierta === 'instagram' ? 'Inicia sesión en la ventana de Chrome (o Edge) que abrió v!d. ' : ''}Que sea una cuenta desechable, nunca ${tuya}.`
     }
   ]
   return (

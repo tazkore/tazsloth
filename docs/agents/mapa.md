@@ -61,7 +61,7 @@ Este es el mapa:
   «Mis videos» (`MisVideos.tsx`) los junta todos. Cada card enseña de fondo el más nuevo (`server/previas.ts`).
 - `server/redes/` y `web/src/Redes.tsx`: los verticales terminados se programan al ritmo que eliges en «Mis videos» (`web/src/Ritmos.tsx`, las cuentas en `shared/ritmo.ts`; YouTube lleva el suyo).
   TikTok va por su página (ADR 0002), en la página `redes` del navegador integrado, con su propio perfil (sin la ventana
-  de v!d, en un Edge con `data/redes/perfil`);
+  de v!d, en Chrome con `data/redes/perfil-chrome`, o Edge según Opciones → Navegador);
   Instagram, por la nube (`nube/`, un Worker de Cloudflare con R2 y un cron, ADR 0003), que publica con la computadora
   apagada. La nube se despliega con `npm run nube -- deploy`, no con «Reiniciar backend». Cuando todo un video quedó
   programado, se borra lo regenerable de su carpeta (`out/partes`, `_bundle_rev`). Para mirar o mover la cola:
@@ -80,7 +80,9 @@ Este es el mapa:
   HeyGen están en `skills/heygen-*`. Nada que baje gigas o gaste créditos corre solo: lo pide un botón de Opciones →
   Avatares y voz o el agente.
 - El navegador de cada hilo (`electron/navegador.ts`, el globo de `web/src/Navegador.tsx`): el Playwright MCP del agente
-  (`server/navegador-agente.ts`, lanzado a demanda por `server/navegador-mcp.mjs`) entra en él por CDP. Sin ventana, un Chrome con `data/navegador`; en lotes, uno limpio.
+  (`server/navegador-agente.ts`, lanzado a demanda por `server/navegador-mcp.mjs`) entra en él por CDP si Opciones → Navegador
+  está en «Integrado». Con Chrome (lo normal) o Edge, entra a una ventana de ese navegador por el relevo `server/chrome-agente.ts`
+  (perfil `data/navegador-chrome`). Sin nada de eso, un Chrome con `data/navegador`; en lotes, uno limpio.
   Sus capturas y los logs de consola quedan en `data/navegador-capturas/`. Copia lo mejor del de T3 Code (`C:\dev\t3code`):
   pestañas (el agente solo usa la primera), tamaños fijos (`navegador-medidas.ts`) y bordes que se arrastran. T3 usa
   `<webview>` y v!d una vista nativa: el tamaño fijo es `enableDeviceEmulation`, y por eso el relevo reescala los clics.
@@ -105,7 +107,8 @@ Este es el mapa:
   Code, lo guarda siempre en `data/feedback/<fecha>-<slug>.md` y, con la llave de agencia del proyecto activo (o la por
   defecto, `server/agencia/llaves.ts`), lo manda a `vid-api` de Kold.Gold con el cliente de `server/agencia/vid-api.ts`
   (`op: 'feedback'`, cabecera `x-vid-key`, contexto recortado a 20 KB).
-- Seguridad del navegador (lista blanca por perfil, confirmación humana, Edge en puerto al azar): `docs/agents/navegador-seguridad.md`.
+- Seguridad del navegador (lista blanca por perfil, confirmación humana, Chrome/Edge en puerto al azar, el agente en Chrome): `docs/agents/navegador-seguridad.md`.
+- Navegador instalado (detección de Chrome/Edge, preferencia de Opciones → Navegador, perfiles por navegador): `server/navegador-sistema.ts`; el lanzador, `server/navegador-seguro.ts`.
 - `server/originales.ts` y `web/src/TusCambios.tsx`: en la app que se vende, «Con tus cambios (N)» bajo la card dice qué
   archivos de su skill (y de video-base) ya no son como los trae la versión, y vuelve a la original, entera o uno a uno.
   Lo que se pisa, también al actualizar (`prepararSkills`), se copia antes a `data/skills-tuyas`.

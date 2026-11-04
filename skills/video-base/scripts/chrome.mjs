@@ -32,6 +32,7 @@ export function buscarChrome() {
           chrome: join('chrome-win64', 'chrome.exe'),
           sistema: [
             'C:/Program Files/Google/Chrome/Application/chrome.exe',
+            'C:/Program Files (x86)/Google/Chrome/Application/chrome.exe',
             join(local, 'Google', 'Chrome', 'Application', 'chrome.exe'),
             'C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe',
             'C:/Program Files/Microsoft/Edge/Application/msedge.exe'
@@ -42,13 +43,18 @@ export function buscarChrome() {
             playwright: join(casa, 'Library', 'Caches', 'ms-playwright'),
             shell: join(`chrome-headless-shell-mac-${process.arch}`, 'chrome-headless-shell'),
             chrome: join(`chrome-mac-${process.arch}`, 'Google Chrome for Testing.app', 'Contents', 'MacOS', 'Google Chrome for Testing'),
-            sistema: ['/Applications/Google Chrome.app/Contents/MacOS/Google Chrome', '/Applications/Chromium.app/Contents/MacOS/Chromium', '/Applications/Microsoft Edge.app/Contents/MacOS/Microsoft Edge']
+            sistema: [
+              '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
+              join(casa, 'Applications', 'Google Chrome.app', 'Contents', 'MacOS', 'Google Chrome'),
+              '/Applications/Chromium.app/Contents/MacOS/Chromium',
+              '/Applications/Microsoft Edge.app/Contents/MacOS/Microsoft Edge'
+            ]
           }
         : {
             playwright: join(casa, '.cache', 'ms-playwright'),
             shell: join('chrome-headless-shell-linux64', 'chrome-headless-shell'),
             chrome: join('chrome-linux64', 'chrome'),
-            sistema: ['/opt/google/chrome/chrome', '/usr/bin/google-chrome', '/usr/bin/chromium', '/usr/bin/chromium-browser', '/opt/microsoft/msedge/msedge']
+            sistema: ['/opt/google/chrome/chrome', '/usr/bin/google-chrome', '/usr/bin/google-chrome-stable', '/usr/bin/chromium', '/usr/bin/chromium-browser', '/opt/microsoft/msedge/msedge']
           }
   const candidatos = [
     process.env.CHROME,

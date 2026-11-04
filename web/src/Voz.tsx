@@ -12,7 +12,7 @@ import { Logo } from './Logos'
  * `Voz:` del primer mensaje (`lineaVoz`, `shared/voz.ts`).
  */
 
-/** El estado de la voz. Mientras esperas en Edge, se vuelve a preguntar cada 2 s. */
+/** El estado de la voz. Mientras esperas en Chrome (o Edge), se vuelve a preguntar cada 2 s. */
 export function useVoz() {
   const [estado, setEstado] = useState<EstadoVoz>()
   const [error, setError] = useState<string>()
@@ -54,7 +54,7 @@ export function SelectorVoz({ card, voz, valor, onCambio }: { card: Card; voz: U
   // Con ElevenLabs basta la llave; con AI Studio, la cuenta de Google.
   const conVoces = !!e?.cuenta || voz.eleven.length > 0
   const deEleven = vozEleven(valor)
-  const label = e?.conectando ? 'Voz: entra con Google en Edge…' : deEleven && conVoces ? `Voz: ${deEleven.nombre} · ElevenLabs` : valor && e?.cuenta ? `Voz: ${valor} · AI Studio` : `Voz: ${propia.toLowerCase()}`
+  const label = e?.conectando ? `Voz: entra con Google en ${e.navegador ?? 'Chrome'}…` : deEleven && conVoces ? `Voz: ${deEleven.nombre} · ElevenLabs` : valor && e?.cuenta ? `Voz: ${valor} · AI Studio` : `Voz: ${propia.toLowerCase()}`
   return (
     <Picker
       label={label}
@@ -102,7 +102,7 @@ export function GenerarVoz({ onGenerar }: { onGenerar(texto: string): Promise<vo
       <div className="generar-voz">
         <span>O que la genere el agente con una voz de AI Studio, gratis con tu cuenta de Google.</span>
         <button className="ghost small" disabled={e.conectando} onClick={voz.conectar}>
-          {e.conectando ? 'Entra con Google en la ventana de Edge…' : 'Conectar con Google'}
+          {e.conectando ? `Entra con Google en la ventana de ${e.navegador ?? 'Chrome'}…` : e.entrarEnChrome ? 'Iniciar sesión en Chrome' : 'Conectar con Google'}
         </button>
         {voz.error && !e.conectando && <span className="bad small">{voz.error}</span>}
       </div>
@@ -144,11 +144,11 @@ export function VozOpciones() {
           <span>
             {e?.cuenta
               ? `Gemini 3.8 Flash TTS · ${e.voces.length} voces en el menú Voz${e.enFila ? ` · generando ${e.enFila}` : ''}`
-              : 'Genera la voz de tus videos con Gemini 3.8 Flash TTS, gratis, con tu cuenta de Google. Entras una vez, en Edge.'}
+              : `Genera la voz de tus videos con Gemini 3.8 Flash TTS, gratis, con tu cuenta de Google. Entras una vez, en ${e?.navegador ?? 'Chrome'}.`}
           </span>
         </div>
         {e?.conectando ? (
-          <span className="estado moviendo">Entra con Google en la ventana de Edge…</span>
+          <span className="estado moviendo">Entra con Google en la ventana de {e.navegador ?? 'Chrome'}…</span>
         ) : e?.cuenta ? (
           <Picker
             className="acciones"
@@ -160,12 +160,22 @@ export function VozOpciones() {
         ) : (
           e && (
             <button className="primary" onClick={voz.conectar}>
-              Conectar con Google
+              {e.entrarEnChrome ? 'Iniciar sesión en Chrome' : 'Conectar con Google'}
             </button>
           )
         )}
       </div>
-      {e?.conectando && <p className="muted small fila-extra">Google no deja entrar desde una app. Al entrar en Edge, la ventana se cierra y la sesión pasa sola a v!d.</p>}
+      {e?.conectando && <p className="muted small fila-extra">Google no deja entrar desde una app. Al entrar en {e.navegador ?? 'Chrome'}, la ventana se cierra y la sesión pasa sola a v!d.</p>}
+      {e?.entrarEnChrome && !e.conectando && (
+        <div className="fila-extra">
+          <p className="small">v!d ahora usa Google Chrome, y su perfil aún no tiene tu sesión de Google (la de Edge no se puede pasar). Entra una vez en Chrome.</p>
+          {e.cuenta && (
+            <button className="ghost small" onClick={voz.conectar}>
+              Iniciar sesión en Chrome
+            </button>
+          )}
+        </div>
+      )}
       {voz.error && !e?.conectando && <p className="bad small fila-extra">{voz.error}</p>}
     </div>
   )

@@ -29,6 +29,8 @@ import { cerrarVigilantesOciosos, etapasApi, folderOf, mismaCwd, queFalta, video
 import { cerrarMotoresOciosos } from './motor.ts'
 import { modelos3d } from './modelos3d.ts' // modelos 3D
 import { modelos3dHilos } from './modelos3d-hilos.ts' // modelos 3D
+import { iniciarChromeAgente } from './chrome-agente.ts' // navegador
+import { estadoNavegador, guardarPreferencia } from './navegador-sistema.ts' // navegador
 import { feedback, resumenDeHilo } from './feedback.ts' // feedback
 import { miniaturas } from './miniaturas.ts' // panel de etapas
 import { cargarVariables, guardarMeta, guardarYoutube, leer, opciones } from './opciones.ts'
@@ -389,6 +391,21 @@ async function api(req: IncomingMessage, res: ServerResponse, url: URL): Promise
 
   if (path === '/api/opciones' && method === 'GET') {
     send(res, 200, opciones())
+    return true
+  }
+
+  // Opciones → Navegador: con qué abre v!d sus ventanas (voz, redes, Ideas) y dónde navega el agente.
+  if (path === '/api/navegador' && method === 'GET') {
+    send(res, 200, estadoNavegador(url.searchParams.has('fresco')))
+    return true
+  }
+  if (path === '/api/navegador' && method === 'POST') {
+    try {
+      guardarPreferencia((await body<{ preferencia: 'chrome' | 'edge' | 'integrado' }>(req)).preferencia)
+      send(res, 200, estadoNavegador())
+    } catch (error) {
+      send(res, 400, { error: error instanceof Error ? error.message : String(error) })
+    }
     return true
   }
 
@@ -839,6 +856,8 @@ v6.on('error', () => {})
 v6.listen(PORT, '::1')
 server.listen(PORT, '127.0.0.1', () => {
   console.log(`v!d en http://localhost:${PORT}`)
+  // El relevo del agente en Chrome (`chrome-agente.ts`): solo escucha; Chrome se abre cuando un hilo lo usa.
+  iniciarChromeAgente().catch((e) => console.error('navegador: no pude levantar el relevo de Chrome:', e instanceof Error ? e.message : e))
   setTimeout(() => {
     cargandoModelos = false
     pedirModelos()

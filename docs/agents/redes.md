@@ -42,11 +42,11 @@ están en la cabecera de `scripts/redes.ts`: `nube` (lo que espera en el Worker 
   `23 oct 2026`).
 - Con la ventana de v!d abierta, TikTok va en la página `redes` del navegador integrado, con su perfil
   (`persist:redes`), sin otra ventana: «Conectar» en Opciones → Redes la enseña ahí para iniciar sesión. Sin la ventana,
-  va en un Edge con el perfil `data/redes/perfil` y el puerto CDP en un puerto libre al azar (127.0.0.1, `server/edge-seguro.ts`). Las dos sesiones son aparte: la de una no vale
+  va en el navegador instalado de Opciones → Navegador (Chrome por omisión, con `data/redes/perfil-chrome`; Edge, con `data/redes/perfil`) y el puerto CDP en un puerto libre al azar (127.0.0.1, `server/navegador-seguro.ts`). Las dos sesiones son aparte: la de una no vale
   en la otra. `POST /api/redes/tiktok/conectar` abre la página de iniciar sesión en el que toque. En la app, Google
   rechaza su inicio de sesión («el navegador no es seguro»): si la página va a `accounts.google.com`, v!d la devuelve
-  al login, abre Edge con ese perfil para ese paso y, al ver la cuenta ahí, pasa las cookies de la red a la app y cierra
-  Edge (`conGoogle` y `pasarDeEdge`). TikTok Studio pone «¿Salir del sitio?», que la app no contesta y que cancela
+  al login, abre Chrome (o Edge) con ese perfil para ese paso y, al ver la cuenta ahí, pasa las cookies de la red a la app y lo
+  cierra (`conGoogle` y `pasarDeEdge`, nombre de cuando solo era Edge). TikTok Studio pone «¿Salir del sitio?», que la app no contesta y que cancela
   cada navegación: antes de mover la página va `sinAviso` (la ventana ya lo ignora sola). Su tour de novedades
   (`.react-joyride__overlay`) tapa la página la primera vez en un perfil y con cada novedad: lo cierra `cerrarTour`.
   Lo que sube se ve en Mis videos, a la derecha (`enNavegador`); en Opciones, solo mientras inicias sesión.

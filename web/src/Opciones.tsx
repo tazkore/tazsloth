@@ -11,6 +11,7 @@ import { TuEquipo } from './Equipo' // tu equipo
 import { Icono } from './Iconos'
 import { Logo } from './Logos'
 import { BotonNavegador } from './Navegador'
+import { NavegadorOpciones } from './NavegadorOpciones' // navegador
 import { RadarOpciones } from './RadarOpciones' // radar
 import { Segmento } from './Segmento'
 import { ConNavegadorRedes, RedesOpciones } from './Redes' // redes
@@ -78,6 +79,9 @@ function Ajustes({ onDone, iniciando, onIniciando }: { onDone(): void; iniciando
         {OTROS_AGENTES.map((p) => (
           <CuentaAgente key={p} p={p} />
         ))}
+      </Grupo>
+      <Grupo titulo="Navegador" nota="Con qué abre v!d sus ventanas (entrar con Google para la voz, TikTok Studio, las cuentas de Ideas) y dónde navega el agente. Siempre con un perfil de v!d, nunca el tuyo.">
+        <NavegadorOpciones />
       </Grupo>
       <Grupo titulo="Voz" nota="Al pedir un video eliges en «Voz» si la mandas tú o si el agente la genera aquí. La sesión de Google vive en un perfil aparte del navegador de v!d: ningún agente la usa.">
         <VozOpciones />
@@ -1243,7 +1247,7 @@ function Avisos() {
           <strong>Cuando un hilo termina o hay un anuncio</strong>
           <span>Te avisa si estás en otra cosa; la notificación abre el hilo o el anuncio.</span>
         </div>
-        {permiso === 'denied' && <span className="estado falta">Bloqueadas en Edge</span>}
+        {permiso === 'denied' && <span className="estado falta">Bloqueadas en el navegador</span>}
         <Interruptor on={activas} disabled={permiso === 'sin-api'} onCambiar={cambiar} etiqueta="Notificación" />
         <Interruptor on={sonido} onCambiar={(si) => (encender('sonido', si), setSonido(si), si && sonar())} etiqueta="Sonido" />
       </div>

@@ -3,17 +3,23 @@ import { closeSync, existsSync, openSync, readFileSync } from 'node:fs'
 import { createRequire } from 'node:module'
 import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { direccionChromeAgente } from './chrome-agente.ts'
+import { detectados, leerPreferencia } from './navegador-sistema.ts'
 
 /**
  * El navegador del agente: Playwright MCP en todos los hilos, para abrir, leer y fotografiar páginas que no se dejan leer
  * con WebFetch (`browser_navigate`, `browser_snapshot`, `browser_take_screenshot`…). No se confunde con el de las redes
  * (`server/redes/navegador.ts`).
  *
- * Con la ventana de v!d abierta, un hilo normal usa su página del navegador integrado (`electron/navegador.ts`): lo que
+ * Con Opciones → Navegador en `chrome` (lo normal) o `edge`, un hilo normal navega en una ventana del navegador instalado,
+ * con el perfil del agente de v!d: Playwright entra por CDP al relevo de `chrome-agente.ts`, que abre ese navegador y
+ * aplica la política de v!d (esquemas, descargas, confirmación de publicar/pagar/borrar).
+ *
+ * Con `integrado` y la ventana de v!d abierta, usa su página del navegador integrado (`electron/navegador.ts`): lo que
  * abre el agente se ve en el hilo, sin otra ventana. Playwright se conecta a ella por CDP, a la dirección que la ventana
  * anota en `data/navegador-integrado.json`.
  *
- * Sin la ventana (v!d en Edge), usa el Chrome del sistema o, sin él, el Edge que trae Windows: no baja navegadores. Un
+ * Si no (sin la ventana, o sin el relevo), usa el Chrome del sistema o, sin él, el Edge que trae Windows: no baja navegadores. Un
  * hilo normal lo abre con ventana y con el perfil de v!d (`data/navegador`, no el tuyo), donde siguen iniciadas las
  * cuentas que abras en él. Solo un proceso puede tener abierto un perfil: si otro hilo lo tiene, Playwright le contesta al
  * agente «Browser is already in use for …\data\navegador». Por eso se cierra tras `OCIOSO` sin usarse, y el siguiente
@@ -98,6 +104,15 @@ export function navegadorAgente(lote?: boolean, hilo?: string): Record<string, M
   })
   // Rutas absolutas: las capturas quedan fuera de la carpeta del hilo, y Read de Claude Code las pide así.
   const salida = ['--output-dir', CAPTURAS, '--output-max-size', String(TOPE_CAPTURAS), '--file-paths', 'absolute']
+  const preferencia = leerPreferencia()
+  if (!lote && hilo && preferencia !== 'integrado') {
+    const hay = detectados()
+    const marca = preferencia === 'edge' ? (hay.edge ? 'edge' : 'chrome') : hay.chrome ? 'chrome' : 'edge'
+    const exe = hay[marca]
+    const relevo = exe ? direccionChromeAgente(hilo, { marca, exe }) : null
+    // Con `OCIOSO`: tras ese rato sin usarlo se suelta Playwright, el relevo cuenta al hilo como ido y el perfil queda libre.
+    if (relevo) return mcp(['--cdp-endpoint', relevo.cdp, ...(relevo.aislado ? ['--isolated'] : []), ...salida], OCIOSO)
+  }
   const ventana = !lote && hilo ? integrado() : null
   if (ventana) {
     const cdp = `ws://127.0.0.1:${ventana.puerto}/${ventana.secreto}/${encodeURIComponent(hilo!)}`

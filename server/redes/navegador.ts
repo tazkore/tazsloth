@@ -1,5 +1,6 @@
-import { existsSync, mkdirSync } from 'node:fs'
-import { lanzarEdge, nuevoEdge } from '../edge-seguro.ts'
+import { mkdirSync } from 'node:fs'
+import { esperarQueResponda, lanzarNavegador, marcaDe, nuevoNavegador } from '../navegador-seguro.ts'
+import { detectados, elegirNavegador, faltaSesionEnChrome, leerPreferencia, marcarSesion, navegadorExterno, nombreMarca, perfilDe } from '../navegador-sistema.ts'
 import { join } from 'node:path'
 import type { Browser, BrowserContext, Page } from 'playwright-core'
 import { conectarCDP } from '../playwright.ts'
@@ -13,20 +14,22 @@ import { integrado } from '../navegador-agente.ts'
  *
  * Con la ventana de v!d abierta, es su página `NAVEGADOR_REDES` del navegador integrado (`electron/navegador.ts`), con
  * su propio perfil: no abre otra ventana, y se ve en Opciones → Redes. Es una sola página: `pestana` la da y `cerrar` la
- * deja en blanco. Sin la ventana (v!d en Edge), un Edge con su propio perfil (`data/redes/perfil`).
+ * deja en blanco. Sin la ventana, el navegador instalado (Chrome, o Edge según Opciones → Navegador) con su propio perfil
+ * (`data/redes/perfil-chrome`; el de Edge, `data/redes/perfil`).
  *
  * Google no deja iniciar sesión dentro de una app («el navegador no es seguro»): si la página de la app va a Google, ese
- * paso se da en Edge (`conGoogle`), y la sesión de la red pasa a la app al entrar (`pasarDeEdge`).
+ * paso se da en Chrome (o Edge) (`conGoogle`), y la sesión de la red pasa a la app al entrar (`pasarDeEdge`, nombre de
+ * cuando solo era Edge).
  */
 
-const edgeRedes = nuevoEdge()
-/** Edge donde lo instala cada sistema y, si no está (lo normal en Mac y Linux), Chrome: Google deja entrar en los dos. */
-const EDGE =
-  process.platform === 'win32'
-    ? ['C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe', 'C:\\Program Files\\Microsoft\\Edge\\Application\\msedge.exe']
-    : process.platform === 'darwin'
-      ? ['/Applications/Microsoft Edge.app/Contents/MacOS/Microsoft Edge', '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome']
-      : ['/opt/microsoft/msedge/msedge', '/opt/google/chrome/chrome', '/usr/bin/google-chrome', '/usr/bin/chromium']
+const edgeRedes = nuevoNavegador()
+
+/** Con qué navegador instalado se abriría la red y si hay que volver a iniciar sesión en Chrome (Opciones → Redes). */
+export function navegadorDeRedes(app: string): { navegador?: string; entrarEnChrome?: boolean } {
+  const elegido = elegirNavegador(leerPreferencia(), detectados())
+  if (!elegido) return {}
+  return { navegador: nombreMarca(elegido.marca), entrarEnChrome: faltaSesionEnChrome(join(app, 'data', 'redes', 'perfil'), elegido.marca) || undefined }
+}
 
 /**
  * La red cerró la sesión. No es un fallo del video: lo que espera en la cola de esa red se queda ahí hasta que se vuelva a
@@ -63,17 +66,21 @@ export async function navegador(app: string, url = 'about:blank'): Promise<Brows
   return conectado.contexts()[0]
 }
 
-/** Edge con el perfil de las redes, abriéndolo con `url` si no estaba. */
+/** Chrome (o Edge) con el perfil de las redes, abriéndolo con `url` si no estaba. */
 async function abrirEdge(app: string, url: string): Promise<Browser> {
   if (!(await responde())) {
-    const edge = EDGE.find((e) => existsSync(e))
-    if (!edge) throw new Error(process.platform === 'win32' ? 'No encontré Microsoft Edge, que es el navegador con el que v!d publica.' : 'No encontré Microsoft Edge ni Google Chrome: instala uno para entrar con Google.')
-    const perfil = join(app, 'data', 'redes', 'perfil')
+    const { marca, exe } = navegadorExterno()
+    const perfil = perfilDe(join(app, 'data', 'redes', 'perfil'), marca)
     mkdirSync(perfil, { recursive: true })
-    await lanzarEdge(edgeRedes, edge, [`--user-data-dir=${perfil}`, '--no-first-run', '--no-default-browser-check', url])
-    for (let i = 0; i < 40 && !(await responde()); i++) await new Promise((r) => setTimeout(r, 500))
+    await lanzarNavegador(edgeRedes, exe, [`--user-data-dir=${perfil}`, url])
+    await esperarQueResponda(edgeRedes)
   }
   return conectarCDP(`http://127.0.0.1:${edgeRedes.valor}`)
+}
+
+/** La red tiene sesión en el navegador instalado: si es Chrome, su perfil ya no pide que entres otra vez. */
+export function sesionFuera(app: string) {
+  if (edgeRedes.exe && !enLaApp) marcarSesion(join(app, 'data', 'redes', 'perfil'), marcaDe(edgeRedes.exe))
 }
 
 /** La página va a iniciar sesión con Google, que no lo deja hacer dentro de la app. */

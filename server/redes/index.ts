@@ -15,7 +15,8 @@ import type { Sessions } from '../sessions.ts'
 import { cuerpo as body, json } from '../http.ts'
 import { montarNube, nubeAlDia } from './cloudflare.ts'
 import { hayNube, instagram } from './instagram.ts'
-import { abierto, conGoogle, contextoDeGoogle, deGoogle, deLaApp, desconectar, enGoogle, navegador, pasarDeEdge, pestana, SinSesion, sinAviso, soltar } from './navegador.ts'
+import { abierto, conGoogle, contextoDeGoogle, deGoogle, deLaApp, desconectar, enGoogle, navegador, navegadorDeRedes, pasarDeEdge, sesionFuera, pestana, SinSesion, sinAviso, soltar } from './navegador.ts'
+import { integrado } from '../navegador-agente.ts'
 import { tiktok } from './tiktok.ts'
 import { programaClaude } from '../agentes.ts'
 
@@ -162,7 +163,7 @@ export function redes(app: string, sessions: Sessions, cards: () => Card[], avis
     if (!login || yendoAGoogle || enGoogle()) return
     yendoAGoogle = true
     await sinAviso(page).then(() => page.goto(login, { waitUntil: 'commit' })).catch(() => {})
-    await conGoogle(app, login).catch((e) => console.error('redes: no pude abrir Edge para entrar con Google:', mensaje(e)))
+    await conGoogle(app, login).catch((e) => console.error('redes: no pude abrir el navegador para entrar con Google:', mensaje(e)))
     yendoAGoogle = false
   }
   // Lo que se está quitando de la nube: la cola no lo toma mientras tanto.
@@ -639,7 +640,7 @@ export function redes(app: string, sessions: Sessions, cards: () => Card[], avis
     const p = datos.publicaciones.find((x) => x.estado === 'subiendo')
     if (p) return `Se está subiendo un video a ${REDES.find((r) => r.id === p.red)?.nombre ?? p.red}. Espera a que termine.`
     if (escribiendoTextos) return 'Claude está escribiendo el texto de un video para redes. Espera a que termine.'
-    if (enGoogle()) return 'Estás iniciando sesión con Google en Edge. Espera a que termine.'
+    if (enGoogle()) return 'Estás iniciando sesión con Google en la ventana del navegador. Espera a que termine.'
     return null
   }
 
@@ -671,7 +672,7 @@ export function redes(app: string, sessions: Sessions, cards: () => Card[], avis
       if (g?.login) {
         const s = await g.cuenta(async () => contextoDeGoogle()).catch(() => null)
         if (s?.cuenta && (sinSesion.has(g.id) || s.cuenta !== datos.cuentas[g.id]))
-          await pasarDeEdge(app, g.login).catch((e) => console.error('redes: no pude pasar la sesión de Edge a la app:', mensaje(e)))
+          await pasarDeEdge(app, g.login).catch((e) => console.error('redes: no pude pasar la sesión del navegador a la app:', mensaje(e)))
       }
       const sesiones: Partial<Record<RedId, Sesion>> = {}
       for (const r of REDES) {
@@ -680,8 +681,10 @@ export function redes(app: string, sessions: Sessions, cards: () => Card[], avis
         if (!s) continue
         sesiones[r.id] = s
         // Una red del navegador que tenía cuenta y ya no, perdió la sesión. Al volver, su cola sigue.
-        if (s.cuenta) sinSesion.delete(r.id)
-        else if (r.login && datos.cuentas[r.id]) sinSesion.add(r.id)
+        if (s.cuenta) {
+          sinSesion.delete(r.id)
+          if (r.login) sesionFuera(app)
+        } else if (r.login && datos.cuentas[r.id]) sinSesion.add(r.id)
         datos.cuentas[r.id] = s.cuenta
       }
       guardar()
@@ -694,6 +697,7 @@ export function redes(app: string, sessions: Sessions, cards: () => Card[], avis
       }
       // En la app, mirar la sesión no abre nada: después se suelta, salvo si sube algo o estás iniciando sesión.
       if (REDES.every((r) => !r.login || (!trabajando.has(r.id) && !iniciando.has(r.id)))) await desconectar()
+      const fuera = navegadorDeRedes(app)
       return json(
         res,
         200,
@@ -705,6 +709,8 @@ export function redes(app: string, sessions: Sessions, cards: () => Card[], avis
           token: !!r.token,
           sinSesion: sinSesion.has(r.id),
           enEdge: (enGoogle() && redDeLaApp() === r) || undefined,
+          // Fuera de la app, la sesión de la red vive en el perfil del navegador instalado: al pasar a Chrome hay que entrar una vez.
+          ...(r.login ? { navegador: fuera.navegador, entrarEnChrome: (!integrado()?.redes && fuera.entrarEnChrome) || undefined } : {}),
           sinNube: (r.enLaNube && !hayNube()) || undefined,
           caduca: sesiones[r.id]?.caduca,
           renovacion: sesiones[r.id]?.renovacion

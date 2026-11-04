@@ -51,7 +51,7 @@ export function RedesOpciones({ onIniciando }: { onIniciando?(si: boolean): void
   const [calendario, setCalendario] = useState<CalendarioRedTipo[]>([])
   const [conectando, setConectando] = useState<RedId | null>(null)
   // Dónde se inicia sesión: en el navegador de la app (se abre a la derecha, y el globo de arriba lo esconde) o en una
-  // ventana de Edge.
+  // ventana de Chrome (o Edge).
   const [donde, setDonde] = useState<'app' | 'edge' | null>(null)
   /** La cuenta que tenía al empezar a conectar: al cambiar de cuenta en la app, el panel sigue hasta que sea otra. */
   const antes = useRef<string | null>(null)
@@ -145,7 +145,7 @@ const PERFIL: Record<RedId, (usuario: string) => string> = {
 
 /**
  * Una red: su logo, el ritmo (se elige en «Mis videos») en una línea, la cuenta en un desplegable y, debajo, lo que
- * tiene programado. TikTok se conecta iniciando sesión en el navegador de la app, que se abre a la derecha (fuera de la ventana de v!d, en Edge); una red con `token` (Instagram), pegando un token de su API, que
+ * tiene programado. TikTok se conecta iniciando sesión en el navegador de la app, que se abre a la derecha (fuera de la ventana de v!d, en Chrome o Edge); una red con `token` (Instagram), pegando un token de su API, que
  * v!d prueba antes de guardarlo y renueva solo. Como las llaves, vive en las variables de tu usuario de Windows. Debajo,
  * lo que falló en ella y ya no está en el disco (`sinVideo`): sigue en la nube, y se reintenta o se quita desde aquí.
  */
@@ -185,6 +185,7 @@ function RedFila(props: { red: Red; conectando: 'abriendo' | 'app' | 'edge' | nu
     if (que === 'quitar') guardar(null)
   }
 
+  const nav = red.navegador ?? 'Chrome'
   return (
     <div className="item red">
       <div className="fila">
@@ -194,29 +195,32 @@ function RedFila(props: { red: Red; conectando: 'abriendo' | 'app' | 'edge' | nu
           <span title={`Salen a las ${horasDelRitmo(red.ritmo).join(', ')}. Se cambia en «Mis videos» → Ritmo de publicación.`}>{resumenRitmo(red.ritmo)}</span>
         </div>
         {props.conectando ? (
-          <span className="estado moviendo">{red.enEdge ? 'Entra con Google en la ventana de Edge…' : props.conectando === 'app' ? 'Inicia sesión en el navegador…' : props.conectando === 'edge' ? 'Inicia sesión en la ventana de Edge…' : 'Abriendo…'}</span>
+          <span className="estado moviendo">{red.enEdge ? `Entra con Google en la ventana de ${nav}…` : props.conectando === 'app' ? 'Inicia sesión en el navegador…' : props.conectando === 'edge' ? `Inicia sesión en la ventana de ${nav}…` : 'Abriendo…'}</span>
         ) : red.cuenta && !red.sinSesion ? (
           <Picker className="acciones" label={<span className="estado">{red.cuenta}</span>} value="" disabled={ocupado} groups={[{ label: 'Cuenta', options: opciones }]} onChange={elegir} />
         ) : (
           !pegando && (
             <button className="primary" onClick={conectar}>
-              Conectar
+              {red.entrarEnChrome ? 'Iniciar sesión en Chrome' : 'Conectar'}
             </button>
           )
         )}
       </div>
-      {/* Google no deja entrar dentro de la app: si vas a Google, v!d abre Edge para ese paso (`server/redes/navegador.ts`). */}
+      {/* Google no deja entrar dentro de la app: si vas a Google, v!d abre Chrome (o Edge) para ese paso (`server/redes/navegador.ts`). */}
       {props.conectando === 'app' && (
         <p className="muted small fila-extra">
           {red.enEdge
-            ? 'Google no deja entrar desde una app. Al terminar en Edge, la ventana se cierra y la sesión pasa sola a v!d.'
-            : `Lo más rápido: «Usar código QR» con la app de ${red.nombre} en tu teléfono. Si entras con Google, se abre Edge para ese paso.`}
+            ? `Google no deja entrar desde una app. Al terminar en ${nav}, la ventana se cierra y la sesión pasa sola a v!d.`
+            : `Lo más rápido: «Usar código QR» con la app de ${red.nombre} en tu teléfono. Si entras con Google, se abre ${nav} para ese paso.`}
         </p>
       )}
       {props.calendario && red.cuenta && !red.sinSesion && (
         <div className="fila-extra">
           <CalendarioRed c={props.calendario} ahora={props.ahora} />
         </div>
+      )}
+      {red.entrarEnChrome && !props.conectando && (
+        <p className="small fila-extra">v!d ahora usa Google Chrome, y su perfil aún no tiene tu sesión de {red.nombre} (la de Edge no se puede pasar). Inicia sesión una vez en Chrome.</p>
       )}
       {red.sinSesion && !props.conectando && (
         <p className="bad small fila-extra">

@@ -1,5 +1,6 @@
 import { createHash, randomBytes } from 'node:crypto'
-import { lanzarEdge, nuevoEdge } from '../edge-seguro.ts'
+import { cerrarNavegador, esperarQueResponda, lanzarNavegador, marcaDe, nuevoNavegador } from '../navegador-seguro.ts'
+import { detectados, elegirNavegador, leerPreferencia, MARCA_SESION, marcarSesion, navegadorExterno, nombreMarca, perfilDe } from '../navegador-sistema.ts'
 import { copyFileSync, existsSync, mkdirSync, readdirSync, readFileSync, rmSync, statSync } from 'node:fs'
 import type { IncomingMessage, ServerResponse } from 'node:http'
 import { homedir } from 'node:os'
@@ -26,10 +27,11 @@ import { leerLlave } from '../avatar/llaves.ts'
  * la línea `Voz:` del primer mensaje (`shared/voz.ts`) dice cuál quiere el usuario.
  *
  * Se genera en la página `NAVEGADOR_VOZ` del navegador integrado (`electron/navegador.ts`), con su propio perfil: la
- * sesión de Google no la tiene ningún agente. Google no deja iniciar sesión dentro de una app, así que se entra en Edge
- * (Chrome en Mac y Linux) con su perfil, `data/voz/perfil`, y las cookies de Google pasan a la página (`copiarSesion`).
- * Si la página la pierde, se vuelven a pasar de Edge sin preguntar; solo si Edge también la perdió hay que volver a
- * entrar. Sin la ventana de v!d (v!d en Edge), se genera en ese Edge, sin ventana. Probado el 29 de octubre de 2026:
+ * sesión de Google no la tiene ningún agente. Google no deja iniciar sesión dentro de una app, así que se entra en el
+ * navegador instalado (Chrome; Edge si así lo eliges en Opciones → Navegador) con un perfil de v!d
+ * (`data/voz/perfil-chrome`; el de Edge, `data/voz/perfil`), y las cookies de Google pasan a la página (`copiarSesion`):
+ * `Storage.getCookies` por CDP, igual en los dos. Si la página la pierde, se vuelven a pasar sin preguntar; solo si el
+ * navegador también la perdió hay que volver a entrar. Sin la ventana de v!d, se genera en ese navegador, sin ventana. Probado el 29 de octubre de 2026:
  * Google acepta en la app la sesión copiada, y una frase sale en unos 4 s; un guion de 6 minutos, en unos 100 s.
  *
  * Una voz a la vez, en fila: los videos de un lote no se pisan la página. El WAV (24 kHz, mono) lo baja el botón
@@ -42,15 +44,8 @@ import { leerLlave } from '../avatar/llaves.ts'
 
 const URL_VOZ = 'https://aistudio.google.com/generate-speech'
 const ENTRAR = `https://accounts.google.com/ServiceLogin?continue=${encodeURIComponent(URL_VOZ)}`
-/** El del script con que El Diff generaba antes la voz: si dejó abierto su Edge, con el mismo perfil, se usa ese. */
-const edgeVoz = nuevoEdge()
-/** Edge donde lo instala cada sistema y, si no está (lo normal en Mac y Linux), Chrome: Google deja entrar en los dos. */
-const EDGE =
-  process.platform === 'win32'
-    ? ['C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe', 'C:\\Program Files\\Microsoft\\Edge\\Application\\msedge.exe']
-    : process.platform === 'darwin'
-      ? ['/Applications/Microsoft Edge.app/Contents/MacOS/Microsoft Edge', '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome']
-      : ['/opt/microsoft/msedge/msedge', '/opt/google/chrome/chrome', '/usr/bin/google-chrome', '/usr/bin/chromium']
+/** El navegador instalado (Chrome o Edge) del perfil de la voz, mientras v!d lo tiene abierto. */
+const edgeVoz = nuevoNavegador()
 /** Lo más que espera una petición a que acabe su voz: el MCP repite, y Codex corta una herramienta a los 60 s. */
 const ESPERA_MAXIMA = 50_000
 
@@ -61,11 +56,16 @@ type Cookie = { name: string; value: string; domain: string; path: string; expir
 export function voz(app: string) {
   const carpeta = join(app, 'data', 'voz')
   const descargas = join(carpeta, 'descargas')
-  // El perfil del Edge donde se entra con Google. El del script viejo de El Diff ya tiene la sesión: se usa mientras no
-  // haya uno de v!d.
+  // El perfil donde se entra con Google, uno por navegador (`perfilDe`). En Edge, el del script viejo de El Diff ya tiene
+  // la sesión: se usa mientras no haya uno de v!d.
   const nuevo = join(carpeta, 'perfil')
   const viejo = join(process.env.LOCALAPPDATA ?? join(homedir(), '.cache'), 'video-el-diff', 'aistudio')
-  const perfil = () => (existsSync(nuevo) || !existsSync(viejo) ? nuevo : viejo)
+  const perfil = (marca: 'chrome' | 'edge') => (marca === 'chrome' ? perfilDe(nuevo, 'chrome') : existsSync(nuevo) || !existsSync(viejo) ? nuevo : viejo)
+  /** El nombre del navegador donde se entra, para los avisos. */
+  const nombre = () => {
+    const e = elegirNavegador(leerPreferencia(), detectados())
+    return e ? nombreMarca(e.marca) : 'Chrome'
+  }
   const archivoCuenta = join(carpeta, 'cuenta.json')
 
   let guardada: { correo?: string | null; voces?: VozStudio[] } = {}
@@ -91,24 +91,28 @@ export function voz(app: string) {
     return r
   }
 
-  // ── Edge, con el perfil donde se entra ──────────────────────────────────────────────────────────────────────────
+  // ── El navegador instalado (Chrome o Edge; las funciones guardan el nombre «Edge» de antes) ──────────────────────────────────────────────────────────────────────────
 
   const responde = () => fetch(`http://127.0.0.1:${edgeVoz.valor}/json/version`).then((r) => r.ok, () => false)
 
-  /** El Edge del perfil: el que ya está abierto o uno nuevo. `ventana`, para entrar; si no, sin ventana ni sonido. */
+  /** El navegador del perfil: el que ya está abierto o uno nuevo. `ventana`, para entrar; si no, sin ventana ni sonido. */
   async function abrirEdge(ventana: boolean): Promise<Browser> {
+    const { marca, exe } = navegadorExterno()
+    // Cambiaste de navegador en Opciones: el abierto se cierra y se abre el elegido, con su perfil.
+    if (edgeVoz.exe && edgeVoz.exe !== exe) {
+      cerrarNavegador(edgeVoz)
+      for (let i = 0; i < 20 && (await responde()); i++) await espera(250)
+    }
     if (await responde()) {
       const b = await conectarCDP(`http://127.0.0.1:${edgeVoz.valor}`)
       if (!ventana) return b
       // Para entrar hace falta la ventana: se cierra el de sin ventana (la sesión vive en el perfil).
       await cerrarEdge(b)
     }
-    const edge = EDGE.find((e) => existsSync(e))
-    if (!edge) throw new Error(process.platform === 'win32' ? 'No encontré Microsoft Edge, donde se entra con Google.' : 'No encontré Microsoft Edge ni Google Chrome: instala uno para entrar con Google.')
-    mkdirSync(perfil(), { recursive: true })
+    mkdirSync(perfil(marca), { recursive: true })
     const extra = ventana ? [ENTRAR] : ['--headless=new', '--mute-audio', 'about:blank']
-    await lanzarEdge(edgeVoz, edge, [`--user-data-dir=${perfil()}`, '--no-first-run', '--no-default-browser-check', ...extra])
-    for (let i = 0; i < 40 && !(await responde()); i++) await espera(500)
+    await lanzarNavegador(edgeVoz, exe, [`--user-data-dir=${perfil(marca)}`, ...extra])
+    await esperarQueResponda(edgeVoz)
     return conectarCDP(`http://127.0.0.1:${edgeVoz.valor}`)
   }
 
@@ -123,7 +127,10 @@ export function voz(app: string) {
     const cdp = await b.newBrowserCDPSession()
     const { cookies } = (await cdp.send('Storage.getCookies')) as { cookies: Cookie[] }
     const deGoogle = cookies.filter((c) => /(^|\.)google\.com$/.test(c.domain.replace(/^\./, '')) && !c.partitionKey)
-    return { cookies: deGoogle, sesion: deGoogle.some((c) => c.name === 'SAPISID') }
+    const sesion = deGoogle.some((c) => c.name === 'SAPISID')
+    // El perfil de Chrome ya tiene la sesión: Opciones deja de pedir que entres en Chrome.
+    if (sesion && edgeVoz.exe) marcarSesion(nuevo, marcaDe(edgeVoz.exe))
+    return { cookies: deGoogle, sesion }
   }
 
   /**
@@ -300,8 +307,8 @@ export function voz(app: string) {
         // Lo que Google pone justo después de entrar.
         if (sesion) await espera(3000)
         await cerrarEdge(b)
-        if (!sesion) throw new Error('No entraste con Google en Edge. Vuelve a intentarlo.')
-        if (!(await enTurno(copiarSesion))) throw new Error('Edge no guardó la sesión de Google. Vuelve a intentarlo.')
+        if (!sesion) throw new Error(`No entraste con Google en ${nombre()}. Vuelve a intentarlo.`)
+        if (!(await enTurno(copiarSesion))) throw new Error(`${nombre()} no guardó la sesión de Google. Vuelve a intentarlo.`)
       }
       await enTurno(leerVoces)
       if (!cuenta) throw new Error('AI Studio no abrió con tu cuenta de Google.')
@@ -446,7 +453,21 @@ export function voz(app: string) {
   }
 
   const publico = ({ texto: _t, salida: _s, huella: _h, proveedor: _p, ...t }: Trabajo): TrabajoVoz => t
-  const estado = (): EstadoVoz => ({ cuenta, conectando, voces, enFila: fila.length + (trabajando ? 1 : 0), proveedor: leerConfig().vozProveedor, elevenlabs: !!leerLlave('elevenlabs'), ...(error ? { error } : {}) })
+  const estado = (): EstadoVoz => {
+    const elegido = elegirNavegador(leerPreferencia(), detectados())
+    return {
+      cuenta,
+      conectando,
+      voces,
+      enFila: fila.length + (trabajando ? 1 : 0),
+      proveedor: leerConfig().vozProveedor,
+      elevenlabs: !!leerLlave('elevenlabs'),
+      navegador: elegido ? nombreMarca(elegido.marca) : undefined,
+      // Había sesión en el perfil de Edge y el de Chrome aún no existe: hay que entrar una vez en Chrome.
+      entrarEnChrome: (elegido?.marca === 'chrome' && (existsSync(nuevo) || existsSync(viejo)) && !existsSync(join(perfilDe(nuevo, 'chrome'), MARCA_SESION))) || undefined,
+      ...(error ? { error } : {})
+    }
+  }
 
   // ── La API ─────────────────────────────────────────────────────────────────────────────────────────────────────
 

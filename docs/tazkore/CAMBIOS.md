@@ -204,3 +204,17 @@ Las ramas `v1-f3` a `v1-f6` se fusionaron en `tazkore` (f3 y f4 en avance rápid
 | Feedback → vid-api | Leía `VID_AGENCIA_LLAVE`/`VID_API_URL` con una URL por omisión con `<proyecto>` (no mandaba nada) | Usa la llave del proyecto activo o la por defecto de Opciones → Agencia y el cliente de `server/agencia/vid-api.ts` (`op: 'feedback'`, `x-vid-key`, confirmado con el README de vid-api); URL por omisión la de Kold.Gold; el contexto que viaja se recorta a 20 KB (límite de vid-api); sin llave, solo se guarda local | `server/feedback.ts`, `server/agencia/vid-api.ts`, `server/index.ts`, `web/src/Feedback.tsx` |
 | Card «Nuevo modelo 3D» | Con etapas, el compositor le ponía formato, voz y avatar, y `comprobar-skills` le exigía `Formato: horizontal` | Solo las cards con etapas con `fase` (los estilos de video, como `sessions.esVideo`) | `web/src/App.tsx`, `scripts/comprobar-skills.mjs` |
 | `comprobar-skills` | Fallaba en las plantillas de reel-collage y video-explicativo (TS2307: `voz.json`, `moneda`, `personaje.json`) cuando los `node_modules` eran los compartidos, sin un video de verdad de donde tomarlos | Si no hay video, se ponen como lo hace el script de crear un video: `modelos.py usar moneda`, el `personaje.json` de la skill y un `voz.json` vacío con la forma de `voz.py` (solo en la carpeta temporal) | `scripts/comprobar-skills.mjs` |
+
+## v1.0.1 — Chrome nativo (3 nov 2026)
+
+El staff usa Mac, donde casi nunca hay Edge: el navegador de v!d pasa a ser Google Chrome instalado.
+
+| Qué | Antes | Ahora | Archivos |
+| --- | --- | --- | --- |
+| Detección | Rutas de Edge fijas por módulo (Chrome solo de respaldo en Mac/Linux) | Chrome en Program Files, (x86), `%LOCALAPPDATA%`, registro App Paths; `/Applications` y `~/Applications`; rutas y PATH en Linux (`google-chrome`, `chromium`); `VID_CHROME` manda | `server/navegador-sistema.ts` |
+| Preferencia | — | Opciones → Navegador: Chrome (por omisión), Edge o Integrado (solo el agente); muestra la ruta de Chrome o el aviso con google.com/chrome; `GET/POST /api/navegador`, `data/navegador-preferencia.json` | `web/src/NavegadorOpciones.tsx`, `server/index.ts` |
+| Lanzador | `server/edge-seguro.ts` | `server/navegador-seguro.ts`: Chrome o Edge, 127.0.0.1, puerto al azar, `--no-first-run --no-default-browser-check`, exige `--user-data-dir` de v!d, se cierran al salir | voz, redes, Ideas |
+| Perfiles | `data/{voz,redes,investigacion}/perfil` (Edge) | Chrome en `…/perfil-chrome`; se vuelve a iniciar sesión una vez (Voz y Redes lo piden con «Iniciar sesión en Chrome») | `server/voz/index.ts`, `server/redes/*`, `server/ideas/navegador-investigacion.ts` |
+| Agente | Navegador integrado de la ventana | Ventana nativa de Chrome por el relevo `server/chrome-agente.ts`: bloquea `file:`/`chrome:`/`javascript:`, cancela descargas ejecutables, confirma publicar/pagar/borrar en la página; «Integrado» como antes | `server/chrome-agente.ts`, `server/navegador-agente.ts`, `docs/agents/navegador-seguridad.md` |
+| Skills | `buscarChrome` sin `~/Applications` ni `google-chrome-stable` | Con ellos (Chrome antes que Edge, como ya era) | `skills/video-base/scripts/chrome.mjs` |
+| Versión | 1.0.0 | 1.0.1 (dispara «Compilar v!d para Mac») | `package.json` |

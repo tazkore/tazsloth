@@ -1,5 +1,6 @@
-import { existsSync, mkdirSync } from 'node:fs'
-import { lanzarEdge, nuevoEdge } from '../edge-seguro.ts'
+import { mkdirSync } from 'node:fs'
+import { lanzarNavegador, nuevoNavegador } from '../navegador-seguro.ts'
+import { navegadorExterno, perfilDe } from '../navegador-sistema.ts'
 import { join } from 'node:path'
 import type { Browser, BrowserContext, Page } from 'playwright-core'
 import { conectarCDP } from '../playwright.ts'
@@ -8,14 +9,14 @@ import { cerrar } from '../redes/navegador.ts'
 import { Detenido } from './youtube.ts'
 
 /**
- * El navegador de las cuentas de investigación: un Edge con su propio perfil (`data/investigacion/perfil`) donde viven una
+ * El navegador de las cuentas de investigación: Chrome (o Edge, según Opciones → Navegador) con su propio perfil
+ * (`data/investigacion/perfil-chrome`; el de Edge, `data/investigacion/perfil`) donde viven una
  * cuenta de TikTok y una de Instagram que solo buscan, nunca las que publican (`server/redes/navegador.ts`): lo que una red
  * le haga a una cuenta que busca mucho no le pasa a la tuya. Lo comparten `tiktok.ts` e `instagram-web.ts`: una operación
  * a la vez, cada una en su pestaña, y la que pide algo a una persona (un captcha, verificar la cuenta) se queda al frente.
  */
 
-const edgeInv = nuevoEdge()
-const EDGE = ['C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe', 'C:\\Program Files\\Microsoft\\Edge\\Application\\msedge.exe']
+const edgeInv = nuevoNavegador()
 const PASAPORTE = 'https://www.tiktok.com/passport/web/account/info/?aid=1988'
 /** Lo que pide la página de Instagram al abrir «Editar perfil»: trae el usuario, sin abrir pestaña. */
 const FORMULARIO = 'https://www.instagram.com/api/v1/accounts/edit/web_form_data/'
@@ -70,12 +71,11 @@ function silenciar() {
 
 /** Lo abre como el de las redes, con su perfil y su puerto. Sin sonido: cada pestaña de la investigación reproduce videos. */
 async function lanzar(app: string) {
-  const edge = EDGE.find((e) => existsSync(e))
-  if (!edge) throw new Error('No encontré Microsoft Edge, que es el navegador con el que v!d investiga TikTok e Instagram.')
-  const perfil = join(app, 'data', 'investigacion', 'perfil')
+  const { marca, exe } = navegadorExterno()
+  const perfil = perfilDe(join(app, 'data', 'investigacion', 'perfil'), marca)
   mkdirSync(perfil, { recursive: true })
   // Sin sincronizar: es un perfil de trabajo, y no tiene por qué traerse tus ajustes ni tus pestañas de otros equipos.
-  await lanzarEdge(edgeInv, edge, [`--user-data-dir=${perfil}`, '--no-first-run', '--no-default-browser-check', '--mute-audio', '--disable-sync', 'about:blank'])
+  await lanzarNavegador(edgeInv, exe, [`--user-data-dir=${perfil}`, '--mute-audio', '--disable-sync', 'about:blank'])
   for (let i = 0; i < 40 && !(await responde()); i++) await new Promise((r) => setTimeout(r, 500))
   if (!(await responde())) throw new Error('El navegador de las cuentas de investigación no respondió.')
 }

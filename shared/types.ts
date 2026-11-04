@@ -368,7 +368,7 @@ export interface EstadoRitmo {
 
 /**
  * Una red en Opciones. `cuenta` es con quién está la sesión abierta, o `null` si falta conectarla. Con `token` se conecta
- * pegando un token de su API (Instagram); si no, iniciando sesión en la ventana de Edge.
+ * pegando un token de su API (Instagram); si no, iniciando sesión en la app o en la ventana de Chrome (o Edge).
  */
 export interface Red {
   id: RedId
@@ -378,8 +378,15 @@ export interface Red {
   token: boolean
   /** Estaba conectada y la red cerró la sesión: lo de su cola espera a que se vuelva a conectar. */
   sinSesion?: boolean
-  /** Conectándola en la app, fuiste a entrar con Google: eso va en una ventana de Edge, y la sesión pasa sola a la app. */
+  /**
+   * Conectándola en la app, fuiste a entrar con Google: eso va en una ventana del navegador instalado (Chrome o Edge,
+   * `navegador`), y la sesión pasa sola a la app. El nombre viene de cuando solo era Edge.
+   */
   enEdge?: boolean
+  /** El navegador instalado con que v!d abre la red fuera de la app (`Chrome` o `Edge`). */
+  navegador?: string
+  /** Se pasó a Chrome y su perfil aún no tiene la sesión de la red: hay que iniciarla una vez en Chrome. */
+  entrarEnChrome?: boolean
   /** Va por la nube (Instagram) y aún no hay una: primero se monta en tu cuenta de Cloudflare. */
   sinNube?: boolean
   /** Cuándo caduca su token (`Date.now()`), si la red lo dijo; y por qué falló la última renovación, si falló. */
@@ -1056,6 +1063,23 @@ export const NAVEGADOR_REDES = 'redes'
  */
 export const NAVEGADOR_VOZ = 'voz'
 
+/**
+ * Opciones → Navegador (`server/navegador-sistema.ts`): con qué abre v!d sus ventanas propias (la voz, las redes, Ideas) y
+ * dónde navega el agente. `chrome` (por omisión) y `edge`, el instalado, con un perfil de v!d; `integrado`, el agente en
+ * la ventana de v!d (las demás ventanas, con Chrome).
+ */
+export type PreferenciaNavegador = 'chrome' | 'edge' | 'integrado'
+export type MarcaNavegador = 'chrome' | 'edge'
+
+export interface OpcionNavegador {
+  preferencia: PreferenciaNavegador
+  /** La ruta de Chrome instalado, o `null` si no se encontró. */
+  chrome: string | null
+  edge: string | null
+  /** El que abre de verdad las ventanas propias de v!d con esa preferencia; `null` si no hay ninguno. */
+  usa: MarcaNavegador | null
+}
+
 /** Una voz de AI Studio: su nombre allí (`Fola`), cómo suena y el grupo en que la pone la página (`Podcast`). */
 export interface VozStudio {
   nombre: string
@@ -1077,6 +1101,10 @@ export interface EstadoVoz {
   proveedor?: 'gemini' | 'elevenlabs'
   /** Hay llave de ElevenLabs: sus voces se piden a `/api/avatar/elevenlabs/voces`. */
   elevenlabs?: boolean
+  /** El navegador donde se entra con Google (`Chrome` o `Edge`). */
+  navegador?: string
+  /** Se pasó a Chrome y su perfil aún no tiene la sesión: hay que entrar una vez en Chrome. */
+  entrarEnChrome?: boolean
 }
 
 /**
