@@ -2,76 +2,108 @@
   "poses": {
     "normal": {
       "cerrada": "perro/normal.webp",
-      "abierta": "perro/normal-abierta.webp"
+      "abierta": "perro/normal-abierta.webp",
+      "media": "perro/normal-media.webp",
+      "o": "perro/normal-o.webp"
     },
     "acostado": {
       "cerrada": "perro/acostado.webp",
-      "abierta": "perro/acostado-abierta.webp"
+      "abierta": "perro/acostado-abierta.webp",
+      "media": "perro/acostado-media.webp",
+      "o": "perro/acostado-o.webp"
     },
     "arriba": {
       "cerrada": "perro/arriba.webp",
-      "abierta": "perro/arriba-abierta.webp"
+      "abierta": "perro/arriba-abierta.webp",
+      "media": "perro/arriba-media.webp",
+      "o": "perro/arriba-o.webp"
     },
     "billetes": {
       "cerrada": "perro/billetes.webp",
-      "abierta": "perro/billetes-abierta.webp"
+      "abierta": "perro/billetes-abierta.webp",
+      "media": "perro/billetes-media.webp",
+      "o": "perro/billetes-o.webp"
     },
     "cartel": {
       "cerrada": "perro/cartel.webp",
-      "abierta": "perro/cartel-abierta.webp"
+      "abierta": "perro/cartel-abierta.webp",
+      "media": "perro/cartel-media.webp",
+      "o": "perro/cartel-o.webp"
     },
     "celular": {
       "cerrada": "perro/celular.webp",
-      "abierta": "perro/celular-abierta.webp"
+      "abierta": "perro/celular-abierta.webp",
+      "media": "perro/celular-media.webp",
+      "o": "perro/celular-o.webp"
     },
     "feliz": {
       "cerrada": "perro/feliz.webp"
     },
     "ladea": {
       "cerrada": "perro/ladea.webp",
-      "abierta": "perro/ladea-abierta.webp"
+      "abierta": "perro/ladea-abierta.webp",
+      "media": "perro/ladea-media.webp",
+      "o": "perro/ladea-o.webp"
     },
     "lado": {
       "cerrada": "perro/lado.webp",
-      "abierta": "perro/lado-abierta.webp"
+      "abierta": "perro/lado-abierta.webp",
+      "media": "perro/lado-media.webp",
+      "o": "perro/lado-o.webp"
     },
     "ladra": {
       "cerrada": "perro/ladra.webp"
     },
     "lentes": {
       "cerrada": "perro/lentes.webp",
-      "abierta": "perro/lentes-abierta.webp"
+      "abierta": "perro/lentes-abierta.webp",
+      "media": "perro/lentes-media.webp",
+      "o": "perro/lentes-o.webp"
     },
     "llave": {
       "cerrada": "perro/llave.webp",
-      "abierta": "perro/llave-abierta.webp"
+      "abierta": "perro/llave-abierta.webp",
+      "media": "perro/llave-media.webp",
+      "o": "perro/llave-o.webp"
     },
     "lupa": {
       "cerrada": "perro/lupa.webp",
-      "abierta": "perro/lupa-abierta.webp"
+      "abierta": "perro/lupa-abierta.webp",
+      "media": "perro/lupa-media.webp",
+      "o": "perro/lupa-o.webp"
     },
     "moneda": {
       "cerrada": "perro/moneda.webp",
-      "abierta": "perro/moneda-abierta.webp"
+      "abierta": "perro/moneda-abierta.webp",
+      "media": "perro/moneda-media.webp",
+      "o": "perro/moneda-o.webp"
     },
     "pata": {
       "cerrada": "perro/pata.webp",
-      "abierta": "perro/pata-abierta.webp"
+      "abierta": "perro/pata-abierta.webp",
+      "media": "perro/pata-media.webp",
+      "o": "perro/pata-o.webp"
     },
     "reojo": {
       "cerrada": "perro/reojo.webp",
-      "abierta": "perro/reojo-abierta.webp"
+      "abierta": "perro/reojo-abierta.webp",
+      "media": "perro/reojo-media.webp",
+      "o": "perro/reojo-o.webp"
     },
     "susto": {
       "cerrada": "perro/susto.webp"
     },
     "tapa": {
       "cerrada": "perro/tapa.webp",
-      "abierta": "perro/tapa-abierta.webp"
+      "abierta": "perro/tapa-abierta.webp",
+      "media": "perro/tapa-media.webp",
+      "o": "perro/tapa-o.webp"
     },
     "triste": {
       "cerrada": "perro/triste.webp",
-      "abierta": "perro/triste-abierta.webp"
+      "abierta": "perro/triste-abierta.webp",
+      "media": "perro/triste-media.webp",
+      "o": "perro/triste-o.webp"
     }
   },
   "anclas": {

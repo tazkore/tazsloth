@@ -6,13 +6,17 @@ import { DATOS } from '../secretos.ts'
 /** Las preferencias de voz y avatar (`data/avatar/config.json`): nada secreto. */
 export interface ConfigAvatar {
   /** El proveedor de voz cuando el agente no pide uno ni la línea `Voz:` lo dice. */
-  vozProveedor: 'gemini' | 'elevenlabs'
+  vozProveedor: 'gemini' | 'elevenlabs' | 'chatterbox'
   /** La voz de ElevenLabs por omisión (su id). */
   vozElevenlabs?: string
   /** El modelo de ElevenLabs. Multilingüe por omisión. */
   modeloElevenlabs?: string
   /** La carpeta de ComfyUI (la que tiene `main.py`) si no es la que instaló v!d. */
   comfyRaiz?: string
+  /** La carpeta del entorno de Python de Chatterbox (la que tiene `Scripts\python.exe`) si no es `C:\vid-ia\chatterbox`. */
+  chatterboxRaiz?: string
+  /** El audio de referencia (10 a 20 s) con que Chatterbox clona la voz, si el agente no pasa otro. */
+  chatterboxReferencia?: string
 }
 
 export const MODELO_ELEVENLABS = 'eleven_multilingual_v2'

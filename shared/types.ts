@@ -1116,7 +1116,7 @@ export interface EstadoVoz {
   enFila: number
   error?: string
   /** El proveedor por omisión de Opciones → Avatares y voz. */
-  proveedor?: 'gemini' | 'elevenlabs'
+  proveedor?: 'gemini' | 'elevenlabs' | 'chatterbox'
   /** Hay llave de ElevenLabs: sus voces se piden a `/api/avatar/elevenlabs/voces`. */
   elevenlabs?: boolean
   /** El navegador donde se entra con Google (`Chrome` o `Edge`). */

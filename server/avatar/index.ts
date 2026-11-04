@@ -12,6 +12,7 @@ import * as comfy from './comfy.ts'
 import * as inst from './comfy-instalar.ts'
 import { guardarConfig, leerConfig } from './config.ts'
 import * as eleven from './elevenlabs.ts'
+import { estadoLatentSync, estadosLocales } from './local.ts'
 import { FLUJOS, descargaGB, flujoDe, importarFlujo, leerFlujo, prepararFlujo } from './flujos.ts'
 import * as hey from './heygen.ts'
 import { type NombreLlave, finalLlave, guardarLlave, leerLlave } from './llaves.ts'
@@ -110,6 +111,7 @@ export function avatar(opts: OpcionesAvatar) {
       codex: [codexListo, codexListo ? 'Codex conectado.' : 'Conecta Codex en Opciones → Agentes.']
     }
     return {
+      locales: await estadosLocales(datos, f),
       motores: MOTORES.map((m) => ({ ...m, listo: detalles[m.id][0], detalle: detalles[m.id][1] })),
       comfy: comfyEstado,
       flujos,
@@ -169,6 +171,11 @@ export function avatar(opts: OpcionesAvatar) {
     const audio = existente(p.audio, 'audio')
     const id = elegirFlujo(p)
     const def = flujoDe(id)!
+    // LatentSync está apagado hasta que se detecta instalado: el error dice qué falta, en vez de fallar a medias.
+    if (id === 'latentsync') {
+      const ls = estadoLatentSync(datos)
+      if (!ls.listo) throw new Error(ls.texto)
+    }
     const guardado = leerFlujo(id, datos)
     if (!guardado) throw new Error(`El flujo ${def.nombre} aún no tiene su JSON: ábrelo en ComfyUI, expórtalo en formato API e impórtalo en Opciones → Avatares y voz.`)
     if (!(await comfy.detectar(comfy.BASE_COMFY, f))) {
@@ -303,7 +310,12 @@ export function avatar(opts: OpcionesAvatar) {
         if (metodo === 'GET') return enviar(200, leerConfig(datos))
         const d = await cuerpo<Record<string, unknown>>(req)
         const cambios: Record<string, unknown> = {}
-        if (d.vozProveedor === 'gemini' || d.vozProveedor === 'elevenlabs') cambios.vozProveedor = d.vozProveedor
+        if (d.vozProveedor === 'gemini' || d.vozProveedor === 'elevenlabs' || d.vozProveedor === 'chatterbox') cambios.vozProveedor = d.vozProveedor
+        if (typeof d.chatterboxRaiz === 'string') {
+          if (d.chatterboxRaiz && !existsSync(join(d.chatterboxRaiz, 'Scripts', 'python.exe'))) return enviar(400, { error: 'Esa carpeta no tiene Scripts\\python.exe: elige la carpeta del entorno de Chatterbox (C:\\vid-ia\\chatterbox).' })
+          cambios.chatterboxRaiz = d.chatterboxRaiz
+        }
+        if (typeof d.chatterboxReferencia === 'string') cambios.chatterboxReferencia = d.chatterboxReferencia
         if (typeof d.vozElevenlabs === 'string') cambios.vozElevenlabs = d.vozElevenlabs
         if (typeof d.comfyRaiz === 'string') {
           if (d.comfyRaiz && !existsSync(join(d.comfyRaiz, 'main.py'))) return enviar(400, { error: 'Esa carpeta no tiene main.py: elige la carpeta ComfyUI (la de adentro del portable).' })

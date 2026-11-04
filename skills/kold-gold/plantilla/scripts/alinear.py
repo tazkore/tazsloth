@@ -235,15 +235,11 @@ def remendar(v16: Path, palabras: list[dict]) -> list[dict]:
 
 def nivel_por_cuadro(wav: Path) -> list[float]:
     # La voz masterizada viene en 24 bits: FFmpeg la da en 16 bits y mono, más fácil de leer.
-    sr = 48000
-    pcm = subprocess.run(["ffmpeg", "-nostdin", "-v", "error", "-i", str(wav), "-ac", "1", "-ar", str(sr), "-f", "s16le", "-"],
-                         capture_output=True, check=True).stdout
-    datos = np.frombuffer(pcm, dtype=np.int16).astype(np.float32)
-    paso = sr // FPS
-    cuadros = len(datos) // paso
-    rms = np.sqrt((datos[: cuadros * paso].reshape(cuadros, paso) ** 2).mean(axis=1))
-    rms /= np.percentile(rms[rms > 0], 95) + 1e-9
-    return [round(float(v), 3) for v in np.clip(rms, 0, 1)]
+    # Ahora no es solo el nivel: scripts/bocas_voz.py decide la forma de la boca (cerrada, media, abierta u "o") con energia +
+    # centroide espectral, y la codifica en el mismo numero por cuadro (ver su docstring). Sin KG_BOCAS usa las 4 formas;
+    # KG_BOCAS=2 o 3 limita las formas, y Personaje.tsx cae a las fotos que la pose tenga.
+    import bocas_voz
+    return bocas_voz.boca_por_cuadro(wav, int(os.environ.get("KG_BOCAS", "4")), 48000, FPS)
 
 
 def solo_frases() -> None:
