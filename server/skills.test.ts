@@ -12,7 +12,37 @@ process.env.USERPROFILE = casa
 const originales = mkdtempSync(join(tmpdir(), 'vid-originales-'))
 mkdirSync(join(originales, 'video-base'))
 process.env.VID_SKILLS_ORIGINALES = originales
-const { configClaude, enlazarSkills, enlazarSkillsCodex, guardarSkillTuya, heredarSesion } = await import('./skills.ts')
+const { configClaude, enlazarSkills, enlazarSkillsCodex, guardarSkillTuya, heredarSesion, skillsDeClaude, SKILLS } = await import('./skills.ts')
+
+test('SKILLS son las de v!d (<app>/skills), no las de ~/.claude/skills', () => {
+  assert.equal(realpathSync(SKILLS), realpathSync(join(import.meta.dirname, '..', 'skills')))
+})
+
+test('skillsDeClaude: la de v!d gana a la de otra app con el mismo nombre, y se rehace sobre la carpeta de la 1.1.0', (t) => {
+  const raiz = mkdtempSync(join(tmpdir(), 'vid-skc-'))
+  t.after(() => rmSync(raiz, { recursive: true, force: true }))
+  const propias = join(raiz, 'app', 'skills')
+  const sloth = join(raiz, 'sloth', 'skills')
+  const usuario = join(raiz, 'usuario', 'skills')
+  for (const d of [join(propias, 'kold-gold'), join(propias, 'video-base'), join(sloth, 'kold-gold'), join(sloth, 'video-documental'), join(usuario, 'supabase')]) mkdirSync(d, { recursive: true })
+  writeFileSync(join(propias, 'kold-gold', 'SKILL.md'), '# v!d 1.1')
+  writeFileSync(join(sloth, 'kold-gold', 'SKILL.md'), '# sloth viejo')
+  // Como en la PC de Alan: ~/.claude/skills con uniones a otra app y skills propias.
+  for (const n of ['kold-gold', 'video-documental']) symlinkSync(join(sloth, n), join(usuario, n), 'junction')
+  const destino = join(raiz, 'data', 'claude', 'skills')
+  mkdirSync(join(raiz, 'data', 'claude'), { recursive: true })
+  // La 1.1.0 dejaba `skills` como unión a ~/.claude/skills: se quita la unión, no lo de adentro.
+  symlinkSync(usuario, destino, 'junction')
+  skillsDeClaude(propias, destino, usuario)
+  assert.deepEqual(readdirSync(destino).sort(), ['kold-gold', 'supabase', 'video-base', 'video-documental'])
+  assert.equal(readFileSync(join(destino, 'kold-gold', 'SKILL.md'), 'utf8'), '# v!d 1.1')
+  assert.equal(realpathSync(join(destino, 'supabase')), realpathSync(join(usuario, 'supabase')))
+  assert.equal(readFileSync(join(usuario, 'kold-gold', 'SKILL.md'), 'utf8'), '# sloth viejo', 'lo del usuario no se toca')
+  // Otra vez: igual. Y si una skill de v!d se va, su unión sale.
+  rmSync(join(propias, 'video-base'), { recursive: true })
+  skillsDeClaude(propias, destino, usuario)
+  assert.deepEqual(readdirSync(destino).sort(), ['kold-gold', 'supabase', 'video-documental'])
+})
 
 test('la configuración de Claude de v!d: en la que se vende, sus skills y la sesión de ~/.claude, sin settings, plugins ni hooks', (t) => {
   const raiz = mkdtempSync(join(tmpdir(), 'vid-config-'))
@@ -25,12 +55,16 @@ test('la configuración de Claude de v!d: en la que se vende, sus skills y la se
   writeFileSync(join(suya, 'CLAUDE.md'), 'reglas globales')
   writeFileSync(join(usuario, '.claude.json'), JSON.stringify({ oauthAccount: { emailAddress: 'a@b.c' }, userID: 'u', hasCompletedOnboarding: true, mcpServers: { x: {} }, projects: {} }))
   const app = join(raiz, 'app')
-  mkdirSync(join(app, 'skills'), { recursive: true })
+  mkdirSync(join(app, 'skills', 'kold-gold'), { recursive: true })
+  mkdirSync(join(suya, 'skills', 'mia'), { recursive: true })
 
   const dir = configClaude(app, true, suya)
   assert.equal(dir, join(app, 'data', 'claude'))
   assert.deepEqual(readdirSync(dir).sort(), ['.claude.json', '.credentials.json', 'projects', 'skills'])
-  assert.equal(realpathSync(join(dir, 'skills')), realpathSync(join(suya, 'skills')))
+  // Sus skills son las de v!d (gana la suya aunque el usuario tenga una con ese nombre) y, con otro nombre, las del usuario.
+  assert.deepEqual(readdirSync(join(dir, 'skills')).sort(), ['kold-gold', 'mia'])
+  assert.equal(realpathSync(join(dir, 'skills', 'kold-gold')), realpathSync(join(app, 'skills', 'kold-gold')))
+  assert.equal(realpathSync(join(dir, 'skills', 'mia')), realpathSync(join(suya, 'skills', 'mia')))
   assert.ok(existsSync(join(dir, 'projects', 'hilo-viejo')), 'los hilos de antes se pueden seguir')
   assert.deepEqual(JSON.parse(readFileSync(join(dir, '.claude.json'), 'utf8')), { oauthAccount: { emailAddress: 'a@b.c' }, userID: 'u', hasCompletedOnboarding: true })
   // Una vez: si ya hay sesión (otra cuenta, o el token ya se renovó aquí), no se pisa.

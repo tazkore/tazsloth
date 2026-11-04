@@ -56,7 +56,7 @@ import { mantenerVoz } from './voz-viva.ts'
 import { avisoDeVideos } from '../shared/limites.ts'
 import { eventosEnVivo } from './eventos-en-vivo.ts'
 import { enviarCliente } from './enviar-cliente.ts'
-import { cambiosDeCard, carpetaSkill, configClaude, duplicateCard, enlazarSkills, enlazarSkillsCodex, guardarSkillTuya, readCards, removeCard, seriesDe, SKILLS, skillRef, volverAOriginal } from './skills.ts'
+import { cambiosDeCard, carpetaSkill, configClaude, duplicateCard, enlazarSkillsCodex, skillsDeClaude, guardarSkillTuya, readCards, removeCard, seriesDe, SKILLS, skillRef, volverAOriginal } from './skills.ts'
 import { estaticos } from './estaticos.ts'
 import { type Agente, version } from './version.ts'
 import { cargarPreciosCodex } from './precios.ts'
@@ -76,7 +76,7 @@ const ATTACHMENT_TYPES: Record<string, string> = { ...IMAGE_TYPES, '.wav': 'audi
 const RESTART = 75
 // Los scripts de las skills buscan aquí los procesos del Python de v!d (`vid.py`); sin esto, los de la app de la skill.
 process.env.VID_PROCESOS ??= process.env.SLOTH_PROCESOS ?? join(APP, 'python', 'procesos')
-// Y aquí las skills (`video-base`, la suya): sin esto, en ~/.claude/skills, que en la app que se vende es lo mismo.
+// Y aquí las skills (`video-base`, la suya): las de v!d, `<app>/skills` (v1.1.1), nunca las de ~/.claude/skills.
 process.env.VID_SKILLS ??= SKILLS
 // Y aquí, este servidor: el MCP de la voz (`server/voz/mcp.mjs`) y los scripts que piden algo a v!d.
 process.env.VID_URL = `http://127.0.0.1:${PORT}`
@@ -91,13 +91,12 @@ process.env.VID_TOKEN = TOKEN
 // Fuera de Windows, las llaves de Opciones guardadas (cifradas) pasan al entorno.
 cargarVariables()
 if (VENTA) {
-  // La app que se vende trae sus skills: las enlaza en ~/.claude/skills, y Codex las lee de esas mismas carpetas, no de
-  // copias suyas.
-  enlazarSkills(APP)
+  // La app que se vende usa siempre sus skills (`<app>/skills`, v1.1.1): Claude, desde su configuración (`configClaude`,
+  // abajo), y Codex, enlazadas a ellas en sus carpetas. En ~/.claude ya no escribe.
   enlazarSkillsCodex(APP)
 }
-// Claude usa siempre la configuración propia de v!d (`configClaude`): solo las skills (las del repo, o las de
-// ~/.claude/skills en la que se vende) y la sesión, sin los plugins, hooks, CLAUDE.md ni MCP del Claude Code del usuario.
+// Claude usa siempre la configuración propia de v!d (`configClaude`): solo las skills (las de v!d; en la que se vende,
+// también las del usuario con otro nombre) y la sesión, sin los plugins, hooks, CLAUDE.md ni MCP del Claude Code del usuario.
 // Un `CLAUDE_CONFIG_DIR` ya puesto manda. A Codex se le pasa siempre la ruta de la skill.
 process.env.CLAUDE_CONFIG_DIR ??= configClaude(APP)
 
@@ -250,7 +249,7 @@ watch(CARDS, () => broadcast({ type: 'cards', cards: cards() }))
 // Y si «Nuevo estilo» hizo uno: su skill se enlaza donde la buscan Claude y Codex antes del primer hilo con su card.
 watch(dirname(CARDS_TUYAS), (_, archivo) => {
   if (archivo !== basename(CARDS_TUYAS)) return
-  if (VENTA) enlazarSkills(APP), enlazarSkillsCodex(APP)
+  if (VENTA) skillsDeClaude(join(APP, 'skills'), join(APP, 'data', 'claude', 'skills')), enlazarSkillsCodex(APP)
   broadcast({ type: 'cards', cards: cards() })
 })
 

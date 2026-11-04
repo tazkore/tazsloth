@@ -397,3 +397,22 @@ Unión de `v11-importar`, `v11-marca`, `v11-optimiza` y `v11-avatar` en `tazkore
   Pruebas: `server/datos-fuera.test.ts`.
 
 Verificación: `npm run typecheck` sin errores; `npm test` 377/377.
+
+## v1.1.1 — La instalada usa siempre sus propias skills (4 nov 2026)
+
+En la PC de Alan, `~/.claude/skills` tenía `kold-gold`, `video-base`, `video-el-diff`, `video-explicativo`, etc. como
+uniones a un build viejo de Sloth (`C:\sloth\dist\…`, del 1 de noviembre). La 1.1.0 instalada buscaba ahí sus skills
+(`SKILLS = ~/.claude/skills`) y `enlazarSkills` no pisaba lo que ya estaba: «Con tus cambios (47)» contaba las
+diferencias con Sloth, a Codex y a los scripts (`VID_SKILLS`) les llegaban las de Sloth.
+
+- `server/skills.ts`: `SKILLS` es siempre `<app>/skills` (la carpeta con `cards.json`, en el repo y en la que se vende;
+  `VID_SKILLS` sigue mandando). De ahí salen «Con tus cambios», la ruta de la skill que se le pasa a Codex y `VID_SKILLS`.
+- `skillsDeClaude`: en la que se vende, `data\claude\skills` (la de `CLAUDE_CONFIG_DIR`) es una carpeta con una unión por
+  skill: las de v!d y, con otro nombre, las del usuario en `~/.claude/skills` (se siguen pudiendo usar). Con el mismo
+  nombre gana la de v!d. Si era una unión a toda una carpeta (la 1.1.0), se quita solo la unión. Corre al arrancar
+  (`configClaude`) y cuando «Nuevo estilo» hace uno.
+- `enlazarSkillsCodex` enlaza las de `<app>/skills`, no las de `~/.claude/skills`. v!d ya no escribe en `~/.claude`
+  (`enlazarSkills` ya no se llama). `guardarSkillTuya` quita la unión de `data\claude\skills`.
+- Pruebas nuevas en `server/skills.test.ts` (la de v!d gana a la de otra app, uniones rotas, la carpeta de la 1.1.0).
+
+Verificación: `npm run typecheck` sin errores; `npm test` 379/379.

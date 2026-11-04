@@ -10,21 +10,32 @@ import { carpetaTrabajo } from './trabajo.ts'
 import { cambiosDe, nombreCopia, respaldar, restaurar } from './originales.ts'
 
 /**
- * Donde los agentes buscan las skills. En la app que se vende, ~/.claude/skills, donde las enlaza `enlazarSkills`. Desde
- * el repo, las del repo. Las dos tienen su propia configuración de Claude (`configClaude`): ninguna carga lo que el
- * usuario tiene en ~/.claude para su propio Claude Code. `VID_SKILLS`, si ya viene
- * puesta, manda (las pruebas imitan así la app que se vende).
+ * La carpeta de la app: la primera de arriba con `cards.json` (en el repo, la raíz; en la que se vende, `app\`, también
+ * desde `server/radar/rastrear.mjs`).
  */
-/** Donde la app que se vende enlaza sus skills (`enlazarSkills`, `enlazarSkillsCodex`): la carpeta de Claude del usuario. */
+function raizApp(desde = dirname(fileURLToPath(import.meta.url))): string {
+  let dir = desde
+  for (let i = 0; i < 4; i++, dir = dirname(dir)) if (existsSync(join(dir, 'cards.json'))) return dir
+  return resolve(desde, '..')
+}
+
+/**
+ * Donde los agentes buscan las skills: SIEMPRE las de v!d, `<app>/skills`, en el repo y en la que se vende (v1.1.1).
+ * Hasta la 1.1.0, la que se vende las buscaba en ~/.claude/skills, y si ahí ya había una con el mismo nombre (la de otra
+ * app, como Sloth) usaba esa: los videos salían con skills viejas y «Con tus cambios» contaba sus diferencias.
+ * `VID_SKILLS`, si ya viene puesta, manda (las pruebas imitan así otra carpeta).
+ */
+export const SKILLS = process.env.VID_SKILLS || process.env.SLOTH_SKILLS || join(raizApp(), 'skills')
+/** Las skills del Claude Code del usuario: las que no son de v!d se pueden usar en los hilos, sin pisar las de v!d. */
 const CASA = join(homedir(), '.claude', 'skills')
-export const SKILLS = process.env.VID_SKILLS || process.env.SLOTH_SKILLS || (VENTA ? CASA : resolve(dirname(fileURLToPath(import.meta.url)), '..', 'skills'))
 
 /**
  * La configuración de Claude propia de v!d (`CLAUDE_CONFIG_DIR`), en `<app>/data/claude`, tanto en el repo como en la app
  * que se vende (v1.1). Antes, la instalada usaba ~/.claude, la del Claude Code del usuario, y cada hilo cargaba lo suyo:
  * sus plugins y hooks (el GateGuard de ECC bloqueó ~90 llamadas en un video), su CLAUDE.md global y sus MCP, en cada una
  * de las ~400 llamadas de un video. Aquí solo están las skills, enlazadas: en el repo, a las del repo; en la que se vende,
- * a ~/.claude/skills (`CASA`), donde `enlazarSkills` deja las suyas y `guardarSkillTuya` las de cada quien.
+ * `skills` es una carpeta con una unión por skill (`skillsDeClaude`): las de v!d (`<app>/skills`) y, con otro nombre, las
+ * del usuario en ~/.claude/skills. Con el mismo nombre gana la de v!d.
  *
  * La sesión no se pierde: en la que se vende, la primera vez se copian de ~/.claude solo las credenciales y la cuenta
  * (`heredarSesion`), nunca settings, plugins ni hooks; y `projects` apunta a ~/.claude/projects, para que los hilos de
@@ -33,12 +44,68 @@ export const SKILLS = process.env.VID_SKILLS || process.env.SLOTH_SKILLS || (VEN
 export function configClaude(app: string, venta = VENTA, casa = join(homedir(), '.claude')): string {
   const dir = join(app, 'data', 'claude')
   mkdirSync(dir, { recursive: true })
-  enlazar(venta ? join(casa, 'skills') : join(app, 'skills'), join(dir, 'skills'))
+  if (venta) skillsDeClaude(join(app, 'skills'), join(dir, 'skills'), join(casa, 'skills'))
+  else enlazar(join(app, 'skills'), join(dir, 'skills'))
   if (venta) {
     if (existsSync(join(casa, 'projects'))) enlazar(join(casa, 'projects'), join(dir, 'projects'))
     heredarSesion(dir, casa)
   }
   return dir
+}
+
+const esEnlace = (ruta: string) => {
+  try {
+    return lstatSync(ruta).isSymbolicLink()
+  } catch {
+    return false
+  }
+}
+
+/**
+ * La carpeta `skills` de la configuración de Claude de v!d (`destino`): una unión por cada skill de v!d (`propias`) y, con
+ * otro nombre, por cada una del usuario (`delUsuario`, ~/.claude/skills). Las de v!d ganan: una unión con su nombre que
+ * apuntaba a otro lado se cambia. Si `destino` era una unión a toda una carpeta (la 1.1.0 apuntaba a ~/.claude/skills),
+ * se quita solo la unión. Las uniones que se quedaron sin destino salen. Nunca borra contenido. Se puede llamar siempre.
+ */
+export function skillsDeClaude(propias: string, destino: string, delUsuario = CASA) {
+  try {
+    if (esEnlace(destino)) unlinkSync(destino)
+    mkdirSync(destino, { recursive: true })
+    const carpetas = (dir: string) => {
+      try {
+        return readdirSync(dir, { withFileTypes: true }).filter((d) => d.isDirectory() || (d.isSymbolicLink() && existsSync(join(dir, d.name)) && statSync(join(dir, d.name)).isDirectory())).map((d) => d.name)
+      } catch {
+        return []
+      }
+    }
+    const deVid = carpetas(propias)
+    const quiere = new Map<string, string>(deVid.map((n) => [n, join(propias, n)]))
+    for (const n of carpetas(delUsuario)) {
+      if (quiere.has(n)) continue
+      try {
+        quiere.set(n, realpathSync(join(delUsuario, n)))
+      } catch { /* Una unión rota del usuario: no se lleva. */ }
+    }
+    for (const n of readdirSync(destino)) {
+      const ruta = join(destino, n)
+      if (esEnlace(ruta) && (!existsSync(ruta) || !quiere.has(n))) unlinkSync(ruta)
+    }
+    for (const [n, origen] of quiere) {
+      const ruta = join(destino, n)
+      if (esEnlace(ruta)) {
+        if (existsSync(ruta) && realpathSync(ruta).toLowerCase() === realpathSync(origen).toLowerCase()) continue
+        unlinkSync(ruta)
+      } else if (existsSync(ruta)) {
+        // Una carpeta de verdad con ese nombre: solo se aparta si es de v!d (gana); si es del usuario, se queda.
+        if (!deVid.includes(n)) continue
+        mkdirSync(join(dirname(destino), 'skills-viejas'), { recursive: true })
+        renameSync(ruta, join(dirname(destino), 'skills-viejas', `${n}-${Date.now()}`))
+      }
+      symlinkSync(origen, ruta, 'junction')
+    }
+  } catch (error) {
+    console.error(`No se pudieron poner las skills de v!d en ${destino}: ${error instanceof Error ? error.message : error}`)
+  }
 }
 
 /** Una unión de `destino` a `origen`, si `destino` no existe aún. */
@@ -79,6 +146,8 @@ export function heredarSesion(dir: string, casa = join(homedir(), '.claude')): b
 }
 
 /**
+ * Desde la 1.1.1 v!d ya no la usa (sus hilos leen sus skills de su configuración, `skillsDeClaude`) ni escribe en
+ * ~/.claude; se queda para quien la llame a propósito.
  * La app que se vende trae sus skills en `<app>/skills`, y Claude las busca en ~/.claude/skills: enlaza ahí, con una
  * unión, cada una que falte. Las que ya están no se tocan, que pueden ser del usuario; solo se rehace la unión que apunta
  * a una carpeta que ya no existe (v!d se movió de sitio).
@@ -111,7 +180,8 @@ export function enlazarSkillsCodex(app: string, bases = basesCodex()) {
     mkdirSync(carpeta, { recursive: true })
     for (const nombre of readdirSync(join(app, 'skills'))) {
       // También las que no son una skill sino lo que comparten (`video-base`), que las demás leen a su lado.
-      const de = join(CASA, nombre)
+      // Las de v!d mismas (v1.1.1): antes, la de ~/.claude/skills, que podía ser la de otra app con ese nombre.
+      const de = join(app, 'skills', nombre)
       if (!existsSync(de) || !statSync(de).isDirectory()) continue
       const destino = join(carpeta, nombre)
       try {
@@ -141,7 +211,7 @@ const basesCodex = () => [process.env.CODEX_HOME || join(homedir(), '.codex'), j
  * Al borrar un estilo tuyo, su skill sale de `<app>/skills` a una copia en `data/skills-tuyas`, por si te arrepientes, y
  * se quitan los enlaces de Claude y Codex que se quedaron sin ella. Una que trae v!d no se toca. Devuelve la copia.
  */
-export function guardarSkillTuya(app: string, skill: string, datos: string, enlaces = VENTA ? [CASA, ...basesCodex().map((b) => join(b, 'skills'))] : []) {
+export function guardarSkillTuya(app: string, skill: string, datos: string, enlaces = VENTA ? [join(app, 'data', 'claude', 'skills'), ...basesCodex().map((b) => join(b, 'skills'))] : []) {
   const dir = join(app, 'skills', skill)
   if (!existsSync(dir) || (ORIGINALES && existsSync(join(ORIGINALES, skill)))) return undefined
   const copia = join(datos, 'skills-tuyas', nombreCopia(`estilo borrado ${skill}`))
