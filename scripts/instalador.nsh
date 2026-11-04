@@ -60,6 +60,9 @@
     ${GetOptions} $R0 "/S" $R1
     ${If} ${Errors}
       MessageBox MB_YESNO|MB_ICONQUESTION "¿Borrar también tus videos y tus hilos?$\n$\nSi dices que no, se quedan en $INSTDIR\app (carpetas «trabajo» y «data»)." IDNO quedan
+        ; Si son uniones a C:\vid-datos (server/datos-fuera.ts), RMDir sin /r quita solo la unión: lo de fuera se queda.
+        RMDir "$INSTDIR\app\trabajo"
+        RMDir "$INSTDIR\app\data"
         RMDir /r "$INSTDIR\app\trabajo"
         RMDir /r "$INSTDIR\app\data"
       quedan:

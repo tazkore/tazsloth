@@ -24,6 +24,7 @@ import { opcionesClicDerecho } from './clic-derecho.ts'
 import { archivos, huella, huellas, nombreCopia, quitarViejos, respaldar } from '../server/originales.ts'
 import { MODELOS_VIEJOS } from './modelos-viejos.ts'
 import { migrarCarpeta, reescribirSesiones } from '../server/migrar.ts'
+import { enlazarFuera } from '../server/datos-fuera.ts'
 import { iniciarNavegador, ventanaDelNavegador } from './navegador.ts'
 
 /** En el repo: la dirección del servidor que ya levantó `npm start`. */
@@ -42,6 +43,18 @@ if (!WINDOWS && !SOLO_VENTANA) {
 /** La carpeta de vid-koldgold.exe. */
 const RAIZ = dirname(process.execPath)
 const APP = SOLO_VENTANA ? (process.env.VID_APP ?? process.env.SLOTH_APP ?? process.cwd()) : WINDOWS ? join(RAIZ, 'app') : DATOS
+/**
+ * v1.1: en Windows, con `C:\vid-datos` (o `VID_DATOS` y `VID_TRABAJO`), `app\data` y `app\trabajo` son uniones a las de
+ * fuera, antes de que nada las abra (server/datos-fuera.ts). Lo que hizo se anota en el registro al abrirlo.
+ */
+const FUERA: string[] = []
+if (WINDOWS && !SOLO_VENTANA) {
+  try {
+    FUERA.push(...enlazarFuera(APP))
+  } catch (e) {
+    FUERA.push(`No pude poner tus datos en C:\\vid-datos: ${e instanceof Error ? e.message : e}`)
+  }
+}
 const REGISTRO = join(APP, 'data', 'vid.log')
 /** Dónde se dejó la ventana. */
 const LUGAR = join(APP, 'data', 'ventana.json')
@@ -85,6 +98,7 @@ async function iniciar() {
   if (SOLO_VENTANA) return
   mkdirSync(join(APP, 'data'), { recursive: true })
   registro = createWriteStream(REGISTRO)
+  for (const f of FUERA) anotar(f)
   process.on('uncaughtException', (e) => anotar(e.stack ?? e.message))
   try {
     if (!WINDOWS) await prepararApp()

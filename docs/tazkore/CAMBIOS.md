@@ -379,4 +379,21 @@ Pendiente de medir: el efecto de Opus medium en la calidad del hilo de Kold Gold
 | Instalador que Alan correrá cuando lo autorice (sin `-Autorizado` solo muestra el plan): ComfyUI portátil en `C:\vid-ia\ComfyUI` + nodo LatentSync + checkpoints 1.5; venv `C:\vid-ia\chatterbox` con Python 3.11, torch CUDA y chatterbox-tts. Ventanas minimizadas en la pantalla 2, registros en `C:\vid-ia\logs` | `scripts/instalar-ia-local.ps1` (nuevo) |
 | Pruebas con fetch simulado | `server/avatar-local.test.ts` (nuevo) |
 
-Pendiente: el campo de Opciones para `chatterboxRaiz` (el backend ya lo guarda; `Opciones.tsx` lo toca otro cambio) y probar LatentSync y Chatterbox contra los motores reales, que no se han instalado.
+Pendiente: probar LatentSync y Chatterbox contra los motores reales, que no se han instalado.
+
+## v1.1.0 — Entrega (4 nov 2026)
+
+Unión de `v11-importar`, `v11-marca`, `v11-optimiza` y `v11-avatar` en `tazkore`, y:
+
+- Opciones → Avatares y voz: estado de LatentSync y Chatterbox (`EstadoAvatar.locales`: «No instalado: …»), campos
+  «Carpeta de Chatterbox» (`chatterboxRaiz`) y «Voz de referencia» (`chatterboxReferencia`), que guarda
+  `/api/avatar/config`, y Chatterbox en el proveedor de voz (`web/src/Avatar.tsx`).
+- Datos fuera de la carpeta del programa (`server/datos-fuera.ts`): en Windows, si existe `C:\vid-datos` (o con
+  `VID_DATOS` y `VID_TRABAJO`), la ventana instalada (`electron/main.ts`) pone `app\data` y `app\trabajo` como uniones a
+  `C:\vid-datos\data` y `C:\vid-datos\trabajo` antes de abrir nada. Lo que hubiera dentro se mueve a la de fuera si está
+  vacía; si las dos tienen algo, la de dentro se aparta (`*.antes-de-vid-datos-<fecha>`). `carpetaTrabajo` de la
+  instalada usa la de fuera, así los hilos tienen el mismo `cwd` que en el repo y sus sesiones de Claude la misma carpeta
+  en `data\claude\projects`. El desinstalador quita primero solo la unión (`RMDir` sin `/r`): lo de `C:\vid-datos` se queda.
+  Pruebas: `server/datos-fuera.test.ts`.
+
+Verificación: `npm run typecheck` sin errores; `npm test` 377/377.

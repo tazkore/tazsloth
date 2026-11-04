@@ -206,11 +206,59 @@ function FilaFlujo({ f, uso, comfyListo }: { f: FlujoInfo; uso: UsoAvatar; comfy
   )
 }
 
+/** Un campo de ruta que se guarda con su botón (vacío vuelve al valor por omisión). */
+function CampoRuta({ titulo, ayuda, valor, placeholder, guardar }: { titulo: string; ayuda: string; valor: string | undefined; placeholder: string; guardar(v: string): Promise<unknown> }) {
+  const [texto, setTexto] = useState(valor ?? '')
+  const [guardando, setGuardando] = useState(false)
+  useEffect(() => setTexto(valor ?? ''), [valor])
+  const cambiado = texto.trim() !== (valor ?? '')
+  return (
+    <div className="fila">
+      <div className="fila-nombre">
+        <strong>{titulo}</strong>
+        <span>{ayuda}</span>
+      </div>
+      <div className="av-acciones">
+        <input style={{ padding: '7px 11px', borderRadius: 8, background: 'var(--panel)', border: '1px solid var(--line)', minWidth: 220 }} placeholder={placeholder} value={texto} onChange={(x) => setTexto(x.target.value)} aria-label={titulo} />
+        <button className="ghost small" disabled={!cambiado || guardando} onClick={() => (setGuardando(true), void guardar(texto.trim()).finally(() => setGuardando(false)))}>
+          {guardando ? 'Guardando…' : 'Guardar'}
+        </button>
+      </div>
+    </div>
+  )
+}
+
+/** LatentSync y Chatterbox: si están instalados (`EstadoAvatar.locales`) y dónde está Chatterbox y su voz de referencia. */
+function MotoresLocales({ locales, config, guardar }: { locales: EstadoAvatar['locales'] | undefined; config: { chatterboxRaiz?: string; chatterboxReferencia?: string } | undefined; guardar(cambios: object): Promise<unknown> }) {
+  const estado = (l: EstadoAvatar['locales']['latentsync'] | undefined) => (!l ? 'Mirando…' : l.texto || (l.listo ? 'Instalado' : 'No instalado'))
+  return (
+    <div className="item">
+      <div className="fila">
+        <div className="fila-nombre">
+          <strong>LatentSync (labios en tu GPU)</strong>
+          <span className={locales?.latentsync.listo ? undefined : 'muted'}>{estado(locales?.latentsync)}</span>
+        </div>
+      </div>
+      <div className="fila">
+        <div className="fila-nombre">
+          <strong>Chatterbox (voz local)</strong>
+          <span className={locales?.chatterbox.listo ? undefined : 'muted'}>{estado(locales?.chatterbox)}</span>
+        </div>
+      </div>
+      <CampoRuta titulo="Carpeta de Chatterbox" ayuda="El entorno de Python de Chatterbox (la carpeta que tiene Scripts\python.exe). Vacío: C:\vid-ia\chatterbox." valor={config?.chatterboxRaiz} placeholder="C:\vid-ia\chatterbox" guardar={(v) => guardar({ chatterboxRaiz: v })} />
+      <CampoRuta titulo="Voz de referencia" ayuda="Un audio de 10 a 20 s con la voz que Chatterbox clona cuando el agente no pasa otro." valor={config?.chatterboxReferencia} placeholder="C:\ruta\a\mi-voz.wav" guardar={(v) => guardar({ chatterboxReferencia: v })} />
+      <div className="fila-extra">
+        <p className="av-nota">Los dos se quedan apagados hasta detectarlos instalados. Para instalarlos: scripts\instalar-ia-local.ps1 -Autorizado.</p>
+      </div>
+    </div>
+  )
+}
+
 /** Opciones → Avatares y voz. */
 export function AvatarOpciones() {
   const uso = useAvatar()
   const e = uso.estado
-  const [config, setConfig] = useState<{ vozProveedor: 'gemini' | 'elevenlabs'; vozElevenlabs?: string }>()
+  const [config, setConfig] = useState<{ vozProveedor: 'gemini' | 'elevenlabs' | 'chatterbox'; vozElevenlabs?: string; chatterboxRaiz?: string; chatterboxReferencia?: string }>()
   const [voces, setVoces] = useState<{ id: string; nombre: string; clon: boolean }[]>([])
   useEffect(() => void api<typeof config>('/api/avatar/config').then(setConfig, () => {}), [])
   useEffect(() => {
@@ -241,9 +289,18 @@ export function AvatarOpciones() {
           </div>
           <Picker
             className="acciones"
-            label={<span className="estado">{config?.vozProveedor === 'elevenlabs' ? 'ElevenLabs' : 'Google AI Studio'}</span>}
+            label={<span className="estado">{config?.vozProveedor === 'elevenlabs' ? 'ElevenLabs' : config?.vozProveedor === 'chatterbox' ? 'Chatterbox (local)' : 'Google AI Studio'}</span>}
             value={config?.vozProveedor ?? 'gemini'}
-            groups={[{ label: 'Proveedor', options: [{ value: 'gemini', label: 'Google AI Studio (Gemini TTS)' }, { value: 'elevenlabs', label: 'ElevenLabs' }] }]}
+            groups={[
+              {
+                label: 'Proveedor',
+                options: [
+                  { value: 'gemini', label: 'Google AI Studio (Gemini TTS)' },
+                  { value: 'elevenlabs', label: 'ElevenLabs' },
+                  { value: 'chatterbox', label: e.locales?.chatterbox.listo ? 'Chatterbox (local, gratis)' : 'Chatterbox (local, no instalado)' }
+                ]
+              }
+            ]}
             onChange={(v) => void guardarConfig({ vozProveedor: v })}
           />
         </div>
@@ -264,6 +321,7 @@ export function AvatarOpciones() {
           </div>
         )}
       </div>
+      <MotoresLocales locales={e.locales} config={config} guardar={guardarConfig} />
       <LlaveAvatar nombre="elevenlabs" titulo="ElevenLabs" para="Voz multilingüe y tus clones (como «Tazkore IA»). Sale como WAV de 24 kHz, igual que AI Studio." ayuda="Pega tu API key de ElevenLabs." url="https://elevenlabs.io/app/settings/api-keys" final={e.elevenlabs.llave} uso={uso} />
       <LlaveAvatar nombre="heygen" titulo="HeyGen" para="Avatares y videos con su API oficial. Cada video gasta créditos de tu plan de API." ayuda="Pega tu API key de HeyGen (platform.heygen.com)." url="https://platform.heygen.com/api-keys" final={e.heygen.llave} uso={uso} />
       <div className="item">
