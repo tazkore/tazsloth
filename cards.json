@@ -144,7 +144,37 @@
         "listo": "{portada.png,portada/*.png}",
         "fase": "entrega"
       }
-    ]
+    ],
+    "modelos": {
+      "principal": {
+        "model": "claude-opus-5-5",
+        "effort": "medium",
+        "medido": "Sin medir en esta skill: elegido en v1.1 (noviembre de 2026) para bajar el costo; El Diff ya arma sus escenas en Opus medium"
+      },
+      "tareas": [
+        {
+          "nombre": "modelos",
+          "para": "Los modelos 3D que faltan, uno por subagente",
+          "model": "sonnet",
+          "effort": "high",
+          "medido": "Sin medir: antes iban con el modelo del hilo (Opus high); Sonnet high escribe three.js con su vista y su revisión"
+        },
+        {
+          "nombre": "subtítulos",
+          "para": "Marcar subtitulos.txt y traer los logos",
+          "model": "haiku",
+          "effort": "medium",
+          "medido": "Sin medir: es marcar texto que ya existe, sin cambiar palabras"
+        },
+        {
+          "nombre": "imágenes",
+          "para": "Mirar vistas, hojas del borrador y parecidos; devuelve solo texto",
+          "model": "sonnet",
+          "effort": "medium",
+          "medido": "Sin medir: las imágenes se quedan en su contexto, no en el del hilo, que las releía en cada llamada"
+        }
+      ]
+    }
   },
   {
     "id": "kold-gold",
@@ -190,7 +220,37 @@
         "listo": "{portada.png,portada/*.png}",
         "fase": "entrega"
       }
-    ]
+    ],
+    "modelos": {
+      "principal": {
+        "model": "claude-opus-5-5",
+        "effort": "medium",
+        "medido": "Sin medir en esta skill: elegido en v1.1 (noviembre de 2026) para bajar el costo; El Diff ya arma sus escenas en Opus medium"
+      },
+      "tareas": [
+        {
+          "nombre": "modelos",
+          "para": "Los modelos 3D que faltan, uno por subagente",
+          "model": "sonnet",
+          "effort": "high",
+          "medido": "Sin medir: antes iban con el modelo del hilo (Opus high); Sonnet high escribe three.js con su vista y su revisión"
+        },
+        {
+          "nombre": "subtítulos",
+          "para": "Marcar subtitulos.txt y traer los logos",
+          "model": "haiku",
+          "effort": "medium",
+          "medido": "Sin medir: es marcar texto que ya existe, sin cambiar palabras"
+        },
+        {
+          "nombre": "imágenes",
+          "para": "Mirar vistas, hojas del borrador y parecidos; devuelve solo texto",
+          "model": "sonnet",
+          "effort": "medium",
+          "medido": "Sin medir: las imágenes se quedan en su contexto, no en el del hilo, que las releía en cada llamada"
+        }
+      ]
+    }
   },
   {
     "id": "reel-collage",

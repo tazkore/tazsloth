@@ -21,6 +21,8 @@ Final (~2 min):
    menos con 6 Chrome y con 2 (el codificador deja de quitarle procesador al dibujo) y pesa un 33 % más.
    Antes se renderizaba y se volvía a codificar con ffmpeg: medido en el de Celsius, directo tarda 36 s menos y se
    parece más a los cuadros sin comprimir (PSNR 45.7 contra 42.2).
+   Luego le pone música bajo la voz, sin tocar la imagen (`musica`): la de `fuentes/musica/` o una sintetizada
+   (video-base/scripts/musica.py); `--sin-musica` la quita.
 2. Pasa comprobar.mjs de video-base: tamaño, fps, sonoridad, pico, negros, arranque. Si algo sale con ✘, falla.
 3. Mide el centro de la pantalla (medir.py): cuánto tiempo está quieto, cuánto se mueve y qué tan lleno está.
 4. Guarda su huella con su hoja (huellas.py de video-base): los siguientes videos se comparan con él.
@@ -75,8 +77,8 @@ def borrador(raiz: Path, mitad: str | None) -> None:
         render(raiz, out / "borrador-a.mp4", *opciones, "--mitad=1")
         hoja(raiz, out / "borrador-a.mp4", raiz / "revision" / "borrador-1.png", "--cada", "2")
         if mitad == "1":
-            print("\nLanza ya `final.py --borrador 2` en segundo plano y, mientras, mira revision/borrador-1.png entera; "
-                  "anota los arreglos y hazlos cuando termine el 2.")
+            print("\nLanza ya `final.py --borrador 2` en segundo plano y, mientras, que un subagente `imágenes` revise "
+                  "revision/borrador-1.png entera y te diga en texto los arreglos; hazlos cuando termine el 2.")
             return
     render(raiz, out / "borrador-b.mp4", *opciones, "--mitad=2")
     lista = out / "borrador.txt"
@@ -87,12 +89,49 @@ def borrador(raiz: Path, mitad: str | None) -> None:
     hoja(raiz, video, raiz / "revision" / "borrador-2.png", "--cada", "2", "--desde", desde)
     correr(sys.executable, "-B", "-X", "utf8", str(BASE / "huellas.py"), "parecidos", str(SKILL), str(video))
     print()
-    print("Mira las dos hojas enteras: cada momento cuando ya terminó de entrar, nada tapado ni cortado, nada que asome.")
+    print("Que un subagente `imágenes` revise cada hoja entera (no la abras tú): cada momento cuando ya terminó de "
+          "entrar, nada tapado ni cortado, nada que asome; que conteste en texto, celda por celda.")
+
+
+AUDIO = {".wav", ".mp3", ".m4a", ".aac", ".ogg", ".opus", ".flac"}
+# La música, en LUFS: unos 20 LU bajo la voz (−14), y el ducking la aparta más mientras ella habla.
+NIVEL_MUSICA = -34
+
+
+def musica(raiz: Path, video: Path) -> None:
+    """
+    Le pone música bajo la voz, sin tocar la imagen (`-c:v copy`): la primera pista de `fuentes/musica/` o, si no hay,
+    una sintetizada del largo del video (`video-base/scripts/musica.py`, libre de derechos), en `out/_musica.wav`. Va a
+    −34 LUFS y se aparta cuando habla la voz (`sidechaincompress`); un limitador deja el pico bajo −1 dBTP.
+    """
+    carpeta = raiz / "fuentes" / "musica"
+    pistas = sorted(p for p in carpeta.iterdir() if p.suffix.lower() in AUDIO) if carpeta.is_dir() else []
+    dur = duracion(video)
+    if pistas:
+        pista = pistas[0]
+    else:
+        pista = raiz / "out" / "_musica.wav"
+        correr(sys.executable, "-B", "-X", "utf8", str(BASE / "musica.py"), f"{dur:.3f}", str(pista))
+    filtros = (
+        f"[1:a]atrim=0:{dur:.3f},asetpts=N/SR/TB,aresample=48000,aformat=channel_layouts=stereo,"
+        f"loudnorm=I={NIVEL_MUSICA}:TP=-9:LRA=11,aresample=48000,afade=t=in:d=1.5,afade=t=out:st={max(dur - 2.5, 0):.3f}:d=2.5[m];"
+        "[0:a]aresample=48000,aformat=channel_layouts=stereo,asplit=2[v][sc];"
+        "[m][sc]sidechaincompress=threshold=0.02:ratio=6:attack=20:release=400[md];"
+        "[v][md]amix=inputs=2:duration=first:normalize=0,alimiter=limit=0.85:level=false[a]"
+    )
+    tmp = video.with_name(video.stem + ".musica-tmp.mp4")
+    correr("ffmpeg", "-nostdin", "-y", "-v", "error", "-i", str(video), "-stream_loop", "-1", "-i", str(pista),
+           "-filter_complex", filtros, "-map", "0:v", "-map", "[a]", "-c:v", "copy", "-c:a", "aac", "-b:a", "320k",
+           "-movflags", "+faststart", str(tmp))
+    tmp.replace(video)
+    print(f"música: {pista.name}, bajo la voz")
 
 
 def final(raiz: Path) -> None:
     video = raiz / "out" / f"{raiz.name}.mp4"
     render(raiz, video, "--crf=14", "--x264-preset=veryfast", "--pixel-format=yuv420p", "--color-space=bt709")
+    if "--sin-musica" not in sys.argv:
+        musica(raiz, video)
     tamano = "1920x1080" if horizontal(raiz) else "1080x1920"
     r = subprocess.run(["node", str(BASE / "comprobar.mjs"), str(video), "--tamano", tamano], capture_output=True, text=True, encoding="utf8")
     print(r.stdout[-1500:])

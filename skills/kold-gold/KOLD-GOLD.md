@@ -59,8 +59,11 @@ a la carga y a quien importa; Kold Gold aparece al final, como la consecuencia l
 - La voz de la hostess: mujer joven, cálida y dulce, ritmo ágil. Si el usuario manda la suya (Higgsfield, voz
   «Marisol»), va a `fuentes/voz/original.wav` a velocidad normal: aquí se acelera.
 - Si el guion cambia después de la voz, se regenera la voz entera, nunca por pedazos.
-- Master −14 LUFS / −1 dBTP, sin clips ni silencios de más de 0.4 s. Música solo si hay una pista libre de derechos en
-  `fuentes/musica/`, a −20 dB bajo la voz.
+- Master −14 LUFS / −1 dBTP, sin clips ni silencios de más de 0.4 s.
+- Música siempre, bajita: la primera pista libre de derechos de `fuentes/musica/` o, si no hay, una que `final.py`
+  sintetiza (`video-base/scripts/musica.py`: senos, ruido y filtros, sin muestras de nadie, del largo del video). Va
+  unos 20 LU bajo la voz y se aparta más cuando ella habla (ducking con `sidechaincompress`). `--sin-musica` la quita.
+- La voz no se apura: `acelerar.py` deja las pausas en 0.25 s y `atempo` en 1.05 (antes 0.18 s y 1.12).
 
 ## Entrega
 - Rechaza el borrador si ves el perro, un dato sin [PRIMARIA], colores fuera de paleta, objetos que se atraviesan,

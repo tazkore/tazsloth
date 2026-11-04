@@ -1,7 +1,10 @@
 """
-Acerca la voz al ritmo del estilo (224 palabras por minuto): acorta las pausas largas y la acelera un poco.
+Acerca la voz al ritmo del estilo: acorta las pausas largas y la acelera un poco, sin que suene apurada.
 
-    python -I -B scripts/acelerar.py <voz.wav> <voz.json de esa voz> [--tempo 1.12] [--pausa 0.18]
+    python -I -B scripts/acelerar.py <voz.wav> <voz.json de esa voz> [--tempo 1.05] [--pausa 0.25]
+
+Kold Gold (v1.1): `tempo` 1.05 y `pausa` 0.25 s. Con 1.12 y 0.18 s (los del explicativo, ~224 palabras por minuto) la
+voz de la anfitriona sonaba apurada y sin respiro.
 
 Va después de alinear.py: con los tiempos por palabra de esa voz, cada hueco de más de `pausa` segundos se acorta a
 `pausa`, cortando solo dentro del tramo callado que mide el propio audio (así no se come el final de una palabra que el
@@ -26,6 +29,8 @@ from alinear import BASE, nivel_por_cuadro  # noqa: E402
 
 SR = 48000
 RESPIRO = 20  # dB bajo la voz: lo que queda debajo (silencio y respiraciones) se puede quitar
+TEMPO = 1.05  # `atempo`: un poco más rápida, sin cambiar el tono (con 1.12 sonaba apurada)
+PAUSA = 0.25  # s que se dejan en cada pausa larga (con 0.18 no respiraba)
 
 
 def leer(wav: Path) -> np.ndarray:
@@ -73,8 +78,8 @@ def cortar(x: np.ndarray, quitar: list[tuple[int, int]]) -> np.ndarray:
 
 def main() -> None:
     opciones = sys.argv[1:]
-    tempo = float(opciones[opciones.index("--tempo") + 1]) if "--tempo" in opciones else 1.12
-    pausa = float(opciones[opciones.index("--pausa") + 1]) if "--pausa" in opciones else 0.18
+    tempo = float(opciones[opciones.index("--tempo") + 1]) if "--tempo" in opciones else TEMPO
+    pausa = float(opciones[opciones.index("--pausa") + 1]) if "--pausa" in opciones else PAUSA
     args = [a for k, a in enumerate(opciones) if not a.startswith("--") and (k == 0 or not opciones[k - 1].startswith("--"))]
     if len(args) != 2:
         sys.exit(__doc__)

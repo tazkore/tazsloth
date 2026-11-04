@@ -75,8 +75,8 @@ def borrador(raiz: Path, mitad: str | None) -> None:
         render(raiz, out / "borrador-a.mp4", *opciones, "--mitad=1")
         hoja(raiz, out / "borrador-a.mp4", raiz / "revision" / "borrador-1.png", "--cada", "2")
         if mitad == "1":
-            print("\nLanza ya `final.py --borrador 2` en segundo plano y, mientras, mira revision/borrador-1.png entera; "
-                  "anota los arreglos y hazlos cuando termine el 2.")
+            print("\nLanza ya `final.py --borrador 2` en segundo plano y, mientras, que un subagente `imágenes` revise "
+                  "revision/borrador-1.png entera y te diga en texto los arreglos; hazlos cuando termine el 2.")
             return
     render(raiz, out / "borrador-b.mp4", *opciones, "--mitad=2")
     lista = out / "borrador.txt"
@@ -87,7 +87,8 @@ def borrador(raiz: Path, mitad: str | None) -> None:
     hoja(raiz, video, raiz / "revision" / "borrador-2.png", "--cada", "2", "--desde", desde)
     correr(sys.executable, "-B", "-X", "utf8", str(BASE / "huellas.py"), "parecidos", str(SKILL), str(video))
     print()
-    print("Mira las dos hojas enteras: cada momento cuando ya terminó de entrar, nada tapado ni cortado, nada que asome.")
+    print("Que un subagente `imágenes` revise cada hoja entera (no la abras tú): cada momento cuando ya terminó de "
+          "entrar, nada tapado ni cortado, nada que asome; que conteste en texto, celda por celda.")
 
 
 def final(raiz: Path) -> None:
