@@ -23,7 +23,7 @@ const HERRAMIENTAS = [
       type: 'object',
       properties: {
         buscar: { type: 'string', description: 'Solo las que tengan esto en su nombre, cómo suenan o su grupo («deep», «Podcast»)' },
-        proveedor: { type: 'string', enum: ['gemini', 'elevenlabs'], description: 'De quién son las voces. Sin él, el proveedor por omisión de Opciones.' }
+        proveedor: { type: 'string', enum: ['gemini', 'elevenlabs', 'chatterbox'], description: 'De quién son las voces. Sin él, el proveedor por omisión de Opciones.' }
       }
     }
   },
@@ -35,7 +35,7 @@ const HERRAMIENTAS = [
       type: 'object',
       properties: {
         voz: { type: 'string', description: 'El nombre de la voz en AI Studio, como Fola o Kore; con elevenlabs, el id o el nombre de la voz (como Tazkore IA)' },
-        proveedor: { type: 'string', enum: ['gemini', 'elevenlabs'], description: 'gemini (AI Studio) o elevenlabs. Sin él, el proveedor por omisión de Opciones → Avatares y voz.' },
+        proveedor: { type: 'string', enum: ['gemini', 'elevenlabs', 'chatterbox'], description: 'gemini (AI Studio), elevenlabs o chatterbox (local y gratis, clona la voz de un audio de referencia). Sin él, el proveedor por omisión de Opciones → Avatares y voz.' },
         texto: { type: 'string', description: 'Lo que se narra' },
         archivo: { type: 'string', description: 'O la ruta absoluta de un .md o .txt con lo que se narra' },
         salida: { type: 'string', description: 'La ruta absoluta del .wav que deja, como <carpeta del video>/fuentes/voz/ai-studio.wav' }

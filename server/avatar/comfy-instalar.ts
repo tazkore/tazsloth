@@ -37,7 +37,9 @@ const PORTABLE = 'ComfyUI_windows_portable'
 /** La carpeta de ComfyUI con `main.py`: la que dijo el usuario en la configuración o la que instaló v!d. */
 export function raizComfy(datos?: string): string | null {
   const dicha = leerConfig(datos).comfyRaiz
-  const candidatas = [dicha, join(carpetaComfy(), PORTABLE, 'ComfyUI')].filter((c): c is string => !!c)
+  // También donde lo deja scripts/instalar-ia-local.ps1 (C:\vid-ia\ComfyUI, con el portable adentro o aplanado).
+  const ia = process.env.VID_IA_RAIZ || 'C:\\vid-ia'
+  const candidatas = [dicha, join(carpetaComfy(), PORTABLE, 'ComfyUI'), join(ia, 'ComfyUI', 'ComfyUI_windows_portable', 'ComfyUI'), join(ia, 'ComfyUI', 'ComfyUI')].filter((c): c is string => !!c)
   return candidatas.find((c) => existsSync(join(c, 'main.py'))) ?? null
 }
 
@@ -201,7 +203,7 @@ export function detenerComfy() {
 
 const nombreDeRepo = (repo: string) => repo.split('/')[1]
 export const nodoInstalado = (raiz: string, repo: string) => existsSync(join(raiz, 'custom_nodes', nombreDeRepo(repo)))
-const pesoPuesto = (raiz: string, p: Peso) => existsSync(join(raiz, p.destino)) && statSync(join(raiz, p.destino)).size === p.bytes
+export const pesoPuesto = (raiz: string, p: Peso) => existsSync(join(raiz, p.destino)) && statSync(join(raiz, p.destino)).size === p.bytes
 
 /** Si lo que pide un flujo está en disco. Con `raiz` `null` (ComfyUI ajeno o sin instalar) no se puede saber. */
 export function estadoDeFlujo(f: FlujoDef, raiz: string | null): 'instalado' | 'parcial' | 'no-instalado' {

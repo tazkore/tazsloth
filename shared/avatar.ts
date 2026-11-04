@@ -70,7 +70,20 @@ export interface EstadoComfy {
   carpeta: string
 }
 
+/** Un motor de IA local (LatentSync, Chatterbox): apagado hasta que se detecta instalado. `texto` explica que falta. */
+export interface EstadoLocal {
+  id: 'latentsync' | 'chatterbox'
+  nombre: string
+  estado: 'no-instalado' | 'parcial' | 'instalado' | 'corriendo'
+  listo: boolean
+  falta: string[]
+  ruta?: string
+  texto: string
+}
+
 export interface EstadoAvatar {
+  /** Los motores locales y si estan instalados (`server/avatar/local.ts`). */
+  locales: { latentsync: EstadoLocal; chatterbox: EstadoLocal }
   motores: (InfoMotor & { listo: boolean; detalle: string })[]
   comfy: EstadoComfy
   flujos: FlujoInfo[]

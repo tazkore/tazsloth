@@ -14,12 +14,15 @@ import { type EstadoVoz, NAVEGADOR_VOZ, type TrabajoVoz, type VozStudio } from '
 import { VENTA } from '../../shared/venta.ts'
 import { segundosWav, textoParaVoz, vocesDelPanel } from '../../shared/voz.ts'
 import { guardar } from '../disco.ts'
+import { DATOS } from '../secretos.ts'
 import { cuerpo } from '../http.ts'
 import { integrado } from '../navegador-agente.ts'
 import { mcpAvatar } from '../avatar/index.ts'
 import { leerConfig } from '../avatar/config.ts'
 import { generar as generarEleven, listarVoces as vocesEleven, buscarVoz } from '../avatar/elevenlabs.ts'
 import { leerLlave } from '../avatar/llaves.ts'
+import { asegurarServidor, generar as generarChatterbox } from '../avatar/chatterbox.ts'
+import { estadoChatterbox, estadoChatterboxVivo, raizChatterbox } from '../avatar/local.ts'
 
 /**
  * La voz de los videos, generada en Google AI Studio («Generate speech», Gemini 3.8 Flash TTS) con la cuenta de Google
@@ -56,7 +59,7 @@ const edgeVoz = nuevoNavegador()
 /** Lo más que espera una petición a que acabe su voz: el MCP repite, y Codex corta una herramienta a los 60 s. */
 const ESPERA_MAXIMA = 50_000
 
-type Trabajo = TrabajoVoz & { texto: string; salida: string; huella: string; proveedor?: 'gemini' | 'elevenlabs' }
+type Trabajo = TrabajoVoz & { texto: string; salida: string; huella: string; proveedor?: 'gemini' | 'elevenlabs' | 'chatterbox' }
 type Cookie = { name: string; value: string; domain: string; path: string; expires: number; httpOnly: boolean; secure: boolean; sameSite?: string; partitionKey?: unknown }
 
 /** Lo que el servidor monta: su API, si está generando y la configuración del MCP para los agentes. */
@@ -508,6 +511,34 @@ export function voz(app: string) {
     return t
   }
 
+  /**
+   * La voz con Chatterbox (`server/avatar/chatterbox.ts`), local y gratis. Solo si está instalado (`local.ts`): si no, el
+   * llamador recibe el texto que dice qué falta. La voz que se clona es el audio de referencia: la ruta absoluta que
+   * trae `nombre`, `data/avatar/voces/<nombre>.wav` o la `chatterboxReferencia` de Opciones; sin ninguna, la voz de siempre.
+   */
+  function pedirChatterbox(texto: string, nombre: string, salida: string): Trabajo {
+    const config = leerConfig()
+    const referencia = [isAbsolute(nombre) ? nombre : '', join(DATOS, 'avatar', 'voces', `${nombre}.wav`), config.chatterboxReferencia ?? ''].find((r) => r && existsSync(r))
+    const huella = createHash('sha1').update(`chatterbox\n${referencia ?? ''}\n${texto}`).digest('hex')
+    const t: Trabajo = { id: randomBytes(6).toString('hex'), estado: 'generando', voz: referencia ? nombre : 'Chatterbox', palabras: texto.split(/\s+/).length, texto, salida, huella, proveedor: 'chatterbox' }
+    trabajos.set(t.id, t)
+    for (const id of [...trabajos.keys()].slice(0, -100)) trabajos.delete(id)
+    const igual = existsSync(salida) && existsSync(`${salida}.huella`) && readFileSync(`${salida}.huella`, 'utf8') === huella
+    const segundos = igual ? segundosWav(readFileSync(salida)) : null
+    if (segundos) return Object.assign(t, { estado: 'lista', archivo: salida, segundos: Math.round(segundos * 10) / 10 })
+    void (async () => {
+      try {
+        await asegurarServidor(raizChatterbox())
+        const r = await generarChatterbox({ texto, salida, referencia })
+        guardar(`${salida}.huella`, huella)
+        Object.assign(t, { estado: 'lista', archivo: r.archivo, segundos: r.segundos })
+      } catch (e) {
+        Object.assign(t, { estado: 'error', error: mensaje(e) })
+      }
+    })()
+    return t
+  }
+
   const publico = ({ texto: _t, salida: _s, huella: _h, proveedor: _p, ...t }: Trabajo): TrabajoVoz => t
   const estado = (): EstadoVoz => {
     const elegido = elegirNavegador(leerPreferencia(), detectados())
@@ -535,6 +566,7 @@ export function voz(app: string) {
       res.end(JSON.stringify(datos))
     }
     if (path === '/api/voz' && metodo === 'GET') return enviar(200, estado()), true
+    if (path === '/api/voz/chatterbox' && metodo === 'GET') return enviar(200, await estadoChatterboxVivo()), true
     if (path === '/api/voz/conectar' && metodo === 'POST') {
       void conectar()
       return enviar(200, { ...estado(), conectando: true }), true
@@ -564,7 +596,12 @@ export function voz(app: string) {
       if (!texto || !d.voz?.trim() || !d.salida || !isAbsolute(d.salida) || !/\.wav$/i.test(d.salida))
         return enviar(400, { error: 'Pide el texto (o el archivo con él), la voz y la ruta absoluta del .wav donde va.' }), true
       // El proveedor: el que pide el agente (la línea `Voz:` se lo dice) o, si no, la preferencia de Opciones.
-      const proveedor = d.proveedor === 'elevenlabs' || d.proveedor === 'gemini' ? d.proveedor : leerConfig().vozProveedor
+      const proveedor = d.proveedor === 'elevenlabs' || d.proveedor === 'gemini' || d.proveedor === 'chatterbox' ? d.proveedor : leerConfig().vozProveedor
+      if (proveedor === 'chatterbox') {
+        const e = estadoChatterbox()
+        if (!e.listo) return enviar(409, { error: `${e.texto} Mientras, usa otra voz (AI Studio o ElevenLabs).` }), true
+        return enviar(200, publico(pedirChatterbox(texto, d.voz.trim(), resolve(d.salida)))), true
+      }
       if (proveedor === 'elevenlabs') {
         if (!leerLlave('elevenlabs')) return enviar(409, { error: 'No hay llave de ElevenLabs: que el usuario la pegue en Opciones → Avatares y voz. Mientras, pídele la voz o usa AI Studio.' }), true
         return enviar(200, publico(pedirEleven(texto, d.voz.trim(), resolve(d.salida), d.proveedor === 'elevenlabs'))), true

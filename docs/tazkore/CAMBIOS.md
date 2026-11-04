@@ -357,3 +357,26 @@ Ahorro estimado por video de Kold Gold (base 21.5 USD y ~56 min; **estimado, no 
   primer lote de v1.1 (gasto por hilo en v!d). Portada: −10 s por final; NVENC: −50 % cuando hay que recodificar.
 
 Pendiente de medir: el efecto de Opus medium en la calidad del hilo de Kold Gold, y `VID_AUTOCOMPACTAR`.
+
+## v1.1 — Lip-sync de sprites y motores locales listos (4 nov 2026)
+
+**Lip-sync de sprites (sin GPU).** La boca del personaje pasa de 2 estados movidos por RMS a 4 formas: cerrada, media, abierta y «o» redonda.
+
+| Qué | Archivos |
+| --- | --- |
+| Medición por cuadro con energía + centroide espectral (numpy), suavizado, histéresis, duración mínima por forma (~60 ms) y cierre en silencios. `python -B scripts/bocas_voz.py audio` imprime la distribución | `skills/kold-gold/plantilla/scripts/bocas_voz.py` (nuevo), `alinear.py` (`nivel_por_cuadro` ahora la usa; `KG_BOCAS=2\|3` limita las formas) |
+| Compatibilidad: `voz.json["boca"]` sigue siendo un número por cuadro; cada forma ocupa una banda (cerrada ≤0.15, media 0.31–0.60, abierta 0.61–1, «o» = 2 + nivel). Un `Personaje.tsx` viejo sigue abriendo la boca y `acelerar.py` recibe las formas sin tocarlo | `bocas_voz.py`, `src/piezas/Personaje.tsx` (`formaDe`, `fotoBoca`) |
+| Si la pose solo trae `cerrada` y `abierta`, cae a 2 bocas (media y «o» usan la abierta) | `Personaje.tsx` |
+| Fotos `-media.webp` y `-o.webp` generadas desde cerrada+abierta (mezcla al 50 % y boca abierta encogida a lo ancho). Las poses cuya foto abierta rehace más que la boca (zorra-kold) se quedan con 2 bocas | `plantilla/scripts/bocas_variantes.py` (nuevo), `skills/kold-gold/personaje/perro/*-media.webp`, `*-o.webp`, `personaje/personaje.json` |
+
+**Motores locales preparados (apagados hasta detectar que están instalados).**
+
+| Qué | Archivos |
+| --- | --- |
+| Estado «No instalado / parcial / instalado / corriendo» con texto que dice qué falta, para LatentSync (ComfyUI, nodo, VideoHelperSuite, checkpoints 1.5) y Chatterbox (venv, paquete, servidor). `EstadoAvatar.locales`; `GET /api/voz/chatterbox` | `server/avatar/local.ts` (nuevo), `shared/avatar.ts`, `server/avatar/index.ts` |
+| LatentSync: ya existía el flujo `latentsync.json`; ahora el motor `comfyui-local` no lo corre si falta algo y dice qué. ComfyUI también se busca en `C:\vid-ia\ComfyUI` | `server/avatar/index.ts`, `server/avatar/comfy-instalar.ts` |
+| Chatterbox (voz gratis, local, español, clonación): cliente HTTP, arranque del servidor bajo demanda y proveedor `chatterbox` en `/api/voz/generar` y en el MCP `voz` | `server/avatar/chatterbox.ts` (nuevo), `scripts/chatterbox-servidor.py` (nuevo), `server/voz/index.ts`, `server/voz/mcp.mjs`, `server/avatar/config.ts` (`chatterboxRaiz`, `chatterboxReferencia`; `vozProveedor` acepta `chatterbox`; `/api/avatar/config` las guarda), `shared/types.ts` |
+| Instalador que Alan correrá cuando lo autorice (sin `-Autorizado` solo muestra el plan): ComfyUI portátil en `C:\vid-ia\ComfyUI` + nodo LatentSync + checkpoints 1.5; venv `C:\vid-ia\chatterbox` con Python 3.11, torch CUDA y chatterbox-tts. Ventanas minimizadas en la pantalla 2, registros en `C:\vid-ia\logs` | `scripts/instalar-ia-local.ps1` (nuevo) |
+| Pruebas con fetch simulado | `server/avatar-local.test.ts` (nuevo) |
+
+Pendiente: el campo de Opciones para `chatterboxRaiz` (el backend ya lo guarda; `Opciones.tsx` lo toca otro cambio) y probar LatentSync y Chatterbox contra los motores reales, que no se han instalado.

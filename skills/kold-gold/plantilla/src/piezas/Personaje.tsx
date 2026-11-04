@@ -1,6 +1,6 @@
 // El personaje, abajo (en vertical, al centro; en horizontal, en el tercio de la derecha: `ZONA.personaje`): una foto
 // recortada como sticker (lo único de collage del video). Habla como un muñeco:
-// abre la boca en cada sílaba (la foto `abierta` de su pose, que solo cambia la boca; scripts/bocas.py) y
+// mueve la boca con la voz: cerrada, media, abierta y "o" (las fotos `cerrada`, `media`, `abierta` y `o` de su pose, que solo cambian la boca; scripts/bocas.py y scripts/bocas_variantes.py; la forma la mide scripts/bocas_voz.py) y
 // rebota con la voz. Cambia de pose con un golpe en la palabra que la pide y, en las poses que sostienen algo (la
 // moneda, el cartel, el celular), enseña encima lo que se está explicando (`objeto`, en el ancla de la pose). Cuando
 // sostiene algo sube un poco, para que se vea sobre el texto de TikTok.
@@ -11,7 +11,7 @@ import { BOCA } from "../tiempo";
 import { ALTO, ZONA } from "../tema";
 import { chueco } from "./ui";
 
-type Bocas = { cerrada: string; abierta?: string };
+type Bocas = { cerrada: string; abierta?: string; media?: string; o?: string };
 type Ancla = { x: number; y: number; ancho: number; alto: number; radio: number };
 const POSES = datos.poses as Record<string, Bocas>;
 const ANCLAS = datos.anclas as Record<string, Ancla>;
@@ -20,15 +20,29 @@ const ANCLAS = datos.anclas as Record<string, Ancla>;
 export type Objeto = { src?: string; nodo?: React.ReactNode };
 export type Tramo = { desde: number; pose: string; x?: number; objeto?: Objeto; sube?: number };
 
+/** Lo que scripts/bocas_voz.py guarda en BOCA: el nivel 0..1 y, sumando 2, la boca redonda ("o"). Ver su docstring. */
+const nivelDe = (v: number) => (v >= 2 ? v - 2 : v);
+
 /** El nivel de la voz alrededor del cuadro, suavizado: el rebote sigue las sílabas sin temblar. */
 const voz = (f: number) => {
   let suma = 0;
-  for (let k = -1; k <= 2; k++) suma += BOCA[f + k] ?? 0;
+  for (let k = -1; k <= 2; k++) suma += nivelDe(BOCA[f + k] ?? 0);
   return suma / 4;
 };
 
-/** ¿Boca abierta? La sílaba que suena en este cuadro o el siguiente (la boca se adelanta un poco al sonido). */
-const abierta = (f: number) => ((BOCA[f] ?? 0) + (BOCA[f + 1] ?? 0)) / 2 > 0.3;
+/** Forma de la boca en un valor de BOCA: 0 cerrada, 1 media, 2 abierta, 3 "o". */
+export const formaDe = (v: number) => (v >= 2 ? 3 : v > 0.6 ? 2 : v > 0.3 ? 1 : 0);
+
+/** La foto de la boca en este cuadro (la boca se adelanta un poco al sonido: se toma el mayor de este cuadro y el
+ * siguiente). Si la pose no trae la foto de esa forma, cae a la más parecida: sin `media` ni `o` queda en dos bocas
+ * (cerrada/abierta), como antes. */
+export const fotoBoca = (bocas: Bocas, f: number): string => {
+  const forma = Math.max(formaDe(BOCA[f] ?? 0), formaDe(BOCA[f + 1] ?? 0));
+  if (forma === 0 || !bocas.abierta) return bocas.cerrada;
+  if (forma === 3) return bocas.o ?? bocas.abierta;
+  if (forma === 1) return bocas.media ?? bocas.abierta;
+  return bocas.abierta;
+};
 
 export const Personaje: React.FC<{ tramos: Tramo[]; entra: number; sale?: number }> = ({ tramos, entra, sale }) => {
   const f = useCurrentFrame();
@@ -58,7 +72,7 @@ export const Personaje: React.FC<{ tramos: Tramo[]; entra: number; sale?: number
   const xDe = (t: Tramo) => t.x ?? ZONA.personaje.x;
   const x = previo ? interpolate(paso, [0, 1], [xDe(previo), xDe(tramo)]) : xDe(tramo);
   const ancla = ANCLAS[tramo.pose];
-  const foto = bocas.abierta && abierta(f) ? bocas.abierta : bocas.cerrada;
+  const foto = fotoBoca(bocas, f);
 
   return (
     <div
