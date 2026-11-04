@@ -31,6 +31,7 @@ import { Feedback } from './Feedback' // feedback
 import { Icono } from './Iconos'
 import { Bienvenida } from './Bienvenida'
 import { MarcaAgente } from './Logos'
+import { MarcaCentro, PieMarca } from './Marca'
 import { YoutubeLote } from './YoutubeProgramar'
 import { CalendarioYoutube } from './YoutubeCalendario'
 import { avisarTanda, AvisoRedes, ConNavegadorRedes, usePublicar } from './Redes' // redes
@@ -985,6 +986,8 @@ function NewSession(props: {
           </section>
         )}
       </div>
+      <MarcaCentro />
+      <PieMarca />
       <div className="new-bottom">
         <div className="new-head">
           <span className="card-icon big"><Icon icon={card.icon ?? '✦'} /></span>

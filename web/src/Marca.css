@@ -1,0 +1,12 @@
+/* Logo de marca al centro del inicio: ~32 % del ancho del área, entre 220 y 420 px, con aire arriba y abajo. No crece
+   a lo alto más de lo que da su proporción (3,2 : 1), así que el compositor y las skills siguen a la vista en 1366×768. */
+.marca-centro { flex: none; display: flex; justify-content: center; margin: -6px 0; pointer-events: none; user-select: none; }
+.marca-centro img { display: block; width: clamp(220px, 32%, 420px); height: auto; min-width: 0; }
+@media (max-height: 800px) { .marca-centro img { width: clamp(220px, 27%, 300px); } }
+
+/* Pie fijo en la esquina de abajo a la derecha: pequeño, en el color secundario, sin tapar nada. */
+.marca-pie { position: absolute; right: 16px; bottom: 6px; z-index: 3; font-size: 11.5px; line-height: 1.2; color: var(--muted); white-space: nowrap; }
+.marca-pie a { color: inherit; text-decoration: none; border-bottom: 1px dotted rgba(143, 151, 168, 0.5); pointer-events: auto; }
+.marca-pie a:hover { color: var(--amber); border-bottom-color: var(--amber); }
+.modal-backdrop > .marca-pie { position: fixed; z-index: 60; }
+@media (max-width: 640px) { .marca-pie { right: 10px; font-size: 11px; } }
