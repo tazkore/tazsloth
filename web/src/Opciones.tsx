@@ -7,6 +7,7 @@ import { encender, encendido, notificar, sonar, usePermiso } from './avisos'
 import { abrirBienvenida } from './Bienvenida'
 import { Picker } from './Composer'
 import { EspacioDisco } from './Espacio' // espacio en disco
+import { HistorialSloth } from './HistorialSloth' // historial de Sloth
 import { TuEquipo } from './Equipo' // tu equipo
 import { Icono } from './Iconos'
 import { Logo } from './Logos'
@@ -110,6 +111,7 @@ function Ajustes({ onDone, iniciando, onIniciando }: { onDone(): void; iniciando
         <Avisos />
       </Grupo>
       <TuEquipo />
+      <HistorialSloth />
       <EspacioDisco />
       <Herramientas req={req} />
     </div>

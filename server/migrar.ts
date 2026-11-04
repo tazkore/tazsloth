@@ -39,7 +39,7 @@ export function migrarCarpeta(viejas: string[], nueva: string): string | null {
 }
 
 /** El nombre de la carpeta de un proyecto de Claude Code (`~/.claude/projects/<esto>`): su ruta con guiones. */
-const proyectoClaude = (cwd: string) => cwd.replace(/[^a-zA-Z0-9]/g, '-')
+export const proyectoClaude = (cwd: string) => cwd.replace(/[^a-zA-Z0-9]/g, '-')
 
 /**
  * En los hilos de `datos/sessions`, la carpeta (`cwd`) que empieza por `de` pasa a empezar por `a`. Antes de cambiar un
