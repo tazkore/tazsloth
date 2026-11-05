@@ -11,6 +11,7 @@ import { alBajarAgente, descartarRoto, programaClaude, rutaAgente } from './agen
 import { sitiosDeAgente } from './tope-agentes.ts'
 import { dolaresDeepSeek, entornoDeepSeek, modeloDeepSeek, SIN_LLAVE, tarifaDeepSeek } from './deepseek.ts'
 import { llaveGuardada } from './acceso.ts'
+import { sincronizarSesion } from './skills.ts'
 import { proveedorDe } from '../shared/providers.ts'
 
 /** Las herramientas que lanzan un subagente. */
@@ -95,6 +96,8 @@ export function startClaude(opts: AgentOptions): AgentRun {
   const deepseek = proveedorDe(opts.model) === 'deepseek'
   if (deepseek && !llaveGuardada('deepseek')) return sinArrancar(opts, SIN_LLAVE)
   const agentes = sitiosDeAgente()
+  // La sesión de Anthropic más nueva entre v!d y ~/.claude, antes de arrancar (v1.1.3, `sincronizarSesion`).
+  if (!deepseek) sincronizarSesion()
   const run = query({
     prompt: inbox,
     options: {

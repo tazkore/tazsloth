@@ -50,6 +50,10 @@ def con_python(*args: str, **kw) -> subprocess.CompletedProcess:
     return subprocess.run([str(python_vid()), *BANDERAS, *args], **kw)
 
 
+# Nombre de antes de con_python: lo importan comun.py de El Diff, fuente.py y los de video-documental.
+vid = con_python
+
+
 def _tomar(f) -> bool:
     """El candado del sistema sobre `f`, sin esperar. False si lo tiene otro."""
     try:

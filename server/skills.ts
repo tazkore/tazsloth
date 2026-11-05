@@ -49,6 +49,7 @@ export function configClaude(app: string, venta = VENTA, casa = join(homedir(), 
   if (venta) {
     if (existsSync(join(casa, 'projects'))) enlazar(join(casa, 'projects'), join(dir, 'projects'))
     heredarSesion(dir, casa)
+    sincronizarSesion(dir, casa)
   }
   return dir
 }
@@ -142,6 +143,60 @@ export function heredarSesion(dir: string, casa = join(homedir(), '.claude')): b
   } catch (error) {
     console.error(`No se pudo copiar la sesión de Claude a ${dir}: ${error instanceof Error ? error.message : error}`)
     return false
+  }
+}
+
+/** Lee un JSON; `null` si no existe o no se puede leer. */
+function leerJson(ruta: string): Record<string, any> | null {
+  try {
+    return JSON.parse(readFileSync(ruta, 'utf8'))
+  } catch {
+    return null
+  }
+}
+
+/** Escribe sin dejar un archivo a medias: primero a un temporal y luego lo cambia de nombre. */
+function escribirJson(ruta: string, datos: unknown) {
+  const tmp = `${ruta}.${process.pid}.tmp`
+  writeFileSync(tmp, JSON.stringify(datos, null, 2))
+  renameSync(tmp, ruta)
+}
+
+/**
+ * v1.1.3. Mantiene una sola sesión de Claude viva entre v!d (`dir`) y el Claude Code del usuario (`casa`, ~/.claude).
+ * `heredarSesion` copiaba las credenciales una vez; pero el token de Anthropic dura horas y su llave de renovación
+ * (`refreshToken`) cambia cada vez que se renueva. En cuanto el Claude Code del usuario renovaba la suya, la copia de
+ * v!d quedaba con una llave vieja: «401 OAuth access token has expired» (5 nov 2026, el Radar semana 45 no arrancó).
+ * Aquí gana la que vence más tarde (`claudeAiOauth.expiresAt`) y se copia al otro lado, sin tocar sus `mcpOAuth`.
+ * Solo si las dos son la misma cuenta (`oauthAccount.accountUuid` en `.claude.json`), para no pisar otra cuenta
+ * conectada a propósito en v!d. Se llama al arrancar, antes de cada hilo de Claude y cada pocos minutos.
+ * Devuelve hacia dónde copió: 'a-vid', 'a-casa' o null.
+ */
+export function sincronizarSesion(dir = process.env.CLAUDE_CONFIG_DIR || '', casa = join(homedir(), '.claude')): 'a-vid' | 'a-casa' | null {
+  try {
+    if (!dir || resolve(dir).toLowerCase() === resolve(casa).toLowerCase()) return null
+    const cuenta = (r: Record<string, any> | null) => r?.oauthAccount?.accountUuid as string | undefined
+    const deVid = cuenta(leerJson(join(dir, '.claude.json')))
+    const deCasa = cuenta(leerJson(join(dirname(casa), '.claude.json')))
+    if (deVid && deCasa && deVid !== deCasa) return null
+    const rutaVid = join(dir, '.credentials.json')
+    const rutaCasa = join(casa, '.credentials.json')
+    const vid = leerJson(rutaVid)
+    const suya = leerJson(rutaCasa)
+    const vence = (c: Record<string, any> | null) => Number(c?.claudeAiOauth?.expiresAt) || 0
+    if (!suya?.claudeAiOauth?.refreshToken && !vid?.claudeAiOauth?.refreshToken) return null
+    if (vence(suya) > vence(vid)) {
+      escribirJson(rutaVid, { ...(vid ?? {}), claudeAiOauth: suya!.claudeAiOauth })
+      return 'a-vid'
+    }
+    if (vence(vid) > vence(suya) && suya) {
+      escribirJson(rutaCasa, { ...suya, claudeAiOauth: vid!.claudeAiOauth })
+      return 'a-casa'
+    }
+    return null
+  } catch (error) {
+    console.error(`No se pudo sincronizar la sesión de Claude: ${error instanceof Error ? error.message : error}`)
+    return null
   }
 }
 

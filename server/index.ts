@@ -56,7 +56,7 @@ import { mantenerVoz } from './voz-viva.ts'
 import { avisoDeVideos } from '../shared/limites.ts'
 import { eventosEnVivo } from './eventos-en-vivo.ts'
 import { enviarCliente } from './enviar-cliente.ts'
-import { cambiosDeCard, carpetaSkill, configClaude, duplicateCard, enlazarSkillsCodex, skillsDeClaude, guardarSkillTuya, readCards, removeCard, seriesDe, SKILLS, skillRef, volverAOriginal } from './skills.ts'
+import { cambiosDeCard, carpetaSkill, configClaude, duplicateCard, enlazarSkillsCodex, skillsDeClaude, guardarSkillTuya, readCards, removeCard, seriesDe, sincronizarSesion, SKILLS, skillRef, volverAOriginal } from './skills.ts'
 import { estaticos } from './estaticos.ts'
 import { type Agente, version } from './version.ts'
 import { cargarPreciosCodex } from './precios.ts'
@@ -99,6 +99,8 @@ if (VENTA) {
 // también las del usuario con otro nombre) y la sesión, sin los plugins, hooks, CLAUDE.md ni MCP del Claude Code del usuario.
 // Un `CLAUDE_CONFIG_DIR` ya puesto manda. A Codex se le pasa siempre la ruta de la skill.
 process.env.CLAUDE_CONFIG_DIR ??= configClaude(APP)
+// v1.1.3: una sola sesión de Anthropic viva entre v!d y ~/.claude (la llave de renovación cambia al renovarse).
+setInterval(() => sincronizarSesion(), 5 * 60_000).unref()
 
 const clients = new Set<WebSocket>()
 const suscripciones = new Map<WebSocket, string | null>()
