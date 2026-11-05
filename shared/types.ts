@@ -1227,6 +1227,8 @@ export interface EstadoNavegador {
   agente: boolean
   zoom: number
   icono?: string
+  /** Estás entrando con Google en este navegador (Edge o Chrome): Google no deja hacerlo dentro de la app. */
+  google?: string
   error?: string
 }
 

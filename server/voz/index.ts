@@ -13,6 +13,7 @@ import { conectarCDP } from '../playwright.ts'
 import { type EstadoVoz, NAVEGADOR_VOZ, type TrabajoVoz, type VozStudio } from '../../shared/types.ts'
 import { VENTA } from '../../shared/venta.ts'
 import { segundosWav, textoParaVoz, vocesDelPanel } from '../../shared/voz.ts'
+import { chromiumDelSistema, lanzarChromium, nombreDe, paginaNueva, SIN_CHROMIUM, SIN_VENTANA } from '../chromium.ts'
 import { guardar } from '../disco.ts'
 import { DATOS } from '../secretos.ts'
 import { cuerpo } from '../http.ts'
@@ -136,7 +137,7 @@ export function voz(app: string) {
       await cerrarEdge()
     }
     mkdirSync(perfil(marca), { recursive: true })
-    const extra = ventana ? [url] : ['--headless=new', '--mute-audio', 'about:blank']
+    const extra = ventana ? [url] : [...SIN_VENTANA, 'about:blank']
     await lanzarNavegador(edgeVoz, exe, [`--user-data-dir=${perfil(marca)}`, ...extra])
     await esperarQueResponda(edgeVoz)
   }
@@ -189,7 +190,7 @@ export function voz(app: string) {
     const b = await abrirEdge()
     let leidas: Awaited<ReturnType<typeof cookiesDeEdge>>
     try {
-      const page = await b.contexts()[0].newPage()
+      const page = await paginaNueva(b)
       await page.goto(URL_VOZ, { waitUntil: 'domcontentloaded', timeout: 30_000 }).catch(() => {})
       await page.waitForLoadState('networkidle', { timeout: 10_000 }).catch(() => {})
       leidas = await cookiesDeEdge()
@@ -245,7 +246,7 @@ export function voz(app: string) {
       }
     }
     const b = await abrirEdge()
-    const page = await b.contexts()[0].newPage()
+    const page = await paginaNueva(b)
     return {
       page,
       bajarA: async (c) => void (await (await b.newBrowserCDPSession()).send('Browser.setDownloadBehavior', { behavior: 'allowAndName', downloadPath: c, eventsEnabled: true })),

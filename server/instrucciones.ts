@@ -1,7 +1,7 @@
 import { existsSync } from 'node:fs'
 import { join } from 'node:path'
 import type { SkillRef } from './agent.ts'
-import { OPCIONES } from './claude.ts'
+import { OPCIONES, UN_VIDEO_POR_HILO } from './claude.ts'
 import { mcpVoz } from './voz/index.ts'
 import { mcpFlow } from './flow/index.ts'
 import { navegadorAgente, USA_EL_NAVEGADOR } from './navegador-agente.ts'
@@ -14,6 +14,7 @@ import { SKILLS } from './skills.ts'
  */
 export const INSTRUCCIONES = `${OPCIONES}
 La interfaz y tus respuestas van en español, también lo que dices mientras trabajas (en una prueba con Big Pickle, las notas de avance salían en inglés). Haz las preguntas en mensajes normales, sin herramientas de preguntas interactivas. Las skills de v!d están en ${SKILLS}. La skill invocada es siempre la de esa carpeta: si ves otra con el mismo nombre, es una copia vieja y no se usa. Respeta la skill invocada y lee sus referencias cuando hagan falta.
+${UN_VIDEO_POR_HILO}
 ${USA_EL_NAVEGADOR}`
 
 /** La ruta del SKILL.md de la skill que invoca el mensaje. Falla si no está. */

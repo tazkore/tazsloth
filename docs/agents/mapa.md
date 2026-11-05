@@ -84,11 +84,11 @@ Este es el mapa:
   HeyGen están en `skills/heygen-*`. Nada que baje gigas o gaste créditos corre solo: lo pide un botón de Opciones →
   Avatares y voz o el agente.
 - `server/flow/` y `web/src/Flow.tsx`: imágenes (Nano Banana) y videos (Veo) de Google Flow, con la cuenta de la voz (en
-  su Edge y su turno, `voz().google`) y las que se agregan en Opciones (`cuentas.ts`, cada una en su Edge), hasta tres a la
-  vez. `elegirCuenta` y los descansos están en `shared/flow.ts`. `pagina.ts` maneja la página, por sus iconos: texto,
+  su Edge y su turno, `voz().google`) y las que se agregan en Opciones (`cuentas.ts`, cada una en su Edge), hasta dos a la
+  vez y con ritmo. `elegirCuenta`, el ritmo y los descansos están en `shared/flow.ts`. `pagina.ts` maneja la página, por sus iconos: texto,
   referencias («Ingredientes») o fotogramas. Los agentes piden con el MCP `flow` (`mcp.mjs`, `skills/video-base/FLOW.md`).
   Lee el costo antes de generar y no pasa del tope. «Ayudar a mejorar Flow» se apaga para todos y se cambia en Opciones →
-  Google Flow. El menú «Imágenes» del compositor manda la línea `Imágenes:` (ChatGPT o un modelo de Flow). ADR 0014 y 0015.
+  Google Flow. El menú «Imágenes» del compositor manda la línea `Imágenes:` (ChatGPT o un modelo de Flow). ADR 0014, 0015 y 0016.
 - El navegador de cada hilo (`electron/navegador.ts`, el globo de `web/src/Navegador.tsx`): el Playwright MCP del agente
   (`server/navegador-agente.ts`, lanzado a demanda por `server/navegador-mcp.mjs`) entra en él por CDP si Opciones → Navegador
   está en «Integrado». Con Chrome (lo normal) o Edge, entra a una ventana de ese navegador por el relevo `server/chrome-agente.ts`
@@ -96,6 +96,7 @@ Este es el mapa:
   Sus capturas y los logs de consola quedan en `data/navegador-capturas/`. Copia lo mejor del de T3 Code (`C:\dev\t3code`):
   pestañas (el agente solo usa la primera), tamaños fijos (`navegador-medidas.ts`) y bordes que se arrastran. T3 usa
   `<webview>` y v!d una vista nativa: el tamaño fijo es `enableDeviceEmulation`, y por eso el relevo reescala los clics.
+  Google no deja iniciar sesión dentro de la app: ese paso se da en Edge (Chrome en Mac) y la sesión pasa a sus páginas (`electron/google.ts`).
 - `server/ideas/` y `web/src/Ideas.tsx`: Ideas, qué video hacer: largo en YouTube o vertical en TikTok e Instagram
   (`formato: 'vertical'`), en `trabajo/ideas/<id>/`. Investigar mide cada video contra su canal (outlier: 3× o más),
   transcribe lo dicho (`transcribir.ts`) y agrupa temas con vectores locales (`vectores.ts`); en vertical busca con
