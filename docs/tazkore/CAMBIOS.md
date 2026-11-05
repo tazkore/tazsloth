@@ -3,6 +3,13 @@
 TazSloth es el fork de Tazkore de [Sloth](https://github.com/Vancci-sloth/sloth) (Apache 2.0 + Commons Clause).
 Uso interno, sin venta. Los cambios propios viven en la rama `tazkore`; `main` sigue a `upstream`.
 
+## v1.1.3 — Sesión de Anthropic que no caduca y mejoras de Sloth (5-nov-2026, base upstream 14332fc)
+
+- **Arreglo «401 OAuth access token has expired»** (el Radar semana 45 no arrancó con Claude): la 1.1.0 copiaba una sola vez `.credentials.json` de `~/.claude` a `C:\vid-datos\data\claude`; el token dura horas y su `refreshToken` cambia al renovarse, así que en cuanto el Claude Code de la PC renovaba, la copia de v!d quedaba muerta. Ahora `sincronizarSesion` (`server/skills.ts`) deja viva una sola sesión: gana la que vence más tarde y se copia al otro lado (sin tocar `mcpOAuth`), solo si es la misma cuenta. Corre al arrancar, antes de cada hilo de Claude y cada 5 min. Prueba: `server/sesion.test.ts`.
+- **De Sloth (8 commits, 7d50117 → 14332fc):** Edge/Chrome sin ventana ya no se presenta como «HeadlessChrome» ni con pantalla de 800×600 (`SIN_VENTANA`, `paginaNueva`), principal causa de «actividad inusual» en Google Flow y la voz; si Flow rechaza un clip, la cuenta descansa y el clip pasa a otra sin cobrarse dos veces; dos clips a la vez y con calma; TikTok/Instagram: el texto lo escribe el agente del hilo (también Codex) y los #hashtags pasan a sus campos; un video por hilo (`UN_VIDEO_POR_HILO`); el Python se recupera solo de una descarga dañada; Antigravity espera hasta 10 min.
+- Conflictos resueltos conservando lo de v!d: marca, navegador propio de la voz (ahora con `SIN_VENTANA`), elección de navegador en Flow, política del navegador por partición, `compactarAntes` y `TEXTO_DE_PAGINAS_ES_DATO`. `server/comunidad.ts` sigue fuera (Fase 1).
+- `npx tsc --noEmit` sin errores; `npm test` 394/394.
+
 ## v1.1.0 — Marca al centro (4-nov-2026)
 
 - Versión 1.0.1 → 1.1.0 (`package.json` y `package-lock.json`; `scripts/compilar.mjs` y el servidor la leen de ahí).
