@@ -1,5 +1,8 @@
-import { type ChildProcess, spawn as spawnReal } from 'node:child_process'
+import { type ChildProcess, execFile, spawn as spawnReal } from 'node:child_process'
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { createServer } from 'node:net'
+import { join } from 'node:path'
+import { WebSocket } from 'ws'
 import type { MarcaNavegador } from '../shared/types.ts'
 
 /**
@@ -78,13 +81,131 @@ export function argumentos(puerto: number, args: string[]): string[] {
 export interface Lanzador {
   spawn: typeof spawnReal
   puerto(): Promise<number>
+  /** Cierra el navegador que se haya quedado con el perfil. Por omisión, `liberarPerfil`. */
+  liberar?(perfil: string): Promise<void>
 }
 const real: Lanzador = { spawn: spawnReal, puerto: puertoLibre }
+
+/** Donde v!d anota, en el perfil, el puerto con que lo abrió (Chrome no escribe `DevToolsActivePort` con puerto fijo). */
+const ANOTADO = 'vid-depurador'
+
+const puertoValido = (texto: string) => {
+  const n = Number(texto.trim().split(/\r?\n/)[0])
+  return Number.isInteger(n) && n > 0 && n < 65536 ? n : 0
+}
+
+/** El puerto anotado en el perfil (el de v!d o el `DevToolsActivePort` de Chrome), o 0. */
+export function puertoDelPerfil(perfil: string): number {
+  for (const f of [ANOTADO, 'DevToolsActivePort']) {
+    try {
+      const n = puertoValido(readFileSync(join(perfil, f), 'utf8'))
+      if (n) return n
+    } catch {
+      // No está.
+    }
+  }
+  return 0
+}
+
+/**
+ * En las líneas de procesos («pid orden»), el navegador principal (no sus hijos `--type=`) abierto con ese perfil: su
+ * pid y su puerto (0 si no tiene). `null` si no hay.
+ */
+export function procesoDelPerfil(lineas: string[], perfil: string): { pid: number; puerto: number } | null {
+  const norm = (s: string) => s.replace(/\\/g, '/').toLowerCase()
+  const p = norm(perfil).replace(/\/+$/, '')
+  for (const linea of lineas) {
+    const m = /^\s*(\d+)\s+(.*)$/.exec(linea)
+    if (!m) continue
+    const orden = norm(m[2])
+    if (/ --type=/.test(orden) || !(orden.includes(`--user-data-dir=${p} `) || orden.endsWith(`--user-data-dir=${p}`) || orden.includes(`--user-data-dir="${p}"`))) continue
+    const puerto = /--remote-debugging-port=(\d+)/.exec(orden)
+    return { pid: Number(m[1]), puerto: puerto ? puertoValido(puerto[1]) : 0 }
+  }
+  return null
+}
+
+/** Chrome y Edge que corren ahora, «pid orden» (para huérfanos abiertos antes de que v!d anotara el puerto). */
+function ordenesDeNavegadores(): Promise<string[]> {
+  const [cmd, args] =
+    process.platform === 'win32'
+      ? ['powershell.exe', ['-NoProfile', '-NonInteractive', '-Command', "Get-CimInstance Win32_Process -Filter \"Name='chrome.exe' or Name='msedge.exe'\" | ForEach-Object { \"$($_.ProcessId) $($_.CommandLine)\" }"]]
+      : ['ps', ['-axww', '-o', 'pid=,command=']]
+  return new Promise((ok) =>
+    execFile(cmd as string, args as string[], { timeout: 30_000, windowsHide: true, maxBuffer: 16 * 1024 * 1024 }, (_e, salida) => ok(String(salida ?? '').split(/\r?\n/)))
+  )
+}
+
+/** ¿Hay un navegador vivo con el perfil? (Chrome deja `lockfile` en Windows y `SingletonLock` en Mac y Linux.) */
+const perfilTomado = (perfil: string) => existsSync(join(perfil, 'lockfile')) || existsSync(join(perfil, 'SingletonLock'))
+
+/**
+ * Si un navegador anterior se quedó con el perfil (un v!d que se cerró de golpe deja su Chrome sin ventana vivo), lo
+ * cierra por CDP. Sin esto, el nuevo le pasa la orden al viejo y se cierra al instante: el puerto queda en 0 y Playwright
+ * acaba en `connect ECONNREFUSED 127.0.0.1:80`. El perfil es siempre de v!d (`argumentos` lo exige), nunca el tuyo.
+ */
+export async function liberarPerfil(perfil: string): Promise<void> {
+  const anotado = puertoDelPerfil(perfil)
+  if (anotado) await cerrarPorCDP(anotado)
+  if (!perfilTomado(perfil)) return
+  // Sigue tomado: uno abierto antes de anotar el puerto, o uno cuyo depurador no contesta. Se busca por su perfil.
+  const huerfano = procesoDelPerfil(await ordenesDeNavegadores(), perfil)
+  if (!huerfano) return
+  if (huerfano.puerto && huerfano.puerto !== anotado) await cerrarPorCDP(huerfano.puerto)
+  if (!vive(huerfano.pid)) return
+  try {
+    process.kill(huerfano.pid)
+  } catch {
+    return
+  }
+  for (let i = 0; i < 20 && vive(huerfano.pid); i++) await new Promise((r) => setTimeout(r, 250))
+  // Chrome suelta el perfil un instante después de salir.
+  await new Promise((r) => setTimeout(r, 500))
+}
+
+const vive = (pid: number) => {
+  try {
+    process.kill(pid, 0)
+    return true
+  } catch {
+    return false
+  }
+}
+
+/** Le pide por CDP al navegador de ese puerto que se cierre, y espera a que deje de contestar (hasta 5 s). */
+async function cerrarPorCDP(puerto: number): Promise<void> {
+  const nav: NavegadorDepurable = { valor: puerto, proceso: null, exe: null }
+  if (!(await responde(nav))) return
+  try {
+    const { webSocketDebuggerUrl } = (await (await fetch(`http://127.0.0.1:${puerto}/json/version`)).json()) as { webSocketDebuggerUrl: string }
+    await new Promise<void>((ok) => {
+      const ws = new WebSocket(webSocketDebuggerUrl)
+      const fin = () => (clearTimeout(t), ok())
+      const t = setTimeout(() => (ws.terminate(), ok()), 3000)
+      ws.once('open', () => ws.send(JSON.stringify({ id: 1, method: 'Browser.close' })))
+      ws.once('close', fin)
+      ws.once('error', fin)
+    })
+  } catch {
+    // Se fue solo mientras tanto.
+  }
+  for (let i = 0; i < 20 && (await responde(nav)); i++) await new Promise((r) => setTimeout(r, 250))
+}
 
 /** Abre `exe` (Chrome o Edge) con el depurador en un puerto libre; deja el puerto en `nav.valor`. */
 export async function lanzarNavegador(nav: NavegadorDepurable, exe: string, args: string[], l: Lanzador = real): Promise<void> {
   enganchar()
+  const perfil = args.find((a) => a.startsWith('--user-data-dir='))?.slice('--user-data-dir='.length).replace(/^"|"$/g, '')
+  if (perfil) await (l.liberar ?? liberarPerfil)(perfil)
   const puerto = await l.puerto()
+  if (perfil && l.spawn === spawnReal) {
+    try {
+      mkdirSync(perfil, { recursive: true })
+      writeFileSync(join(perfil, ANOTADO), `${puerto}\n`)
+    } catch {
+      // Sin anotarlo, el siguiente lo busca entre los procesos.
+    }
+  }
   const p = l.spawn(exe, argumentos(puerto, args), { stdio: 'ignore', windowsHide: false })
   p.unref?.()
   nav.valor = puerto
