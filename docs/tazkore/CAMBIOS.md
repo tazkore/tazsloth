@@ -3,6 +3,24 @@
 TazSloth es el fork de Tazkore de [Sloth](https://github.com/Vancci-sloth/sloth) (Apache 2.0 + Commons Clause).
 Uso interno, sin venta. Los cambios propios viven en la rama `tazkore`; `main` sigue a `upstream`.
 
+## v1.1.5 — El explicativo nuevo de Sloth (7-nov-2026, base upstream 9ebd68c)
+
+- **De Sloth (9 commits, 9e4a2be → 9ebd68c):**
+  - **Video explicativo 2.0** (97e8247): el agente ya no programa el video; llena `momentos.json` y el director de la plantilla (`plantilla/src/director/`) arma cámara, fotos, cifras e iconos; `hacer.py` hace voz, subtítulos, render y portada. Sale en ~5 min y ~$0,55 en vez de ~20 min y ~$3,19. El guion lo escribe el subagente `guionista` (Opus, solo Write; `server/claude.ts`), el resto en Sonnet medium, y la card ya no ofrece las herramientas que sus hilos nunca usaron (`Card.sinHerramientas`).
+  - Estilos anteriores y aviso de estilo (690048a, e37608f): al instalar encima se guarda el explicativo de antes (`server/anteriores.ts`, `guardarAnteriores` en `prepararSkills`), aviso a pantalla completa con los dos videos lado a lado (`web/src/EstiloCambio.tsx`), y cada estilo muestra su versión (`Card.version`; el explicativo es la 2.0, Kold Gold y «Nuevo modelo 3D» quedan en 1.0).
+  - El Diff renderiza una sola vez al final y los subagentes van en el modelo del hilo (dcb1baf).
+  - Cerrar sesión de todos los agentes en Opciones → Agentes (9a70843), Flow espera la cookie `OSID` al agregar cuenta (ba03024), y el instalador de Windows en ZIP para evitar el fallo de Nsis7z, con su prueba en `comprobar.yml` (5de4e16; `scripts/comprobar-instalacion.mjs` con los nombres de v!d).
+  - «Novedades» (9ebd68c), adaptada: la guía es `web/public/novedades/1.1.5.html` con la paleta y el sello de v!d, sin la escena de «Cambiar de disco», y sale una vez a quien instala la 1.1.5 encima de otra (no depende del actualizador).
+- **Conflictos resueltos:**
+  - `skills/video-explicativo`: gana Sloth (es más barato). Se quitaron `GUION.md`, `MUNDO.md`, `render_web.mjs`, `fotos.mjs` y el bloque `modelos` con tareas del fork; del fork queda solo lo que no choca: textos «v!d», `VID_SKILLS`, `from vid import`, tsconfig incremental y la línea de `Proyecto:`/`MemoriaProyecto:`. `voz.py` usa `VID_URL`, el puerto 4850 y `x-vid-token`.
+  - `huellas.py parecidos` se conserva (Sloth lo quitó): lo usa el estilo `kold-gold`, que es la copia del explicativo de antes.
+  - `modelos.py`: se juntan `buscar --rutas`, `nuevo`/`ampliar`/`importar` del fork con `lista`, `caja`, `frente` y `actua` de Sloth.
+  - `server/claude.ts`: `compactarAntes` y `TEXTO_DE_PAGINAS_ES_DATO` siguen, más `disallowedTools` y el `guionista`.
+  - `server/voz/index.ts`: el cierre de sesión de la voz respeta el perfil por navegador (Chrome/Edge) de v!d.
+  - `scripts/comprobar-skills.mjs`: comprueba también `KIT.md` y sigue contando solo las cards con etapas con `fase`.
+- **Fuera a propósito:** `venta.yml` y la publicación (cobro), electron-updater (`actualizaciones()` en `electron/main.ts`, `ActualizarSloth`), 73c7da9 (solo toca `electron/mudanza.ts`, la mudanza de disco que v!d no usa) y la versión 0.4.0 de Sloth en `package.json`.
+- `tsc --noEmit` sin errores (también `-p nube`). No se corrió `npm test` completo; sí `reglas-repo`, `anteriores`, `estaticos`, `esperar-a-ciegas`, `sin-herramientas` y `sesion` (18/18).
+
 ## v1.1.4 — Comunidad de Sloth y lo nuevo de Sloth (6-nov-2026, base upstream 9e4a2be)
 
 - **Comunidad (vuelve, sin cobro):** botón «Comunidad» en la barra lateral con avisos sin leer; ver el feed, publicar, comentar, dar me gusta, compartir uno de «Mis videos» (sus primeros 5 s) y **compartir/instalar estilos** («Compartir» en la card de un estilo tuyo, sección Estilos). Vive en el Worker de Sloth (`api.sloth.vancci.org`): `server/comunidad.ts` le pasa `/api/comunidad/*` con la credencial. Se entra con una **cuenta gratis de Sloth** (`server/licencia.ts`, `data/licencia.json`; la pantalla de la comunidad la crea si falta). v!d no muestra apoyo, pagos ni recordatorios: no hay grupo «Apoyo» en Opciones ni `Recordatorio`.

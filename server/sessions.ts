@@ -118,6 +118,8 @@ export class Sessions {
    * sea cual sea su proveedor. No se ve en el hilo: lo que se ve son las líneas `Proyecto:` y `MemoriaProyecto:`.
    */
   contexto: (meta: SessionMeta) => string = () => ''
+  /** Lo que su card no le ofrece al agente (`Card.sinHerramientas`). */
+  sinHerramientas: (meta: SessionMeta) => string[] | undefined = () => undefined
 
   constructor(
     private dir: string,
@@ -673,6 +675,7 @@ export class Sessions {
       lote: !!meta.lote,
       hilo: meta.id,
       conLlave,
+      sinHerramientas: this.sinHerramientas(meta),
       onEvent: (event) => this.emit(meta.id, event),
       onDraft: (draft) => this.pushDraft(meta.id, draft),
       // Un proceso muerto no recibe nada: se olvida, y el siguiente mensaje abre otro que retoma la sesión. Si se cayó,

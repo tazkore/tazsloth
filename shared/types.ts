@@ -8,6 +8,11 @@ export interface Card {
   description: string
   /** Nombre de la carpeta de la skill en `SKILLS` (`server/skills.ts`). */
   skill?: string
+  /**
+   * La versión del estilo, a la vista bajo su título: así quien lo usa sabe cuál tiene. Al cambiar la skill sube el
+   * segundo número si se nota en los videos (2.0 → 2.1), y el primero si cambia a fondo, con su `cambio` (2.1 → 3.0).
+   */
+  version?: string
   /** Carpeta donde trabaja el agente. `{app}` es la carpeta de v!d. Si falta, es `<trabajo>/<id>` (`carpetaTrabajo`). */
   cwd: string
   icon?: string
@@ -37,6 +42,67 @@ export interface Card {
   basadoEn?: string
   /** Un estilo que instalaste de otro: de dónde vino. Al volver a instalarlo de ahí, se pone al día. */
   origen?: OrigenEstilo
+  /**
+   * Lo que el agente de Claude de esta card no ve: herramientas (`NotebookEdit`, `mcp__21st__bookmark`) o servidores MCP
+   * enteros (`mcp__openseo`), también los del usuario. Sale de lo que sus hilos nunca usaron (`medidor economizar`, en
+   * sloth-medidor): menos herramientas ofrecidas, menos contexto en cada mensaje.
+   */
+  sinHerramientas?: string[]
+  /**
+   * Una versión de Sloth cambió este estilo a fondo: quien ya lo usaba puede quedarse también con el de antes
+   * (`server/anteriores.ts`).
+   */
+  cambio?: CambioEstilo
+}
+
+/** Lo que dice la card de un estilo de Sloth que cambió a fondo (`Card.cambio`). */
+export interface CambioEstilo {
+  /** El día del cambio, `AAAA-MM-DD`: lo distingue de otro y nombra el de antes («hasta el 7 nov 2026»). */
+  fecha: string
+  /** Qué cambió, en un párrafo y en palabras de quien hace videos: más rápido, más barato, qué se ve distinto. */
+  texto: string
+  /** El titular del aviso, en una línea («Sale en 5 minutos y gasta 46 veces menos»). Si falta, «Pasó a la versión N». */
+  titulo?: string
+  /** Dónde ver los dos lado a lado, fuera de Sloth. */
+  compara?: string
+  /** El mismo video hecho con el de antes y con el nuevo, que el aviso enseña lado a lado. */
+  comparacion?: Comparacion
+  /** Lo de la card de antes que ya no es igual (las etapas, por ejemplo); `null` quita un campo. */
+  antes?: Partial<Record<keyof Card, unknown>>
+}
+
+/**
+ * Los dos videos de un `cambio`, con lo mismo de entrada (pedido, guion, voz). Sus archivos van en
+ * `web/public/cambios/<card>/`, ligeros (540 px de ancho): viajan dentro de la app.
+ */
+export interface Comparacion {
+  /** Qué tuvieron igual, para que la comparación se crea. */
+  nota: string
+  /** Lo que mejoró, en grande: `{ valor: '10,7×', texto: 'más rápido' }`. */
+  resumen?: { valor: string; texto: string }[]
+  antes: LadoComparado
+  ahora: LadoComparado
+}
+
+export interface LadoComparado {
+  /** Ruta de la app, como `/cambios/video-explicativo/antes.mp4`. */
+  video: string
+  portada?: string
+  /** Con qué se hizo, en pocas palabras («Opus, esfuerzo alto»). */
+  detalle?: string
+  /** Lo que se midió, en el mismo orden en los dos: `{ nombre: 'Tardó', valor: '53,6 min' }`. */
+  cifras: { nombre: string; valor: string }[]
+}
+
+/** El aviso de una card cuyo estilo cambió y del que hay guardado el de antes (`GET /api/cards/<id>/anterior`). */
+export interface EstiloAnterior {
+  fecha: string
+  texto: string
+  compara?: string
+  /** Cómo se llamará entre los tuyos si lo guardas. */
+  titulo: string
+  /** Si este usuario tenía el de antes y está guardado. Si no (instaló de cero), el aviso solo pide leerlo. */
+  guardado: boolean
 }
 
 /** De dónde vino un estilo instalado: de un archivo (sin `publicacion`) o de la comunidad, y de qué versión de Sloth. */

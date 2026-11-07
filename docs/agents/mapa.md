@@ -62,9 +62,10 @@ Este es el mapa:
   `Carpeta: <nombre>`, que leen las skills. Con `lote`, varios enlaces pueden ser un video cada uno
   (`lote-MMDD-HHMM-NN`, ver `skills/video-base/LOTE.md`). Cambiar la carpeta desde el estudio usa una que ya existe.
   Todo estilo de video hace vertical y horizontal: el compositor manda la línea `Formato:` (`skills/video-base/FORMATO.md`).
-- `modelos` (`web/src/Modelos.tsx`): en «Optimizado», el modelo y el esfuerzo medidos para el hilo y sus subagentes
-  (los de los subagentes van en la línea `Subagentes:`). Una card sin medir
-  usa lo último que eligió el usuario a mano. En «Avanzado» se elige cada uno.
+- `modelos` (`web/src/Modelos.tsx`): en «Optimizado», el modelo y el esfuerzo medidos para el hilo. Una card sin medir
+  usa lo último que eligió el usuario a mano. En «Avanzado» se eligen. Los subagentes van siempre en el modelo y el
+  esfuerzo del hilo: en Claude, Sloth los manda en la línea `Subagentes: todos = <alias> <esfuerzo>.` (las `tareas`
+  medidas de la card ya no se usan). La excepción es el `guionista` del explicativo (`server/claude.ts`), que va en Opus.
 - La galería: al elegir un estilo, sus videos terminados ocupan el sitio de las cards (`videosApi` en `etapas.ts`);
   «Mis videos» (`MisVideos.tsx`) los junta todos. Cada card enseña de fondo el más nuevo (`server/previas.ts`).
 - `server/redes/` y `web/src/Redes.tsx`: los verticales terminados se programan al ritmo que eliges en «Mis videos» (`web/src/Ritmos.tsx`, las cuentas en `shared/ritmo.ts`; YouTube lleva el suyo).
@@ -132,6 +133,16 @@ Este es el mapa:
 - `server/originales.ts` y `web/src/TusCambios.tsx`: en la app que se vende, «Con tus cambios (N)» bajo la card dice qué
   archivos de su skill (y de video-base) ya no son como los trae la versión, y vuelve a la original, entera o uno a uno.
   Lo que se pisa, también al actualizar (`prepararSkills`), se copia antes a `data/skills-tuyas`.
+- `server/anteriores.ts` y `web/src/EstiloCambio.tsx`: cuando una versión cambia a fondo un estilo de v!d, su card en
+  `cards.json` lleva `cambio` (la fecha, qué cambió para quien hace videos, el enlace a los dos lado a lado y lo de la
+  card de antes que ya no es igual). Al instalar encima la versión nueva se guarda el de antes. Al abrir v!d, todos ven
+  un aviso a pantalla completa hasta pulsar «Leí toda la especificación»; quien tenía el de antes elige luego «Guardar
+  también el de antes», que lo pone entre sus estilos como `<skill>-<fecha>`, o «Usar solo el nuevo». El de v!d se
+  actualiza siempre.
+  Cada estilo lleva su `version`, a la vista en su card: el segundo número sube con un cambio que se nota, el primero
+  con uno a fondo (el del `cambio`, que dice en `antes.version` la de antes; lo comprueba `reglas-repo.test.ts`).
+  El aviso enseña el mismo video con los dos (`cambio.comparacion`), con los archivos en `web/public/cambios/<card>/`. Al rehacer un estilo, pon el
+  `cambio` y deja la comparación lista antes de compilar.
 - `server/requisitos.ts`: lo que las skills necesitan fuera de v!d. Cada card pide solo los paquetes de su skill
   (`PAQUETES` dice cuáles), siempre ya compilados; si tu Python de Windows no los tiene (uno recién salido), baja el suyo. Instala automáticamente el Python de v!d en `%APPDATA%\youtube\piezas\python`,
   sus paquetes y los modelos; elige CUDA y Whisper si hay una NVIDIA que lo aguante (`aguantaCuda`) y, si no, CPU y

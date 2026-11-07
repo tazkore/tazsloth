@@ -393,7 +393,11 @@ export function voz(app: string, socio: Parameters<typeof voicesCloning>[1] = { 
     }
   }
 
-  /** Quita la sesión de la página de la app. La de Edge se queda: conectar otra vez la vuelve a pasar sin entrar. */
+  /**
+   * Quita la sesión de la página de la app y la de Edge: si la de Edge se quedaba, conectar otra vez entraba solo con la
+   * misma cuenta y no había cómo elegir otra (con la cuota del día agotada, 5 de noviembre). El perfil del script viejo
+   * de El Diff no se toca: se deja de usar y se empieza uno de v!d, vacío. Vale para Chrome y Edge, cada uno con su perfil.
+   */
   async function desconectar() {
     const ventana = integrado()
     if (ventana?.voz)
@@ -402,6 +406,14 @@ export function voz(app: string, socio: Parameters<typeof voicesCloning>[1] = { 
         await b.contexts()[0].clearCookies().catch(() => {})
         await b.close().catch(() => {})
       })
+    await enTurno(async () => {
+      if (await responde()) await cerrarEdge()
+      // El del script viejo de El Diff (solo en Edge) no se toca: se empieza el de v!d, vacío.
+      if (perfil(navegadorExterno().marca) === viejo) return void mkdirSync(nuevo, { recursive: true })
+      await lanzarEdge(false)
+      await alNavegador('Storage.clearCookies').catch(() => {})
+      await cerrarEdge()
+    }).catch(() => {})
     cuenta = null
     guardarCuenta()
   }

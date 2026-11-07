@@ -21,8 +21,8 @@ import { opencodeModels } from './opencode.ts'
 import { conectandoOtro, OTROS, sinLimites } from './proveedores.ts'
 import { PROVEEDORES, type Proveedor, proveedorDe } from '../shared/providers.ts'
 import { paraMandar, salidaDe, sinSalidasLargas } from '../shared/historial.ts'
-import { conectandoCodex, conectarCodex, cuentaCodex, limitesCodex } from './cuenta-codex.ts'
-import { alEntrarClaude, conectando, conectarClaude, cuentaClaude, limitesClaude } from './cuenta.ts'
+import { conectandoCodex, conectarCodex, cuentaCodex, limitesCodex, salirCodex } from './cuenta-codex.ts'
+import { alEntrarClaude, conectando, conectarClaude, cuentaClaude, limitesClaude, salirClaude } from './cuenta.ts'
 import { cancelarOpenCode, conectandoOpenCode, conectarOpenCode, cuentaOpenCode, limitesOpenCode, quitarCuentaOpenCode, usarCuentaOpenCode } from './cuenta-opencode.ts'
 import { enlacesApi } from './enlaces.ts' // tarjeta de los enlaces
 import { cerrarVigilantesOciosos, etapasApi, folderOf, mismaCwd, queFalta, videosApi, videosDe } from './etapas.ts' // panel de etapas
@@ -59,6 +59,7 @@ import { mantenerVoz } from './voz-viva.ts'
 import { avisoDeVideos } from '../shared/limites.ts'
 import { eventosEnVivo } from './eventos-en-vivo.ts'
 import { enviarCliente } from './enviar-cliente.ts'
+import { anteriorDe, conservarAnterior, olvidarAnterior } from './anteriores.ts'
 import { cambiosDeCard, carpetaSkill, configClaude, duplicateCard, enlazarSkillsCodex, skillsDeClaude, guardarSkillTuya, readCards, removeCard, seriesDe, sincronizarSesion, SKILLS, skillRef, volverAOriginal } from './skills.ts'
 import { estaticos } from './estaticos.ts'
 import { type Agente, version } from './version.ts'
@@ -146,6 +147,7 @@ const social = agencia({ dir: join(APP, 'data', 'agencia'), skills: SKILLS, proy
 sessions.esVideo = (meta) => !!cards().find((c) => c.id === meta.cardId)?.etapas?.some((e) => e.fase)
 // Con otra cuenta de Claude, los hilos quietos sueltan su Claude Code: el siguiente mensaje ya va con ella.
 alEntrarClaude(() => sessions.soltarQuietos('claude'))
+sessions.sinHerramientas = (meta) => cards().find((c) => c.id === meta.cardId)?.sinHerramientas
 // Mientras un video trabaja, Whisper se queda cargado: el primero que empieza lo carga, antes de que sus agentes llenen la memoria.
 setInterval(() => {
   if (sessions.videosTrabajando()) void mantenerVoz(SKILLS)
@@ -159,6 +161,7 @@ setInterval(() => {
 
 /**
  * Las cards de cards.json, más las tuyas (`CARDS_TUYAS`) si hay; una tuya sin `id` o con el de una de v!d no cuenta.
+ * Un estilo tuyo sin `version` (de antes de que la hubiera) es la 1.0.
  * Se releen solo si alguno cambió. Si quedó a medio escribir o con un error, siguen las últimas buenas: una coma de más no
  * puede dejarte sin «Detener» ni «Reiniciar backend», que pasan por aquí. Un error en las tuyas no se lleva las de v!d.
  */
@@ -174,7 +177,7 @@ function cards(): Card[] {
       const ids = new Set(deVid.map((c) => c.id))
       let suyas: Card[] = []
       try {
-        if (tuyas) suyas = readCards(CARDS_TUYAS, APP).filter((c) => !ids.has(c.id)).map((c) => ({ ...c, tuya: true }))
+        if (tuyas) suyas = readCards(CARDS_TUYAS, APP).filter((c) => !ids.has(c.id)).map((c) => ({ ...c, tuya: true, ...(c.etapas && !c.version ? { version: '1.0' } : {}) }))
       } catch (error) {
         console.error(`${CARDS_TUYAS} tiene un error; van solo las cards de v!d. ${error instanceof Error ? error.message : error}`)
       }
@@ -475,6 +478,15 @@ async function api(req: IncomingMessage, res: ServerResponse, url: URL): Promise
     pedirModelos()
     return true
   }
+  if (path === '/api/codex/salir' && method === 'POST') {
+    try {
+      send(res, 200, await salirCodex())
+      pedirModelos()
+    } catch (error) {
+      send(res, 400, { error: error instanceof Error ? error.message : String(error) })
+    }
+    return true
+  }
 
   // La cuenta de OpenCode (`server/cuenta-opencode.ts`): mirarla, conectar otra, dejar de esperar al navegador, usar otra
   // de las conectadas o quitarla. Sus modelos dependen de la cuenta: cada cambio los vuelve a pedir.
@@ -529,6 +541,10 @@ async function api(req: IncomingMessage, res: ServerResponse, url: URL): Promise
 
   if (path === '/api/claude/conectar' && method === 'POST') {
     send(res, 200, await conectarClaude(APP))
+    return true
+  }
+  if (path === '/api/claude/salir' && method === 'POST') {
+    send(res, 200, await salirClaude(APP))
     return true
   }
 
@@ -607,6 +623,25 @@ async function api(req: IncomingMessage, res: ServerResponse, url: URL): Promise
       const { skill, archivo } = await body<{ skill?: string; archivo?: string }>(req)
       await volverAOriginal(card, todas, join(APP, 'data'), skill && archivo ? { skill, archivo } : undefined)
       return send(res, 200, await cambiosDeCard(card, todas, join(APP, 'data'))), true
+    }
+  }
+
+  // Un estilo de Sloth que cambió a fondo y del que se guardó el de antes al actualizar (`server/anteriores.ts`): su aviso,
+  // guardarlo entre los tuyos o quedarse solo con el nuevo.
+  const ant = /^\/api\/cards\/([\w-]+)\/anterior$/.exec(path)
+  if (ant) {
+    const card = cards().find((c) => c.id === ant[1])
+    if (!card) return send(res, 404, { error: 'No existe esa card' }), true
+    const datos = join(APP, 'data')
+    if (method === 'GET') return send(res, 200, anteriorDe(card, datos)), true
+    if (method === 'POST') {
+      const { accion } = await body<{ accion?: string }>(req)
+      if (accion === 'olvidar') return olvidarAnterior(card, datos), send(res, 200, { ok: true }), true
+      try {
+        return send(res, 200, conservarAnterior({ card, datos, skills: join(APP, 'skills'), tusCards: CARDS_TUYAS })), true
+      } catch (error) {
+        return send(res, 409, { error: error instanceof Error ? error.message : String(error) }), true
+      }
     }
   }
 

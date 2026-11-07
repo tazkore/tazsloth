@@ -4,6 +4,7 @@
     "title": "El Diff",
     "description": "Tu noticiero para TikTok o YouTube, con tu nombre, tu sello y tu despedida: le das un enlace o un tema, te escribe el guion, grabas tu voz y arma el episodio, o un short.",
     "skill": "video-el-diff",
+    "version": "1.0",
     "icon": "noticiero",
     "etapas": [
       {
@@ -98,14 +99,106 @@
           "medido": "Sin medir en esta skill: elegido el 19 de octubre para bajar el tiempo (Opus 5.5 en medium rinde como Opus 5 en high, según Anthropic)"
         }
       ]
-    }
+    },
+    "sinHerramientas": [
+      "mcp__21st__add_to_list",
+      "mcp__21st__bookmark",
+      "mcp__21st__create_bookmark_list",
+      "mcp__21st__delete_component",
+      "mcp__21st__delete_template",
+      "mcp__21st__delete_theme",
+      "mcp__21st__edit_component",
+      "mcp__21st__edit_profile",
+      "mcp__21st__edit_take",
+      "mcp__21st__edit_template",
+      "mcp__21st__edit_theme",
+      "mcp__21st__get_bookmark_list",
+      "mcp__21st__get_changes",
+      "mcp__21st__get_component",
+      "mcp__21st__get_generation",
+      "mcp__21st__get_generation_job",
+      "mcp__21st__get_inspiration",
+      "mcp__21st__get_notes",
+      "mcp__21st__get_profile",
+      "mcp__21st__get_take",
+      "mcp__21st__get_theme",
+      "mcp__21st__get_usage",
+      "mcp__21st__list_bookmark_lists",
+      "mcp__21st__list_bookmarks",
+      "mcp__21st__list_team_components",
+      "mcp__21st__list_team_libraries",
+      "mcp__21st__list_team_lists",
+      "mcp__21st__list_teams",
+      "mcp__21st__record_inspiration_feedback",
+      "mcp__21st__record_take_outcome",
+      "mcp__21st__remove_component_from_catalog",
+      "mcp__21st__resubmit_component",
+      "mcp__21st__search",
+      "mcp__21st__search_picker",
+      "mcp__21st__send_feedback",
+      "mcp__21st__submit_component",
+      "mcp__21st__update_note",
+      "mcp__21st__upload_profile_media",
+      "mcp__21st__video_apply_ops",
+      "mcp__21st__video_create_project",
+      "mcp__21st__video_export",
+      "mcp__21st__video_export_status",
+      "mcp__21st__video_finalize_asset",
+      "mcp__21st__video_get_doc",
+      "mcp__21st__video_list_blocks",
+      "mcp__21st__video_propose_variants",
+      "mcp__21st__video_search_blocks",
+      "mcp__21st__video_snapshot",
+      "mcp__21st__video_upload_asset",
+      "mcp__21st__withdraw_component",
+      "mcp__claude_ai_Claude_Docs",
+      "mcp__navegador__browser_click",
+      "mcp__navegador__browser_close",
+      "mcp__navegador__browser_console_messages",
+      "mcp__navegador__browser_drag",
+      "mcp__navegador__browser_drop",
+      "mcp__navegador__browser_emulate_media",
+      "mcp__navegador__browser_file_upload",
+      "mcp__navegador__browser_fill_form",
+      "mcp__navegador__browser_find",
+      "mcp__navegador__browser_handle_dialog",
+      "mcp__navegador__browser_hover",
+      "mcp__navegador__browser_navigate_back",
+      "mcp__navegador__browser_network_request",
+      "mcp__navegador__browser_network_requests",
+      "mcp__navegador__browser_press_key",
+      "mcp__navegador__browser_select_option",
+      "mcp__navegador__browser_snapshot",
+      "mcp__navegador__browser_tabs",
+      "mcp__navegador__browser_type",
+      "mcp__openseo",
+      "mcp__pinterest",
+      "mcp__plugin_mercadopago_mcp",
+      "CronCreate",
+      "CronDelete",
+      "CronList",
+      "DesignSync",
+      "EnterWorktree",
+      "ExitWorktree",
+      "NotebookEdit",
+      "PushNotification",
+      "RemoteTrigger"
+    ]
   },
   {
     "id": "video-explicativo",
     "title": "Video explicativo",
     "description": "Un video que explica cualquier tema en el tiempo que necesite: un solo mundo 3D que la cámara recorre sin cortes, el texto palabra por palabra y tu personaje (el perro salchicha, uno tuyo o ninguno). Tú grabas la voz y el cierre lleva a donde quieras.",
     "skill": "video-explicativo",
+    "version": "2.0",
     "icon": "pizarra",
+    "modelos": {
+      "principal": {
+        "model": "claude-sonnet-5-5",
+        "effort": "medium",
+        "medido": "5 nov 2026, tamal, agua y estafas con el director: medium 2.9–4.3 min y $0.27–0.38; high 2.9–7.0 min y $0.39–1.08, con guiones igual de buenos. Sin esto iba en Opus high."
+      }
+    },
     "etapas": [
       {
         "nombre": "Investigación",
@@ -131,7 +224,7 @@
       },
       {
         "nombre": "Revisión",
-        "listo": "revision/borrador-*.png",
+        "listo": "revision/hoja.png",
         "fase": "video"
       },
       {
@@ -145,35 +238,98 @@
         "fase": "entrega"
       }
     ],
-    "modelos": {
-      "principal": {
-        "model": "claude-opus-5-5",
-        "effort": "medium",
-        "medido": "Sin medir en esta skill: elegido en v1.1 (noviembre de 2026) para bajar el costo; El Diff ya arma sus escenas en Opus medium"
-      },
-      "tareas": [
-        {
-          "nombre": "modelos",
-          "para": "Los modelos 3D que faltan, uno por subagente",
-          "model": "sonnet",
-          "effort": "high",
-          "medido": "Sin medir: antes iban con el modelo del hilo (Opus high); Sonnet high escribe three.js con su vista y su revisión"
+    "cambio": {
+      "fecha": "2026-11-07",
+      "texto": "El agente ya no programa cada video: llena la lista de lo que pasa en cada frase y v!d arma la cámara, las fotos, las cifras y las animaciones. El guion lo escribe Opus, con un gancho que te contradice y una situación concreta.",
+      "titulo": "Sale en 5 minutos y gasta 46 veces menos",
+      "comparacion": {
+        "resumen": [
+          { "valor": "10,7×", "texto": "más rápido" },
+          { "valor": "46×", "texto": "más barato" },
+          { "valor": "17×", "texto": "menos pasos" }
+        ],
+        "nota": "Mismo pedido, mismo guion palabra por palabra y misma grabación de voz, en la misma computadora. El costo es a precio de la API: con tu plan no lo pagas aparte, pero gasta de él en la misma proporción.",
+        "antes": {
+          "video": "/cambios/video-explicativo/antes.mp4",
+          "portada": "/cambios/video-explicativo/antes.jpg",
+          "detalle": "Opus, esfuerzo alto",
+          "cifras": [
+            {
+              "nombre": "Tardó",
+              "valor": "53,6 min"
+            },
+            {
+              "nombre": "Costó",
+              "valor": "$21,68"
+            },
+            {
+              "nombre": "Pasos",
+              "valor": "262"
+            }
+          ]
         },
-        {
-          "nombre": "subtítulos",
-          "para": "Marcar subtitulos.txt y traer los logos",
-          "model": "haiku",
-          "effort": "medium",
-          "medido": "Sin medir: es marcar texto que ya existe, sin cambiar palabras"
-        },
-        {
-          "nombre": "imágenes",
-          "para": "Mirar vistas, hojas del borrador y parecidos; devuelve solo texto",
-          "model": "sonnet",
-          "effort": "medium",
-          "medido": "Sin medir: las imágenes se quedan en su contexto, no en el del hilo, que las releía en cada llamada"
+        "ahora": {
+          "video": "/cambios/video-explicativo/ahora.mp4",
+          "portada": "/cambios/video-explicativo/ahora.jpg",
+          "detalle": "Sonnet medio, Opus en el guion",
+          "cifras": [
+            {
+              "nombre": "Tardó",
+              "valor": "5,0 min"
+            },
+            {
+              "nombre": "Costó",
+              "valor": "$0,47"
+            },
+            {
+              "nombre": "Pasos",
+              "valor": "15"
+            }
+          ]
         }
-      ]
+      },
+      "antes": {
+        "version": "1.0",
+        "etapas": [
+          {
+            "nombre": "Investigación",
+            "listo": "fuentes/investigacion.md",
+            "fase": "idea"
+          },
+          {
+            "nombre": "Guion",
+            "listo": "guion.md",
+            "copiar": true,
+            "fase": "guion"
+          },
+          {
+            "nombre": "Tu voz",
+            "listo": "fuentes/voz/original.wav",
+            "espera": "Graba el guion (con el celular basta) y súbelo aquí o mándalo por el chat.",
+            "fase": "sonido"
+          },
+          {
+            "nombre": "Voz lista",
+            "listo": "fuentes/voz/rapida.wav",
+            "fase": "sonido"
+          },
+          {
+            "nombre": "Revisión",
+            "listo": "revision/borrador-*.png",
+            "fase": "video"
+          },
+          {
+            "nombre": "Video",
+            "listo": "out/!(render*|borrador*|_*).mp4",
+            "fase": "video"
+          },
+          {
+            "nombre": "Portada",
+            "listo": "{portada.png,portada/*.png}",
+            "fase": "entrega"
+          }
+        ]
+      }
     }
   },
   {
@@ -181,6 +337,7 @@
     "title": "Kold Gold",
     "description": "Un video explicativo de Kold Gold con la zorra anfitriona: un solo mundo 3D que recorre el viaje de la carga, el texto palabra por palabra en carbón, plata y cobre, y el cierre a kold.gold. Le das el tema y él investiga en kold.gold, escribe el guion y arma el video.",
     "skill": "kold-gold",
+    "version": "1.0",
     "icon": "globo",
     "etapas": [
       {
@@ -257,6 +414,7 @@
     "title": "Reel de comedia",
     "description": "Un sketch de comedia sobre cualquier tema o tu propio guion: un experto muy serio enseña a resolver una situación con pasos físicos absurdos, con tus poses recortadas sobre fotos reales y la voz que elijas.",
     "skill": "reel-collage",
+    "version": "1.0",
     "icon": "risa",
     "voz": {
       "propia": "Voz de edge-tts"
@@ -309,6 +467,7 @@
     "title": "Documental",
     "description": "Tu grabación hablando a cámara, convertida en un documental para YouTube, TikTok o Reels: cada frase con material real encontrado en internet, recoloreado y animado a golpe de corte, tú recortado delante de un mundo que cambia y un clic en cada imagen.",
     "skill": "video-documental",
+    "version": "1.0",
     "icon": "claqueta",
     "voz": false,
     "etapas": [
@@ -353,6 +512,7 @@
     "title": "Nuevo modelo 3D",
     "description": "Cuéntale qué objeto 3D quieres, o pásale una imagen de referencia, y v!d lo modela con three.js en un proyecto de prueba, le saca su vista y lo guarda en la biblioteca de Modelos 3D para tus próximos videos.",
     "skill": "modelos-3d",
+    "version": "1.0",
     "icon": "escena",
     "etapas": [
       {
@@ -374,6 +534,7 @@
     "title": "Frutinovela",
     "description": "Una telenovela de frutas en 3D que hablan con sus propias voces: los mismos personajes en cada escena, drama de traición o familia y un final que pide la siguiente parte. Se hace en Google Flow con tus cuentas de Google.",
     "skill": "frutinovela",
+    "version": "1.0",
     "icon": "personas",
     "voz": false,
     "clips": true,

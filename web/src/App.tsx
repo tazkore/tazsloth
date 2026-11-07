@@ -17,6 +17,8 @@ import { LINK, threadIcons, threadRef } from './etiquetas'
 import { Confirm } from './Confirm'
 import { TusCambios } from './TusCambios'
 import { AvisoAgentes } from './AvisoAgentes' // versiones nuevas de los agentes (no de la app)
+import { EstiloCambio } from './EstiloCambio'
+import { Novedades } from './Novedades'
 import { TarjetasEnlaces } from './Enlaces' // tarjeta de los enlaces
 import { esDeEstudio, Estudio } from './Estudio' // panel de etapas
 import { BotonNavegador, PanelNavegador, useNavegadorAbierto } from './Navegador' // navegador de cada hilo
@@ -755,6 +757,8 @@ export function App() {
           />
         )}
       </main>
+      <Novedades />
+      <EstiloCambio cards={cards} activa={newCard?.id} />
     </div>
   )
 }
@@ -1077,6 +1081,7 @@ function NewSession(props: {
           <span className="card-icon big"><Icon icon={card.icon ?? '✦'} /></span>
           <h1>{card.title}</h1>
           <p>{card.description}</p>
+          {card.version && <p className="estilo-version">Versión {card.version}</p>}
           <TusCambios card={card} clave={hilos.map((s) => s.id + s.updatedAt).join()} />
         </div>
         {/* Hasta saber qué cuentas hay no sale: el aviso de Claude no se asoma a quien solo tiene ChatGPT u OpenCode. */}
@@ -1142,6 +1147,7 @@ const Carteles = memo(function Carteles({ cards, activa, previas, sessions, acci
               <span className="card-desc">{c.description}</span>
             </span>
           )}
+          {c.version && <span className="card-version" title={`Versión ${c.version} de este estilo`}>v{c.version}</span>}
           {/* En la app que se vende, las cards de v!d ni se duplican ni se borran; las de tus estilos se borran. */}
           {(!VENTA || c.tuya) && (
             <span className="card-actions">
