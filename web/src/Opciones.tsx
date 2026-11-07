@@ -890,7 +890,7 @@ export function AvisoPrimerAgente({ onIr }: { onIr?(): void }) {
           <Logo de="python-sloth" />
           <div className="fila-nombre">
             <strong>Conecta tu primer agente</strong>
-            <span>Sloth hace los videos con una IA: Claude, ChatGPT, OpenCode (gratis) u otra. Elige una en Opciones y conéctala una sola vez.</span>
+            <span>v!d hace los videos con una IA: Claude, ChatGPT, OpenCode (gratis) u otra. Elige una en Opciones y conéctala una sola vez.</span>
           </div>
           <button className="primary" onClick={() => (onIr?.(), (location.hash = AGENTES))}>
             Conectar la IA
