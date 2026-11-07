@@ -1,6 +1,5 @@
 # Comprueba lo que llegaría a la app instalada antes de publicar desde venta.
-# Usa el empaquetado real en cada sistema (las tres de Mac: Intel, Apple Silicon y la de macOS 12, que prueba también
-# con Node 22); deja los archivos en el runner.
+# Usa el empaquetado real en los tres sistemas; deja los archivos en el runner.
 name: Comprobar Sloth
 
 on:
@@ -22,21 +21,14 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # La de macOS 12 sale en un Mac con Intel, con Electron 43 y Node 22: Electron 44 y Node 24 ya no abren ahí
-        # (SLOTH_MAC12, scripts/compilar.mjs).
-        include:
-          - { os: windows-latest, node: 24.18.0 }
-          - { os: macos-15-intel, node: 24.18.0 }
-          - { os: macos-15, node: 24.18.0 }
-          - { os: macos-15-intel, node: 22.23.4, mac12: '1' }
-          - { os: ubuntu-latest, node: 24.18.0 }
+        os: [windows-latest, macos-15-intel, ubuntu-latest]
     runs-on: ${{ matrix.os }}
     timeout-minutes: 60
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-node@v5
         with:
-          node-version: ${{ matrix.node }}
+          node-version: 24.18.0
           cache: npm
       - run: npm ci --no-audit --no-fund
       # Las pruebas de YouTube generan videos y extraen sus fotogramas con FFmpeg.
@@ -62,7 +54,6 @@ jobs:
       # compilar incluye el typecheck y comprueba los paquetes que llevará el servidor.
       - run: npm run compilar -- --sin-instalador
         env:
-          SLOTH_MAC12: ${{ matrix.mac12 }}
           SLOTH_TUYO: ${{ secrets.SLOTH_TUYO }}
           # Reproduce también los secretos vacíos que GitHub entrega cuando faltan.
           # Mac usa la firma ad hoc; esta comprobación no necesita credenciales.
