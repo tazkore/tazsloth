@@ -143,7 +143,34 @@ const conEtapas = (id: string) => !!cards().find((c) => c.id === sessions.meta(i
 const proyectos = new Proyectos(join(APP, 'data', 'proyectos'), join(SKILLS, 'kold-gold', 'marca.json'))
 sessions.contexto = (meta) => proyectos.contexto(meta.proyecto, meta.serie)
 // Agencia y Social Media (v!d Fase 4): la llave de vid-api por proyecto; exporta VID_AGENCIA_LLAVE y VID_API_URL.
-const social = agencia({ dir: join(APP, 'data', 'agencia'), skills: SKILLS, proyectos, programaClaude })
+// El piloto automático de contenido (`server/agencia/piloto.ts`) hace sus videos como un lote: esperan su turno en `sessions`.
+const social = agencia({
+  dir: join(APP, 'data', 'agencia'),
+  skills: SKILLS,
+  proyectos,
+  programaClaude,
+  piloto: {
+    cards: () => cards(),
+    modelos: () => modelos,
+    hilos: {
+      crear: ({ proyecto, cardId, modelo, esfuerzo, videos }) => {
+        const card = cards().find((c) => c.id === cardId)
+        if (!card) throw new Error('No existe esa card')
+        mkdirSync(card.cwd, { recursive: true })
+        const lineas = proyectos.lineasDe(proyecto)
+        const carpetas = carpetasDeLote(card, videos.length)
+        const n = videos.length
+        const lote = videos.map((v, i) => ({ carpeta: carpetas[i], title: v.title, text: [v.text, `Lote: video ${i + 1} de ${n}. Carpeta: ${carpetas[i]}`, lineas.join('\n')].filter(Boolean).join('\n\n') }))
+        const metas = sessions.crearLote({ cardId, model: modelo, effort: esfuerzo, cwd: card.cwd, ...(lineas.length ? { proyecto } : {}) }, lote, card.skill ? skillRef(card.skill) : undefined)
+        return metas.map((m) => m.id)
+      },
+      trabajando: (id) => {
+        const m = sessions.meta(id)
+        return m ? !!(m.running || m.background?.length || m.pendiente) : undefined
+      }
+    }
+  }
+})
 sessions.esVideo = (meta) => !!cards().find((c) => c.id === meta.cardId)?.etapas?.some((e) => e.fase)
 // Con otra cuenta de Claude, los hilos quietos sueltan su Claude Code: el siguiente mensaje ya va con ella.
 alEntrarClaude(() => sessions.soltarQuietos('claude'))

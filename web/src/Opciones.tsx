@@ -1371,7 +1371,7 @@ function Avisos() {
 }
 
 /** Un interruptor de encendido y apagado, con la bolita que se desliza y su nombre a la izquierda, que también lo cambia. */
-function Interruptor({ on, onCambiar, etiqueta, disabled }: { on: boolean; onCambiar(si: boolean): void; etiqueta: string; disabled?: boolean }) {
+export function Interruptor({ on, onCambiar, etiqueta, disabled }: { on: boolean; onCambiar(si: boolean): void; etiqueta: string; disabled?: boolean }) {
   return (
     <label className="con-interruptor">
       {etiqueta}

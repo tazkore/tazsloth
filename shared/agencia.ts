@@ -200,3 +200,213 @@ export function enmascarar(llave: string): string {
 export function proyectoDeMemoria(ruta: string): string | undefined {
   return /[\\/]proyectos[\\/]([\w-]+)[\\/](?:series[\\/][\w-]+[\\/])?MEMORIA\.md$/i.exec(ruta.trim())?.[1]
 }
+
+/*
+ * Contenido automático por agencia («Piloto automático», v!d 1.1.6; contrato en vid-api 1.3.0): `perfil` trae el negocio,
+ * la configuración de contenido de la agencia (tabla `agencia_contenido` en Supabase) y el brief de su nicho
+ * (`agencia_nicho_brief`, que genera agentes.kold.gold); `guardar_contenido` la cambia. El piloto (`server/agencia/piloto.ts`)
+ * hace con eso los videos del día y los programa en todas las redes conectadas.
+ */
+
+/** El brief de contenido de un giro o nicho, en un idioma. */
+export interface BriefNicho {
+  slug: string
+  idioma: string
+  nombre: string
+  categoria?: string
+  resumen?: string
+  promesa?: string
+  dolores: string[]
+  /** Los pasos del recorrido del cliente, cortos. */
+  momentos: string[]
+  kpis: string[]
+  preguntas: string[]
+  cumplimiento: string[]
+  cta?: string
+  /** Ideas de gancho derivadas de los dolores, sin vender de frente. */
+  ganchos: string[]
+  pilares: string[]
+}
+
+export type PrivacidadContenido = 'publico' | 'privado'
+
+/** La configuración de contenido de una agencia (`agencia_contenido`, sin `agencia_id`). */
+export interface ContenidoAgencia {
+  activo: boolean
+  autopublicar: boolean
+  /** De 1 a 6. */
+  videos_por_dia: number
+  /** Familias de red (`PLATAFORMAS`); vacío, todas las conectadas. */
+  redes: string[]
+  /** `HH:MM` en la zona horaria de la agencia. */
+  horarios: string[]
+  idioma: string
+  pilares: string[]
+  tono: string | null
+  cta: string | null
+  /** El estilo de video de v!d: el id de una card (`video-explicativo`) o su nombre corto (`explicativo`). */
+  estilo_video: string
+  privacidad: PrivacidadContenido
+  notas: string | null
+  updated_at?: string | null
+  updated_by?: string | null
+}
+
+export const CONTENIDO_POR_DEFECTO: ContenidoAgencia = {
+  activo: false,
+  autopublicar: false,
+  videos_por_dia: 1,
+  redes: [],
+  horarios: ['10:00', '19:00'],
+  idioma: 'es',
+  pilares: [],
+  tono: null,
+  cta: null,
+  estilo_video: 'explicativo',
+  privacidad: 'publico',
+  notas: null
+}
+
+/** Lo que dice `perfil`. */
+export interface PerfilAgencia {
+  agencia: { id: string | null; folio?: string | null; nombre: string }
+  negocio: {
+    giro?: string | null
+    nicho?: string | null
+    ciudad?: string | null
+    pais?: string | null
+    zona_horaria?: string | null
+    sitio_web?: string | null
+    idiomas?: string[]
+    plan?: string | null
+  }
+  contenido: ContenidoAgencia
+  brief: BriefNicho | null
+  cuentas: (CuentaSocial & { familia?: string })[]
+  /** Las familias conectadas que entran (las de `contenido.redes`, o todas). */
+  redes_objetivo: string[]
+}
+
+export const HORA = /^([01]\d|2[0-3]):[0-5]\d$/
+const textos = (x: unknown): string[] => (Array.isArray(x) ? x.filter((v): v is string => typeof v === 'string' && !!v.trim()).map((v) => v.trim()) : [])
+const textoONulo = (x: unknown): string | null => (typeof x === 'string' && x.trim() ? x.trim() : null)
+
+/** La configuración tal como venga de vid-api, con los valores por defecto donde falte algo. */
+export function contenidoNormal(x: unknown): ContenidoAgencia {
+  const c = (x && typeof x === 'object' ? x : {}) as Record<string, unknown>
+  const d = CONTENIDO_POR_DEFECTO
+  const n = Number(c.videos_por_dia)
+  const horarios = [...new Set(textos(c.horarios).filter((h) => HORA.test(h)))].sort()
+  return {
+    activo: c.activo === true,
+    autopublicar: c.autopublicar === true,
+    videos_por_dia: Number.isFinite(n) ? Math.min(6, Math.max(1, Math.round(n))) : d.videos_por_dia,
+    redes: textos(c.redes).map((r) => r.toLowerCase()),
+    horarios: Array.isArray(c.horarios) ? horarios : d.horarios,
+    idioma: textoONulo(c.idioma) ?? d.idioma,
+    pilares: textos(c.pilares),
+    tono: textoONulo(c.tono),
+    cta: textoONulo(c.cta),
+    estilo_video: textoONulo(c.estilo_video) ?? d.estilo_video,
+    privacidad: c.privacidad === 'privado' ? 'privado' : 'publico',
+    notas: textoONulo(c.notas),
+    ...(typeof c.updated_at === 'string' ? { updated_at: c.updated_at } : {}),
+    ...(typeof c.updated_by === 'string' ? { updated_by: c.updated_by } : {})
+  }
+}
+
+/** El brief tal como venga, o null si no trae nada que sirva. */
+export function briefNormal(x: unknown): BriefNicho | null {
+  if (!x || typeof x !== 'object') return null
+  const b = x as Record<string, unknown>
+  const slug = textoONulo(b.slug)
+  if (!slug) return null
+  return {
+    slug,
+    idioma: textoONulo(b.idioma) ?? 'es',
+    nombre: textoONulo(b.nombre) ?? slug,
+    ...(textoONulo(b.categoria) ? { categoria: textoONulo(b.categoria)! } : {}),
+    ...(textoONulo(b.resumen) ? { resumen: textoONulo(b.resumen)! } : {}),
+    ...(textoONulo(b.promesa) ? { promesa: textoONulo(b.promesa)! } : {}),
+    dolores: textos(b.dolores),
+    momentos: textos(b.momentos),
+    kpis: textos(b.kpis),
+    preguntas: textos(b.preguntas),
+    cumplimiento: textos(b.cumplimiento),
+    ...(textoONulo(b.cta) ? { cta: textoONulo(b.cta)! } : {}),
+    ganchos: textos(b.ganchos),
+    pilares: textos(b.pilares)
+  }
+}
+
+/** Los errores de un cambio de configuración, antes de mandarlo a `guardar_contenido` (las mismas reglas que vid-api). */
+export function validarContenido(c: Partial<ContenidoAgencia>): string[] {
+  const e: string[] = []
+  for (const k of ['activo', 'autopublicar'] as const) if (k in c && typeof c[k] !== 'boolean') e.push(`«${k}» tiene que ser sí o no.`)
+  if ('videos_por_dia' in c && !(Number.isInteger(c.videos_por_dia) && c.videos_por_dia! >= 1 && c.videos_por_dia! <= 6)) e.push('Los videos por día van de 1 a 6.')
+  if ('horarios' in c && (!Array.isArray(c.horarios) || !c.horarios.every((h) => typeof h === 'string' && HORA.test(h)))) e.push('Cada horario va como HH:MM (24 horas).')
+  if ('redes' in c && (!Array.isArray(c.redes) || !c.redes.every((r) => typeof r === 'string' && r in PLATAFORMAS))) e.push('Hay una red que no existe.')
+  if ('privacidad' in c && c.privacidad !== 'publico' && c.privacidad !== 'privado') e.push('La privacidad es pública o privada.')
+  if ('pilares' in c && (!Array.isArray(c.pilares) || !c.pilares.every((p) => typeof p === 'string'))) e.push('Los pilares son una lista de textos.')
+  for (const k of ['idioma', 'estilo_video'] as const) if (k in c && (typeof c[k] !== 'string' || !c[k]!.trim())) e.push(`Falta «${k}».`)
+  for (const k of ['tono', 'cta', 'notas'] as const) if (k in c && c[k] !== null && typeof c[k] !== 'string') e.push(`«${k}» tiene que ser texto.`)
+  return e
+}
+
+/** Lo que el piloto guarda de este lado, por proyecto: su interruptor y con qué hace los videos. */
+export interface PilotoLocal {
+  /** El interruptor de Opciones → Agencia. Apagado por defecto: sin él, el `activo` del servidor no basta. */
+  encendido: boolean
+  /** El modelo y el esfuerzo de sus hilos; sin ellos, uno de Claude Sonnet o el primero que haya. */
+  modelo?: string
+  esfuerzo?: string
+  /** La voz del video (`lineaVoz`, `shared/voz.ts`); sin ella, la de la marca o la del estilo. */
+  voz?: string
+}
+
+export type EstadoTurno = 'hilo' | 'subiendo' | 'programado' | 'borrador' | 'error'
+
+/** Un video del piloto: su horario, el hilo que lo hace y lo que pasó al publicarlo. */
+export interface TurnoPiloto {
+  /** El boleto con que el hilo entrega su video (`publicar.mjs --piloto`): de un solo uso, vale para este horario. */
+  id: string
+  /** `AAAA-MM-DD` y `HH:MM` en la zona de la agencia, y el instante en ISO. */
+  fecha: string
+  hora: string
+  instante: string
+  sesion?: string
+  cardId: string
+  gancho: string
+  pilar: string
+  creado: number
+  estado: EstadoTurno
+  /** Si se publicó con `scheduled` (los dos interruptores y `autopublicar`) o quedó en borrador. */
+  post?: { id: string; estado: string; fecha?: string | null }
+  advertencias?: string[]
+  error?: string
+}
+
+/** Lo que enseña la sección «Contenido automático». */
+export interface VistaPiloto {
+  proyecto: string
+  local: PilotoLocal
+  /** Sin perfil: el motivo (backend viejo, sin llave, red…). */
+  aviso?: string
+  /** `backend_viejo`: vid-api aún no tiene `perfil`; el piloto se queda apagado. */
+  codigo?: string
+  perfil?: PerfilAgencia
+  /** Si el piloto puede trabajar ahora: los dos interruptores. */
+  encendido: boolean
+  zona: string
+  /** Los horarios de hoy y de mañana, con lo que tiene cada uno. */
+  proximos: { fecha: string; hora: string; instante: string; estado: 'libre' | 'pasado' | EstadoTurno; turno?: string }[]
+  ultimos: TurnoPiloto[]
+  /** El estilo con que saldrán (la card que le toca a `estilo_video`). */
+  estilo?: CardResumen
+  estilos: CardResumen[]
+}
+
+export interface CardResumen {
+  id: string
+  title: string
+}

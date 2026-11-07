@@ -116,7 +116,10 @@ Este es el mapa:
 - `server/agencia/` y `web/src/SocialMedia.tsx`: «Social Media» (Fase 4), publicar por la agencia con vid-api de Kold.Gold
   (Social Planner de GHL). La llave de cada proyecto, cifrada, en Opciones → Agencia (`llaves.ts`, `AgenciaOpciones.tsx`);
   la del proyecto activo llega a los agentes en `VID_AGENCIA_LLAVE`/`VID_API_URL`. Las skills `skills/social-*` (de
-  Instagram Skills, MIT) se lanzan desde ahí y desde Ideas (`agencia/skills.ts`); publican solo en borrador.
+  Instagram Skills, MIT) se lanzan desde ahí y desde Ideas (`agencia/skills.ts`); publican solo en borrador. El
+  «Piloto automático» (`agencia/piloto.ts`, Opciones → Agencia → Contenido automático) hace con `perfil` de vid-api los
+  videos del día de cada proyecto con llave propia, un hilo por horario, y los programa con un boleto de un solo uso
+  (`publicar.mjs --piloto`): solo con el `activo` del servidor y el interruptor local encendidos (ver su cabecera).
 - `server/radar/`: buscador propio de noticias tech, cada 5 minutos (`POST /api/radar/buscar`).
 - `server/modelos3d.ts` y `web/src/Modelos3D.tsx`: «Modelos 3D» enseña la biblioteca `skills/modelos-3d` que usan los
   agentes (la de `SKILLS`), que llenan los videos (solo se mira). Empieza vacía; la moneda de la plantilla

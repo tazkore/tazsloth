@@ -11,8 +11,15 @@
 //
 // La llave: VID_AGENCIA_LLAVE y VID_API_URL (las del proyecto activo, que pone v!d), o la del proyecto que se pida,
 // preguntada al servidor local de v!d (VID_URL + VID_TOKEN, ruta /api/agencia/entorno).
+//
+// La excepción es el piloto automático de contenido (server/agencia/piloto.ts): con --piloto <boleto> --proyecto <id>
+// no habla con vid-api; entrega el video al servidor local de v!d (/api/agencia/piloto/entregar), que lo sube y lo
+// programa (o lo deja en borrador) solo si el boleto es de ese proyecto, no se ha usado y los dos interruptores del
+// piloto (el de la agencia en el servidor y el del proyecto en v!d) están encendidos. Espera a que acabe y lo dice.
+//
+//   node publicar.mjs --piloto <boleto> --proyecto <id> --medio <video.mp4> --texto-archivo caption.txt [--titulo "…"]
 import { openAsBlob, readFileSync, statSync } from 'node:fs'
-import { basename, extname } from 'node:path'
+import { basename, extname, resolve } from 'node:path'
 
 const URL_POR_DEFECTO = 'https://udzsxmgyedojtirjpepc.supabase.co/functions/v1/vid-api'
 const TIPOS = { '.mp4': 'video/mp4', '.mov': 'video/quicktime', '.m4v': 'video/mp4', '.webm': 'video/webm', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.png': 'image/png', '.webp': 'image/webp', '.gif': 'image/gif' }
@@ -73,6 +80,33 @@ const a = argumentos(process.argv.slice(2))
 const texto = a['texto-archivo'] ? readFileSync(a['texto-archivo'], 'utf8').trim() : (a.texto ?? '').trim()
 if (!texto) fallar('falta --texto o --texto-archivo')
 if (!a.medio.length) fallar('falta al menos un --medio (archivo o URL https)')
+
+if (a.piloto) {
+  if (!a.proyecto) fallar('--piloto necesita --proyecto')
+  if (!process.env.VID_URL || !process.env.VID_TOKEN) fallar('el piloto entrega por el servidor local de v!d y faltan VID_URL y VID_TOKEN')
+  const local = async (ruta, cuerpo) => {
+    const r = await fetch(`${process.env.VID_URL}/api/agencia/${ruta}`, {
+      method: cuerpo ? 'POST' : 'GET',
+      headers: { 'x-vid-token': process.env.VID_TOKEN, ...(cuerpo ? { 'content-type': 'application/json' } : {}) },
+      ...(cuerpo ? { body: JSON.stringify(cuerpo) } : {})
+    })
+    const d = await r.json().catch(() => ({}))
+    if (!r.ok) fallar(d.error ?? `v!d respondió HTTP ${r.status}`)
+    return d
+  }
+  const e = await local('piloto/entregar', { ticket: a.piloto, proyecto: a.proyecto, ruta: resolve(a.medio[0]), texto, titulo: a.titulo })
+  console.error(`publicar: entregado al piloto (${e.destino === 'scheduled' ? 'se programa' : 'queda en borrador'}); subiendo…`)
+  // Un video grande tarda: hasta una hora, mirando cada 10 s.
+  for (let i = 0; i < 360; i++) {
+    await new Promise((ok) => setTimeout(ok, 10_000))
+    const t = await local(`piloto/entrega?proyecto=${encodeURIComponent(a.proyecto)}&ticket=${encodeURIComponent(a.piloto)}`)
+    if (t.estado === 'subiendo') continue
+    if (t.estado === 'error') fallar(t.error ?? 'el piloto no pudo publicar')
+    console.log(JSON.stringify({ ok: true, estado: t.estado, post: t.post, advertencias: t.advertencias ?? [] }, null, 2))
+    process.exit(0)
+  }
+  fallar('la subida sigue después de una hora; mira Opciones → Agencia → Contenido automático')
+}
 const cfg = await llaveDe(a)
 if (!cfg) fallar('no hay llave de agencia: pégala en v!d → Opciones → Agencia. Mientras, entrega el texto para copiar.')
 

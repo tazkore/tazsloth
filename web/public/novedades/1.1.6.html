@@ -1,0 +1,257 @@
+<!doctype html>
+<!--
+  La guía de lo nuevo de la 1.1.6: sale una vez al abrir v!d después de instalarla encima (web/src/Novedades.tsx, en un
+  iframe), y también se abre sola en un navegador. Una página suelta, sin dependencias: el logo (web/public/icon.svg) va
+  adentro, en #cara. Sigue a la guía de la 1.1.5 (paleta, controles, «Siguiente», flechas, deslizar y ?escena=N), con
+  cinco escenas sobre el piloto automático de contenido por agencia. Las animaciones son de entrada y terminan.
+-->
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>v!d 1.1.6</title>
+<style>
+  /* Paleta de v!d (web/src/styles.css) y la plata del logo. */
+  :root {
+    --bg: #0b0d12; --panel: #12151c; --panel-2: #1b1f29; --line: #2a303d; --text: #e6e9ef; --muted: #8f97a8;
+    --amber: #d69a5c; --amber-2: #efb57a; --sobre-ambar: #1a1006; --ok: #8fc177; --bad: #e06c55;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; background: var(--bg); }
+  body { display: grid; place-items: center; overflow: hidden; color: var(--text); font-family: Inter, 'Segoe UI', system-ui, sans-serif; }
+  .escenario { position: relative; width: min(100vw, 100vh); max-width: 1080px; aspect-ratio: 1; user-select: none; -webkit-user-select: none; }
+  .escenario > svg { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+  .controles { position: absolute; left: 8.33%; right: 8.33%; bottom: 3.2%; display: flex; align-items: center; gap: 12px; font-size: clamp(12px, 1.85vmin, 20px); }
+  .controles button { font: inherit; font-weight: 700; border-radius: 12px; padding: .8em 1.25em; cursor: pointer; border: 2px solid var(--line); background: var(--panel); color: var(--text); display: inline-flex; align-items: center; gap: .55em; transition: transform .12s, background-color .2s, border-color .2s, opacity .3s; }
+  .controles button:hover { border-color: var(--muted); }
+  .controles button:active { transform: scale(.95); }
+  .controles button:focus-visible { outline: 3px solid var(--amber-2); outline-offset: 3px; }
+  .controles svg { width: 1.25em; height: 1.25em; }
+  #siguiente { margin-left: auto; background: var(--amber); border-color: var(--amber); color: var(--sobre-ambar); }
+  #siguiente:hover { background: var(--amber-2); border-color: var(--amber-2); }
+  #anterior.oculto { opacity: 0; pointer-events: none; }
+  #cuenta { flex: 1; text-align: center; color: var(--muted); font-variant-numeric: tabular-nums; font-weight: 600; }
+  .escena { display: none; }
+  .escena.visible { display: inline; }
+  .entra { opacity: 0; transform: translateY(26px); transform-box: fill-box; transition: opacity .6s cubic-bezier(.2,.8,.2,1), transform .6s cubic-bezier(.2,.8,.2,1); }
+  .visible .entra { opacity: 1; transform: none; }
+  .visible .d1 { transition-delay: .15s; } .visible .d2 { transition-delay: .3s; } .visible .d3 { transition-delay: .45s; }
+  .visible .d4 { transition-delay: .6s; } .visible .d5 { transition-delay: .75s; } .visible .d6 { transition-delay: .9s; }
+  .perilla { transition: transform .5s cubic-bezier(.3,1.5,.5,1) 1s, fill .3s 1s; transform-box: fill-box; }
+  .visible .perilla { transform: translateX(46px); fill: #1a1006; }
+  .carril { transition: fill .3s 1s; }
+  .visible .carril { fill: #d69a5c; }
+  @media (prefers-reduced-motion: reduce) { .entra, .perilla, .carril { transition: none !important; } }
+</style>
+</head>
+<body>
+<div class="escenario" id="escenario">
+<svg id="lienzo" viewBox="0 0 1080 1080" xmlns="http://www.w3.org/2000/svg" font-family="Inter, 'Segoe UI', system-ui, sans-serif">
+  <defs>
+    <radialGradient id="brillo" cx="50%" cy="40%" r="62%">
+      <stop offset="0" stop-color="#d69a5c" stop-opacity=".26"/>
+      <stop offset=".55" stop-color="#d69a5c" stop-opacity=".06"/>
+      <stop offset="1" stop-color="#d69a5c" stop-opacity="0"/>
+    </radialGradient>
+    <!-- Iconos de trazo (Lucide, como web/src/Iconos.tsx) -->
+    <symbol id="i-flecha" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></symbol>
+    <symbol id="i-izq" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></symbol>
+    <symbol id="i-palomita" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></symbol>
+    <symbol id="i-video" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3.8a1 1 0 0 1 1.5-.86l11.5 7.2a1 1 0 0 1 0 1.72l-11.5 7.2A1 1 0 0 1 6 18.2z"/></symbol>
+    <symbol id="i-calendario" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2v4"/><path d="M16 2v4"/><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M3 10h18"/></symbol>
+    <symbol id="i-escudo" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/></symbol>
+    <symbol id="i-megafono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 11 18-5v12L3 14v-3z"/><path d="M11.6 16.8a3 3 0 1 1-5.8-1.6"/></symbol>
+    <symbol id="i-personas" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><path d="M9 3a4 4 0 1 0 0 8 4 4 0 0 0 0-8z"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></symbol>
+
+    <!-- El logo de v!d (web/public/icon.svg), en sus coordenadas de 512 -->
+
+    <radialGradient id="v-fondo" cx="50%" cy="38%" r="64%">
+      <stop offset="0%" stop-color="#222a3d" />
+      <stop offset="100%" stop-color="#080a0f" />
+    </radialGradient>
+    <linearGradient id="v-cobre" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#ffd6a6" />
+      <stop offset="45%" stop-color="#d69a5c" />
+      <stop offset="100%" stop-color="#7d4a22" />
+    </linearGradient>
+    <linearGradient id="v-cobreV" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#ffd6a6" />
+      <stop offset="50%" stop-color="#d69a5c" />
+      <stop offset="100%" stop-color="#8a5328" />
+    </linearGradient>
+    <linearGradient id="v-acero" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#f6f7f9" />
+      <stop offset="50%" stop-color="#a9b0bd" />
+      <stop offset="100%" stop-color="#454c5c" />
+    </linearGradient>
+    <linearGradient id="v-aceroV" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#ffffff" />
+      <stop offset="55%" stop-color="#c3c9d4" />
+      <stop offset="100%" stop-color="#7c8496" />
+    </linearGradient>
+    <g id="cara">
+  <circle cx="256" cy="256" r="250" fill="url(#v-acero)" />
+  <circle cx="256" cy="256" r="232" fill="url(#v-fondo)" />
+  <circle cx="256" cy="256" r="216" fill="none" stroke="url(#v-cobre)" stroke-width="11" />
+  <g fill="none" stroke="#d69a5c" stroke-opacity="0.16" stroke-width="4">
+    <ellipse cx="256" cy="256" rx="176" ry="66" />
+    <ellipse cx="256" cy="256" rx="84" ry="176" />
+  </g>
+  <g fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="40">
+    <polyline points="106,196 150,332 194,196" stroke="url(#v-aceroV)" />
+    <circle cx="356" cy="282" r="50" stroke="url(#v-aceroV)" />
+    <rect x="386" y="128" width="40" height="224" rx="20" fill="url(#v-aceroV)" stroke="none" />
+    <rect x="236" y="130" width="40" height="158" rx="20" fill="url(#v-cobreV)" stroke="none" />
+  </g>
+  <path d="M 241 298 L 283 322 L 241 346 Z" fill="url(#v-cobre)" stroke="url(#v-cobre)" stroke-width="10" stroke-linejoin="round" />
+    </g>
+
+  </defs>
+
+  <rect width="1080" height="1080" fill="#0b0d12"/>
+  <rect width="1080" height="1080" fill="url(#brillo)"/>
+
+  <!-- 0. Portada -->
+  <g class="escena">
+    <g class="entra" transform="translate(412 170) scale(.5)"><use href="#cara"/></g>
+    <text class="entra d1" x="540" y="560" text-anchor="middle" font-size="44" font-weight="700" fill="#8f97a8">Lo nuevo de la <tspan fill="#d69a5c">1.1.6</tspan></text>
+    <text class="entra d2" x="540" y="660" text-anchor="middle" font-size="96" font-weight="900" fill="#e6e9ef">Piloto automático</text>
+    <text class="entra d3" x="540" y="730" text-anchor="middle" font-size="34" font-weight="500" fill="#8f97a8">El contenido de cada agencia, todos los días, solo.</text>
+  </g>
+
+  <!-- 1. Doble interruptor -->
+  <g class="escena">
+    <text class="entra" x="540" y="190" text-anchor="middle" font-size="58" font-weight="800" fill="#e6e9ef">Dos interruptores, los dos</text>
+    <text class="entra d1" x="540" y="250" text-anchor="middle" font-size="30" fill="#8f97a8">Sin ellos no se hace ni se publica nada.</text>
+    <g class="entra d2" transform="translate(150 340)">
+      <rect width="780" height="150" rx="24" fill="#12151c" stroke="#2a303d" stroke-width="3"/>
+      <text x="40" y="70" font-size="36" font-weight="700" fill="#e6e9ef">Activo</text>
+      <text x="40" y="112" font-size="26" fill="#8f97a8">En el servidor de Kold.Gold, por agencia</text>
+      <rect class="carril" x="610" y="50" width="110" height="56" rx="28" fill="#2a303d"/>
+      <circle class="perilla" cx="644" cy="78" r="20" fill="#8f97a8"/>
+    </g>
+    <g class="entra d3" transform="translate(150 530)">
+      <rect width="780" height="150" rx="24" fill="#12151c" stroke="#2a303d" stroke-width="3"/>
+      <text x="40" y="70" font-size="36" font-weight="700" fill="#e6e9ef">Piloto automático</text>
+      <text x="40" y="112" font-size="26" fill="#8f97a8">En v!d: Opciones → Agencia, por proyecto</text>
+      <rect class="carril" x="610" y="50" width="110" height="56" rx="28" fill="#2a303d"/>
+      <circle class="perilla" cx="644" cy="78" r="20" fill="#8f97a8"/>
+    </g>
+    <g class="entra d5" transform="translate(150 740)" color="#d69a5c">
+      <svg width="44" height="44" y="-34"><use href="#i-escudo"/></svg>
+      <text x="62" y="0" font-size="28" fill="#e6e9ef">Viene apagado. Con los dos encendidos, esa es tu confirmación.</text>
+    </g>
+  </g>
+
+  <!-- 2. El brief del nicho -->
+  <g class="escena">
+    <text class="entra" x="540" y="190" text-anchor="middle" font-size="58" font-weight="800" fill="#e6e9ef">Sabe de qué hablar</text>
+    <text class="entra d1" x="540" y="250" text-anchor="middle" font-size="30" fill="#8f97a8">El brief del nicho de cada agencia, de agentes.kold.gold.</text>
+    <g class="entra d2" transform="translate(150 320)">
+      <rect width="780" height="110" rx="20" fill="#1b1f29"/>
+      <text x="36" y="48" font-size="24" font-weight="700" fill="#d69a5c">DOLORES</text>
+      <text x="36" y="86" font-size="28" fill="#e6e9ef">Lo que le quita el sueño a su cliente</text>
+    </g>
+    <g class="entra d3" transform="translate(150 450)">
+      <rect width="780" height="110" rx="20" fill="#1b1f29"/>
+      <text x="36" y="48" font-size="24" font-weight="700" fill="#d69a5c">GANCHOS Y PILARES</text>
+      <text x="36" y="86" font-size="28" fill="#e6e9ef">Rotan: ninguno se repite mientras haya otro</text>
+    </g>
+    <g class="entra d4" transform="translate(150 580)">
+      <rect width="780" height="110" rx="20" fill="#1b1f29"/>
+      <text x="36" y="48" font-size="24" font-weight="700" fill="#d69a5c">REGLA DE ORO</text>
+      <text x="36" y="86" font-size="28" fill="#e6e9ef">No vender de frente: explicar, emocionar, entretener</text>
+    </g>
+    <text class="entra d5" x="540" y="770" text-anchor="middle" font-size="28" fill="#8f97a8">La marca, sutil y al final.</text>
+  </g>
+
+  <!-- 3. Un hilo por video -->
+  <g class="escena">
+    <text class="entra" x="540" y="190" text-anchor="middle" font-size="58" font-weight="800" fill="#e6e9ef">Un hilo por video</text>
+    <text class="entra d1" x="540" y="250" text-anchor="middle" font-size="30" fill="#8f97a8">Cada 10 minutos mira cuántos faltan hoy.</text>
+    <g class="entra d2" transform="translate(190 330)" color="#d69a5c">
+      <rect width="700" height="120" rx="20" fill="#12151c" stroke="#d69a5c" stroke-width="3"/>
+      <svg x="34" y="36" width="48" height="48"><use href="#i-calendario"/></svg>
+      <text x="110" y="74" font-size="34" font-weight="700" fill="#e6e9ef">10:00 · Video explicativo</text>
+    </g>
+    <g class="entra d3" transform="translate(190 480)" color="#d69a5c">
+      <rect width="700" height="120" rx="20" fill="#12151c" stroke="#2a303d" stroke-width="3"/>
+      <svg x="34" y="36" width="48" height="48"><use href="#i-calendario"/></svg>
+      <text x="110" y="74" font-size="34" font-weight="700" fill="#e6e9ef">19:00 · Video explicativo</text>
+    </g>
+    <text class="entra d4" x="540" y="700" text-anchor="middle" font-size="28" fill="#8f97a8">Esperan su turno, como un lote: tantos a la vez como aguante la máquina.</text>
+    <text class="entra d5" x="540" y="750" text-anchor="middle" font-size="28" fill="#8f97a8">Y «Hacer uno ahora» crea el del siguiente horario libre.</text>
+  </g>
+
+  <!-- 4. Todas las redes -->
+  <g class="escena">
+    <text class="entra" x="540" y="190" text-anchor="middle" font-size="58" font-weight="800" fill="#e6e9ef">En todas sus redes</text>
+    <text class="entra d1" x="540" y="250" text-anchor="middle" font-size="30" fill="#8f97a8">Al terminar el render, se programa en el Social Planner.</text>
+    <g class="entra d2" transform="translate(150 330)" color="#8fc177">
+      <rect width="780" height="130" rx="24" fill="#12151c" stroke="#2a303d" stroke-width="3"/>
+      <svg x="36" y="40" width="50" height="50"><use href="#i-palomita"/></svg>
+      <text x="110" y="62" font-size="32" font-weight="700" fill="#e6e9ef">Autopublicar</text>
+      <text x="110" y="100" font-size="26" fill="#8f97a8">Programado a su hora, en todas las conectadas</text>
+    </g>
+    <g class="entra d3" transform="translate(150 490)" color="#d69a5c">
+      <rect width="780" height="130" rx="24" fill="#12151c" stroke="#2a303d" stroke-width="3"/>
+      <svg x="36" y="40" width="50" height="50"><use href="#i-personas"/></svg>
+      <text x="110" y="62" font-size="32" font-weight="700" fill="#e6e9ef">Sin autopublicar</text>
+      <text x="110" y="100" font-size="26" fill="#8f97a8">En borrador en app.kold.gold, para aprobarlo</text>
+    </g>
+    <g class="entra d5">
+      <text x="540" y="730" text-anchor="middle" font-size="96" font-weight="900" fill="#d69a5c">¡A crear!</text>
+      <text class="despedida" x="540" y="800" text-anchor="middle" font-size="28" fill="#8f97a8">un servicio de agentes.kold.gold</text>
+    </g>
+  </g>
+</svg>
+<nav class="controles">
+  <button id="anterior" class="oculto" type="button"><svg><use href="#i-izq"/></svg>Anterior</button>
+  <span id="cuenta"></span>
+  <button id="siguiente" type="button"><span id="sig-texto">Ver lo nuevo</span><svg><use href="#i-flecha"/></svg></button>
+</nav>
+</div>
+
+<script>
+'use strict';
+// Dentro de v!d (web/src/Novedades.tsx, en un iframe): el final cierra la guía en vez de volver a empezar.
+const enVid = window.parent !== window;
+const cerrarGuia = () => parent.postMessage('sloth-novedades-cerrar', location.origin);
+const escenas = [...document.querySelectorAll('.escena')];
+const N = escenas.length;
+const sig = document.getElementById('siguiente');
+const ant = document.getElementById('anterior');
+const sigTexto = document.getElementById('sig-texto');
+const cuenta = document.getElementById('cuenta');
+let actual = -1;
+if (enVid) document.querySelector('.despedida').textContent = 'Gracias por crear con v!d.';
+
+function ir(i) {
+  if (i < 0 || i >= N || i === actual) return;
+  if (actual >= 0) escenas[actual].classList.remove('visible');
+  actual = i;
+  // Un cuadro después: así las transiciones de entrada corren cada vez.
+  requestAnimationFrame(() => requestAnimationFrame(() => escenas[i].classList.add('visible')));
+  ant.classList.toggle('oculto', i === 0);
+  cuenta.textContent = i > 0 ? `${i} de ${N - 1}` : '';
+  sigTexto.textContent = i === 0 ? 'Ver lo nuevo' : i === N - 1 ? (enVid ? 'Listo' : 'Otra vez') : 'Siguiente';
+}
+const siguiente = () => (actual === N - 1 ? (enVid ? cerrarGuia() : ir(0)) : ir(actual + 1));
+const anterior = () => ir(actual - 1);
+sig.addEventListener('click', siguiente);
+ant.addEventListener('click', anterior);
+addEventListener('keydown', (ev) => {
+  if (ev.key === 'ArrowRight' || ev.key === 'PageDown') { ev.preventDefault(); siguiente(); }
+  if (ev.key === 'ArrowLeft' || ev.key === 'PageUp') { ev.preventDefault(); anterior(); }
+  if (ev.key === 'Escape' && enVid) cerrarGuia();
+});
+// Deslizar con el dedo
+let x0 = null;
+const esc = document.getElementById('escenario');
+esc.addEventListener('pointerdown', (ev) => (x0 = ev.clientX));
+esc.addEventListener('pointerup', (ev) => { if (x0 === null) return; const d = ev.clientX - x0; x0 = null; if (Math.abs(d) > 60) d < 0 ? siguiente() : anterior(); });
+const pedida = +new URLSearchParams(location.search).get('escena') || 0;
+ir(Math.min(Math.max(pedida, 0), N - 1));
+</script>
+</body>
+</html>

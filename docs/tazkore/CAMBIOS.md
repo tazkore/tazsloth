@@ -3,6 +3,24 @@
 TazSloth es el fork de Tazkore de [Sloth](https://github.com/Vancci-sloth/sloth) (Apache 2.0 + Commons Clause).
 Uso interno, sin venta. Los cambios propios viven en la rama `tazkore`; `main` sigue a `upstream`.
 
+## v1.1.6 — Piloto automático de contenido por agencia (7-nov-2026)
+
+Con vid-api 1.3.0 (ops `perfil` y `guardar_contenido`; `crear_post` acepta `cuentas: "todas"`; contrato en
+`CONTRATO-CONTENIDO.md`), v!d hace solo el contenido diario de cada agencia.
+
+| Qué | Archivos |
+| --- | --- |
+| Cliente: `perfil()` y `guardarContenido()`, `perfil` se reintenta como `estado`; `esBackendViejo` reconoce `op_desconocida`; `crearPost` acepta `cuentas: "todas"`. Tipos `PerfilAgencia`, `ContenidoAgencia`, `BriefNicho`, `PilotoLocal`, `TurnoPiloto`, `VistaPiloto`, con `contenidoNormal`, `briefNormal` y `validarContenido` | `server/agencia/vid-api.ts`, `shared/agencia.ts` |
+| El piloto: cada 10 min, por cada proyecto con llave propia y los dos interruptores encendidos, cuenta los horarios libres de hoy (`videos_por_dia`, `horarios` en la `zona_horaria` de la agencia, a más de 30 min) y crea un hilo por horario, como lote (`sessions.crearLote`: el repartidor arranca los que caben). No crea más si uno del piloto aún trabaja o espera. El estilo sale de `estilo_video` (`explicativo` → `video-explicativo`, o el explicativo si no existe). El primer mensaje lleva el brief del nicho, la regla de oro, gancho y pilar que rotan sin repetir los últimos, y cómo entregar. Historial en `data/agencia/piloto/<proyecto>.json` | `server/agencia/piloto.ts` (nuevo), `server/index.ts` |
+| La confirmación es el doble interruptor: `activo` del servidor y «Piloto automático» local (apagado por defecto). Cada turno lleva un boleto de un solo uso; el hilo entrega con `publicar.mjs --piloto <boleto>` → `POST /api/agencia/piloto/entregar` (solo con `x-vid-token`), que relee los interruptores, sube a GHL y crea el post `reel` en `cuentas: "todas"`: `scheduled` a su hora si `autopublicar`, si no `draft` (se aprueba en app.kold.gold). TikTok `PUBLIC_TO_EVERYONE`/`SELF_ONLY` y YouTube `public`/`private` según `privacidad`. `publicar`, `posts/editar` y `publicar.mjs` sin `--piloto` siguen igual | `server/agencia/piloto.ts`, `server/agencia/index.ts`, `skills/social-base/publicar.mjs`, `skills/social-base/SKILL.md` |
+| Rutas `GET /api/agencia/piloto`, `POST piloto/config`, `POST piloto/contenido`, `POST piloto/ahora`, `POST piloto/entregar`, `GET piloto/entrega` | `server/agencia/index.ts` |
+| Opciones → Agencia → «Contenido automático»: interruptor local por proyecto, lo del servidor editable (activo, autopublicar, videos por día, redes con sus logos marcando las conectadas, horarios, idioma, estilo, tono, CTA, pilares, privacidad, notas) guardado con `guardar_contenido`, el brief del nicho, próximos horarios, últimos videos y «Hacer uno ahora» | `web/src/AgenciaOpciones.tsx`, `web/src/SocialMedia.css`, `web/src/Opciones.tsx` (exporta `Interruptor`) |
+| Novedades 1.1.6 y versión | `web/public/novedades/1.1.6.html` (nueva), `web/src/Novedades.tsx`, `package.json`, `package-lock.json` |
+| Pruebas con cliente falso (faltan hoy, rotación, sin duplicar horarios, apagado con un interruptor, backend viejo, entrega con boleto, rutas); `npm test` corre también `server/agencia/*.test.ts` | `server/agencia/piloto.test.ts` (nuevo), `package.json` |
+
+Sin modelo elegido, los hilos del piloto van con Claude Sonnet (o el primer modelo); `modelo`, `esfuerzo` y `voz` se
+pueden fijar por proyecto con `POST /api/agencia/piloto/config` (aún sin control en la interfaz).
+
 ## v1.1.5 — El explicativo nuevo de Sloth (7-nov-2026, base upstream 9ebd68c)
 
 - **De Sloth (9 commits, 9e4a2be → 9ebd68c):**

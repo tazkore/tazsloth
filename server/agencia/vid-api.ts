@@ -2,7 +2,7 @@ import { createReadStream, statSync } from 'node:fs'
 import { basename, extname } from 'node:path'
 import { Readable } from 'node:stream'
 import { randomBytes } from 'node:crypto'
-import { MAX_OTRO, MAX_VIDEO, URL_VID_API, type EstadoAgencia, type NuevoPost, type PostSocial } from '../../shared/agencia.ts'
+import { briefNormal, contenidoNormal, MAX_OTRO, MAX_VIDEO, URL_VID_API, type ContenidoAgencia, type EstadoAgencia, type NuevoPost, type PerfilAgencia, type PostSocial } from '../../shared/agencia.ts'
 
 /**
  * El cliente de vid-api (la API privada de Kold.Gold sobre el Social Planner de GHL). Solo lo usa el servidor: la
@@ -15,6 +15,8 @@ import { MAX_OTRO, MAX_VIDEO, URL_VID_API, type EstadoAgencia, type NuevoPost, t
  *   (`estado`, `listar_posts`, `categorias`, `salud`, `borrar_*`). Crear, editar o subir no se repiten tras un 5xx: un
  *   post repetido en una red es peor que un error.
  * - Errores en español (`ErrorVidApi`): el `message` de vid-api si lo trae (ya viene en español), o uno según el HTTP.
+ * - `perfil` y `guardar_contenido` (vid-api 1.3.0) son del contenido automático (`piloto.ts`). Una vid-api más vieja
+ *   contesta `op_desconocida`: `esBackendViejo` lo reconoce y el piloto se queda apagado con un aviso.
  */
 
 export class ErrorVidApi extends Error {
@@ -38,7 +40,7 @@ export interface OpcionesVidApi {
   esperar?: (ms: number) => Promise<void>
 }
 
-const REPETIBLES = new Set(['estado', 'listar_posts', 'categorias', 'salud', 'borrar_post', 'borrar_media'])
+const REPETIBLES = new Set(['estado', 'perfil', 'listar_posts', 'categorias', 'salud', 'borrar_post', 'borrar_media'])
 const ESPERA_MAX = 30_000
 
 const TIPOS: Record<string, string> = {
@@ -68,6 +70,12 @@ export function retryAfter(valor: string | null, ahora = Date.now()): number | u
   const t = Date.parse(valor)
   return Number.isNaN(t) ? undefined : Math.min(Math.max(0, t - ahora), ESPERA_MAX)
 }
+
+/** Si el error es de una vid-api que aún no conoce la operación (anterior a la 1.3.0). */
+export const esBackendViejo = (e: unknown) => e instanceof ErrorVidApi && (e.code === 'op_desconocida' || e.code === 'op_invalida')
+
+/** `crear_post` también acepta `cuentas: "todas"`: vid-api pone las de `redes_objetivo` del perfil. */
+export type PostAEnviar = Omit<NuevoPost, 'cuentas'> & { cuentas: string[] | 'todas' }
 
 /** Quita la llave de cualquier texto antes de mostrarlo. */
 const sinLlave = (texto: string, llave: string) => (llave ? texto.split(llave).join('[llave]') : texto)
@@ -174,7 +182,21 @@ export function clienteVidApi(o: OpcionesVidApi) {
       return r.media
     },
     borrarMedia: (id: string) => op<{ ok: true }>('borrar_media', { id }),
-    crearPost: async (p: NuevoPost) => (await op<{ post: { id: string; estado: string; tipo: string; fecha: string | null }; advertencias?: string[] }>('crear_post', { ...p })),
+    /** El negocio, la configuración de contenido y el brief del nicho de la agencia (vid-api 1.3.0). */
+    perfil: async (): Promise<PerfilAgencia> => {
+      const r = await op<Partial<PerfilAgencia> & { contenido?: unknown; brief?: unknown }>('perfil')
+      return {
+        agencia: r.agencia ?? { id: null, nombre: 'Sin nombre' },
+        negocio: r.negocio ?? {},
+        contenido: contenidoNormal(r.contenido),
+        brief: briefNormal(r.brief),
+        cuentas: Array.isArray(r.cuentas) ? r.cuentas : [],
+        redes_objetivo: Array.isArray(r.redes_objetivo) ? r.redes_objetivo.map(String) : []
+      }
+    },
+    /** Cambia cualquier parte de la configuración de contenido; devuelve la que quedó. */
+    guardarContenido: async (cambios: Partial<ContenidoAgencia>) => contenidoNormal((await op<{ contenido?: unknown }>('guardar_contenido', { ...cambios })).contenido),
+    crearPost: async (p: PostAEnviar) => (await op<{ post: { id: string; estado: string; tipo: string; fecha: string | null }; advertencias?: string[] }>('crear_post', { ...p })),
     listarPosts: (filtro: { estado?: string; cuentas?: string[]; desde?: string; hasta?: string; limite?: number; saltar?: number } = {}) =>
       op<{ total: number; posts: PostSocial[] }>('listar_posts', filtro),
     editarPost: (id: string, cambios: Partial<NuevoPost>) => op<{ post: PostSocial }>('editar_post', { ...cambios, id }),

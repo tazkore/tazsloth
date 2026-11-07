@@ -51,7 +51,7 @@ ramas ni bloquea por sí solo un push a `venta`.
 v!d (Fase 1) no tiene pagos, comunidad ni actualizaciones automáticas: se quitaron `licencias/`, `npm run publicar`,
 `scripts/anuncio.mjs` y electron-updater. El instalador sale de `npm run compilar` y una versión nueva se instala encima
 de la anterior. La distribución propia se definirá en otra fase. Una versión grande puede llevar su guía animada
-(`web/src/Novedades.tsx`, la 1.1.5 en `web/public/novedades/1.1.5.html`), que sale una vez al abrirla a quien la
+(`web/src/Novedades.tsx`, la 1.1.6 en `web/public/novedades/1.1.6.html`), que sale una vez al abrirla a quien la
 instaló encima de otra; su número va en `VERSION` de `Novedades.tsx`.
 
 ## Publicaciones de Instagram: nube/

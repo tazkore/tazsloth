@@ -91,3 +91,30 @@
   .social-cal-rejilla { grid-template-columns: 1fr; }
   .social-cal-dia-nombre { display: none; }
 }
+
+/* Opciones → Agencia → Contenido automático (piloto). */
+.piloto { gap: 14px; }
+.piloto h3 { margin: 0 0 6px; display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 650; color: var(--muted); letter-spacing: 0.06em; text-transform: uppercase; }
+.piloto ul { margin: 0; padding-left: 18px; display: flex; flex-direction: column; gap: 3px; }
+.piloto-aviso { display: flex; align-items: center; gap: 6px; color: var(--amber); }
+.piloto-form { display: flex; flex-direction: column; gap: 10px; }
+.piloto-form label { display: flex; flex-direction: column; gap: 4px; }
+.piloto-form input, .piloto-form select, .piloto-form textarea {
+  padding: 7px 10px; border-radius: 8px; background: var(--panel); border: 1px solid var(--line); color: var(--text); outline: none; font: inherit;
+}
+.piloto-form input:focus, .piloto-form select:focus, .piloto-form textarea:focus { border-color: var(--amber); }
+.piloto-form textarea { resize: vertical; }
+.piloto-interruptores { display: flex; flex-wrap: wrap; gap: 14px; }
+.piloto-campos { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 10px; }
+.piloto-redes { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.piloto-red { padding: 3px; border-radius: 8px; border: 1px solid var(--line); background: var(--panel); opacity: 0.35; cursor: pointer; }
+.piloto-red.conectada { opacity: 0.7; }
+.piloto-red.conectada.elegida { opacity: 1; border-color: var(--amber); }
+.piloto-red:not(.conectada).elegida { border-style: dashed; }
+.piloto-brief summary { cursor: pointer; }
+.piloto-brief p { margin: 6px 0; }
+.piloto-brief-rejilla { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 10px; margin-top: 8px; }
+.piloto-listas { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 14px; }
+.piloto-programado, .piloto-borrador { color: var(--ok); }
+.piloto-error { color: var(--bad); }
+.piloto-pasado { color: var(--muted); }

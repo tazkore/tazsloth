@@ -11,7 +11,7 @@ import './Novedades.css'
  * un clic fuera. Lo que sale al abrir v!d después (`EstiloCambio.tsx`) espera a `NOVEDADES_CERRADAS`.
  * Para la guía de otra versión: su página en `web/public/novedades/` y su número aquí.
  */
-const VERSION = '1.1.5'
+const VERSION = '1.1.6'
 const VISTA = 'sloth-novedades-vistas'
 export const NOVEDADES_CERRADAS = 'sloth-novedades-cerradas'
 

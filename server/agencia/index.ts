@@ -12,6 +12,9 @@ import type { Proyectos } from '../proyectos.ts'
 import { LlavesAgencia } from './llaves.ts'
 import { clienteVidApi, ErrorVidApi, tipoDeArchivo, type ClienteVidApi } from './vid-api.ts'
 import { correrSkill, planDeTexto } from './skills.ts'
+import { piloto as crearPiloto, type HilosPiloto } from './piloto.ts'
+import type { Card, Model } from '../../shared/types.ts'
+import type { ContenidoAgencia, PilotoLocal } from '../../shared/agencia.ts'
 
 /**
  * `/api/agencia/*`: Opciones → Agencia y la vista Social Media (v!d Fase 4). El navegador nunca ve la llave: cada
@@ -25,6 +28,10 @@ import { correrSkill, planDeTexto } from './skills.ts'
  * - `POST publicar`, `POST posts`, `POST posts/editar`, `POST posts/borrar`: el Social Planner. Programar o publicar
  *   ya (`scheduled`, `now`) exige `confirmado: true`, que la interfaz manda solo desde el diálogo de confirmación.
  * - `GET/POST plan`: los borradores locales del plan de la semana; `POST skill`: una skill social-* con la memoria.
+ * - Contenido automático (`piloto.ts`): `GET piloto?proyecto=` (perfil, próximos horarios, últimos videos), `POST
+ *   piloto/config` (el interruptor local, modelo y voz), `POST piloto/contenido` (`guardar_contenido` en el servidor),
+ *   `POST piloto/ahora` («Hacer uno ahora»). `POST piloto/entregar` y `GET piloto/entrega` son de los hilos del piloto
+ *   (`publicar.mjs --piloto`): solo con el token en la cabecera, como `entorno`.
  */
 
 const MEDIOS = /\.(mp4|mov|m4v|webm|jpe?g|png|webp|gif)$/i
@@ -46,6 +53,8 @@ export interface OpcionesAgencia {
   /** Para las pruebas. */
   cliente?: (llave: { url: string; llave: string }) => ClienteVidApi
   programaClaude?: () => { pathToClaudeCodeExecutable?: string }
+  /** El contenido automático: sin esto (las pruebas de antes), no hay piloto. */
+  piloto?: { cards(): Card[]; modelos(): Model[]; hilos: HilosPiloto; ahora?: () => number; dir?: string; noArrancar?: boolean }
 }
 
 export function agencia(o: OpcionesAgencia) {
@@ -61,6 +70,22 @@ export function agencia(o: OpcionesAgencia) {
     if (!l) throw new ErrorVidApi('Este proyecto no tiene llave de agencia (ni hay una por defecto): pégala en Opciones → Agencia.', 401, 'sin_llave')
     return (o.cliente ?? ((x) => clienteVidApi(x)))({ url: l.url, llave: l.llave })
   }
+
+  const piloto = o.piloto
+    ? crearPiloto({
+        dir: o.piloto.dir ?? join(o.dir, 'piloto'),
+        skills: o.skills,
+        // Solo los proyectos con su propia llave: la por defecto la compartirían varios, y cada video saldría repetido.
+        proyectosConLlave: () => Object.entries(llaves.vista().proyectos).filter(([, v]) => v.tieneLlave).map(([id]) => id),
+        existe: (id) => !!o.proyectos.get(id),
+        cliente: (p) => cliente(p),
+        cards: o.piloto.cards,
+        modelos: o.piloto.modelos,
+        hilos: o.piloto.hilos,
+        ahora: o.piloto.ahora
+      })
+    : undefined
+  if (piloto && !o.piloto?.noArrancar) piloto.arrancar()
 
   async function estado(proyecto?: string | null, fresco = false) {
     const clave = proyecto ?? ''
@@ -290,8 +315,51 @@ export function agencia(o: OpcionesAgencia) {
         return { plan }
       })
     if (ruta === 'skill' && method === 'POST') return intentar(async () => skill(await datos()))
+    if (ruta.startsWith('piloto')) {
+      if (!piloto) return send(res, 404, { error: 'El piloto automático no está en esta copia.' })
+      const deProyecto = (p: unknown) => {
+        if (typeof p !== 'string' || !o.proyectos.get(p)) throw new Error('Ese proyecto no existe.')
+        if (llaves.de(p)?.desde !== 'proyecto') throw new Error('El piloto necesita la llave de agencia propia del proyecto (no la por defecto).')
+        return p
+      }
+      if (ruta === 'piloto' && method === 'GET') return intentar(() => piloto.vista(deProyecto(url.searchParams.get('proyecto')), url.searchParams.has('fresco')))
+      if (ruta === 'piloto/config' && method === 'POST')
+        return intentar(async () => {
+          const d = await datos<{ proyecto?: string } & Partial<PilotoLocal>>()
+          const p = deProyecto(d.proyecto)
+          piloto.configurar(p, d)
+          return piloto.vista(p)
+        })
+      if (ruta === 'piloto/contenido' && method === 'POST')
+        return intentar(async () => {
+          const d = await datos<{ proyecto?: string; cambios?: Partial<ContenidoAgencia> }>()
+          return piloto.contenido(deProyecto(d.proyecto), d.cambios ?? {})
+        })
+      if (ruta === 'piloto/ahora' && method === 'POST')
+        return intentar(async () => {
+          const p = deProyecto((await datos<{ proyecto?: string }>()).proyecto)
+          const r = await piloto.revisarProyecto(p, { uno: true })
+          if (!r.hechos) {
+            const motivos: Record<string, string> = {
+              apagado_local: 'Enciende «Piloto automático» de este proyecto.',
+              apagado_servidor: 'El contenido automático está apagado en el servidor (Activo).',
+              al_dia: 'No queda ningún horario libre hoy ni en los dos días que siguen.',
+              ocupado: 'El piloto ya está creando videos de este proyecto.',
+              backend_viejo: 'El servidor de Kold.Gold aún no tiene el contenido automático (vid-api 1.3.0).'
+            }
+            throw new Error(motivos[r.motivo ?? ''] ?? `No se pudo: ${r.motivo}.`)
+          }
+          return piloto.vista(p)
+        })
+      // Los hilos del piloto entregan su video: solo procesos locales, con el boleto de su turno.
+      if ((ruta === 'piloto/entregar' && method === 'POST') || (ruta === 'piloto/entrega' && method === 'GET')) {
+        if (typeof req.headers[CABECERA_TOKEN] !== 'string') return send(res, 403, { error: 'Solo para los hilos del piloto.' })
+        if (method === 'GET') return intentar(() => piloto.entrega(String(url.searchParams.get('proyecto') ?? ''), String(url.searchParams.get('ticket') ?? '')))
+        return intentar(async () => piloto.entregar(await datos()))
+      }
+    }
     return false
   }
 
-  return { api, llaves }
+  return { api, llaves, piloto }
 }
