@@ -28,6 +28,8 @@ const ICONO = join(REPO, 'assets', 'icon.ico')
 const ICONO_PNG = join(REPO, 'assets', 'icon.png')
 const WINDOWS = process.platform === 'win32'
 const MAC = process.platform === 'darwin'
+/** v!d no arma la variante de macOS 12 de Sloth (Electron 43 / Node 22): siempre la normal. */
+const MAC12 = false
 // GitHub pasa vacío un secreto que no existe, y electron-builder tomaría ese vacío por un certificado.
 for (const v of ['CSC_LINK', 'CSC_KEY_PASSWORD', 'APPLE_ID', 'APPLE_APP_SPECIFIC_PASSWORD', 'APPLE_TEAM_ID']) if (!process.env[v]) delete process.env[v]
 /** Con el certificado de Apple (CSC_LINK, ver docs/adr/0006), la de Mac va firmada y notarizada. */
@@ -100,7 +102,8 @@ const { metafile } = await esbuild({
   bundle: true,
   platform: 'node',
   format: 'esm',
-  target: 'node24',
+  // El Node que viaja en la app: el 22 en la de macOS 12.
+  target: MAC12 ? 'node22' : 'node24',
   packages: 'external',
   define: { __VENTA__: 'true', __NUBE__: JSON.stringify(nube.outputFiles[0].text) },
   minifySyntax: true,
@@ -189,7 +192,7 @@ if (WINDOWS) {
 
 paso('Armando la ventana')
 rmSync(VENTANA, { recursive: true, force: true })
-await armarVentana(VENTANA, { macFirmada: MAC_FIRMADA })
+await armarVentana(VENTANA, { macFirmada: MAC_FIRMADA, mac12: MAC12 })
 if (WINDOWS) {
   // ayudante.exe, que ancla v!d a la barra de tareas en los Windows de antes y la desancla al desinstalarla
   // (electron/barra.ts): C# con el csc de .NET Framework 4, que trae Windows.
@@ -293,7 +296,9 @@ const hechos = await empaquetar({
     ],
     win: { icon: ICONO },
     nsis: {
-      oneClick: true,
+      // Con sus pasos, para elegir en qué disco va (scripts/instalador.nsh). Las actualizaciones siguen sin preguntar nada.
+      oneClick: false,
+      allowToChangeInstallationDirectory: true,
       perMachine: false,
       runAfterFinish: true,
       createDesktopShortcut: true,

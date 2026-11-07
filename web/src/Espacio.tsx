@@ -4,6 +4,8 @@ import { api } from './api'
 import { Icono } from './Iconos'
 
 const gb = (b: number) => (b >= 1e9 ? `${(b / 1e9).toFixed(1)} GB` : b >= 1e6 ? `${Math.round(b / 1e6)} MB` : '0 MB')
+/** El id de la sección, para que el aviso de «disco lleno» de Opciones lleve a ella. */
+export const ESPACIO_DISCO = 'espacio-disco'
 /** Lo que no vale un botón: menos de esto no se enseña. */
 const MINIMO = 20e6
 
@@ -15,9 +17,24 @@ export function EspacioDisco() {
   const [e, setE] = useState<Espacio>()
   const [error, setError] = useState('')
   const [liberando, setLiberando] = useState<IdEspacio[] | 'seguros' | null>(null)
+  // Dónde están tus videos y la IA local; solo en la app instalada (electron/mudanza.ts).
+  const [donde, setDonde] = useState<string | null>(null)
+  const [llevando, setLlevando] = useState(false)
 
   const leer = () => api<Espacio>('/api/espacio').then(setE, (x) => setError(x.message))
   useEffect(() => void leer(), [])
+  useEffect(() => void window.sloth?.disco?.donde().then(setDonde, () => {}), [])
+
+  async function cambiarDisco() {
+    setLlevando(true)
+    setError('')
+    try {
+      const r = await window.sloth!.disco!.llevar()
+      if (r.error) setError(r.error)
+    } finally {
+      setLlevando(false)
+    }
+  }
 
   async function liberar(grupos?: IdEspacio[]) {
     setLiberando(grupos ?? 'seguros')
@@ -37,7 +54,7 @@ export function EspacioDisco() {
   const ocupado = liberando !== null
 
   return (
-    <section className="grupo">
+    <section className="grupo" id={ESPACIO_DISCO}>
       <div className="grupo-titulo">
         <h2>Espacio en disco</h2>
         {totalSeguro > 0 && (
@@ -62,7 +79,13 @@ export function EspacioDisco() {
                     {e.liberado ? `Se liberaron ${gb(e.liberado)}. ` : ''}
                     {visibles.length ? 'Nada de esto es tuyo: tus videos terminados, tus grabaciones y tus guiones no se tocan.' : 'No hay nada que sobre.'}
                   </span>
+                  {donde && <span className="mono">Tus videos y la IA local: {donde}</span>}
                 </div>
+                {donde && (
+                  <button className="ghost small" disabled={ocupado || llevando} onClick={cambiarDisco}>
+                    Cambiar de disco…
+                  </button>
+                )}
               </div>
             </div>
             {visibles.map((g) => (
@@ -72,7 +95,10 @@ export function EspacioDisco() {
         )}
       </div>
       {e && error && <p className="bad small fila-extra">{error}</p>}
-      <p className="grupo-nota">Lo de «Liberar» v!d también lo borra solo cada 6 horas, cuando nada trabaja. Lo que usa un hilo que está trabajando se queda para la próxima.</p>
+      <p className="grupo-nota">
+        Lo de «Liberar» v!d también lo borra solo cada 6 horas, cuando nada trabaja. Lo que usa un hilo que está trabajando se queda para la próxima.
+        {donde && ' «Cambiar de disco» lleva a otro disco tus videos, la IA local, los agentes y las dependencias de los videos; v!d se detiene mientras los mueve.'}
+      </p>
     </section>
   )
 }

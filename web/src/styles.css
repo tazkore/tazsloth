@@ -107,6 +107,10 @@ input, textarea, select { font: inherit; color: inherit; }
 .estante { min-height: 0; display: flex; flex-direction: column; gap: 12px; }
 .estante header { display: flex; align-items: center; gap: 2px; }
 .estante h2 { flex: 1; margin: 0; font-size: 11px; font-weight: 650; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
+/* «Importar» un estilo que te pasaron: texto con su icono, sin cápsula. */
+.estilo-importar { display: flex; align-items: center; gap: 6px; padding: 3px 6px; border-radius: 6px; color: var(--muted); font-size: 12px; transition: color 0.15s; }
+.estilo-importar:hover { color: var(--amber); }
+.importar-error { margin-right: 8px; }
 .cards { min-height: 0; overflow-y: auto; display: grid; grid-template-columns: repeat(auto-fill, minmax(168px, 1fr)); grid-auto-rows: max-content; gap: 14px; margin: 0 -6px; padding: 4px 6px 6px; }
 .card { position: relative; aspect-ratio: 3 / 4; overflow: hidden; isolation: isolate; border-radius: 14px; border: 1px solid var(--line); background: var(--panel-2); text-align: left; transition: border-color 0.15s, transform 0.15s; }
 .card:hover { border-color: #3a4254; transform: translateY(-2px); }
@@ -394,6 +398,13 @@ span.sub-avatar > .logo.chico svg { width: 13px; height: 13px; }
 /* Bajo el último turno que acabó mal: qué hacer y «Reintentar». */
 .turn-ayuda { display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 6px 12px; margin-bottom: 6px; color: var(--muted); font-size: 12.5px; text-align: center; }
 .turn-ayuda .primary { padding: 5px 14px; font-size: 12.5px; }
+/* «Seguir con…»: el hilo pasa a otro agente conectado (`Fallo` en Timeline.tsx). */
+.turn-ayuda .seguir-con { display: inline-flex; align-items: center; gap: 6px; padding: 5px 12px; border: 1px solid var(--line); border-radius: 12px; color: var(--text); font-size: 12.5px; font-weight: 600; }
+.turn-ayuda .seguir-con:hover:not(:disabled) { background: var(--panel-2); }
+/* Una fila entera del aviso: cuánto queda del límite de Claude, o qué hacer al cambiar de cuenta (`LimiteClaude.tsx`). */
+.turn-ayuda-linea { flex-basis: 100%; }
+.turn-ayuda-linea b { color: var(--text); font-weight: 600; font-variant-numeric: tabular-nums; }
+.turn-ayuda-linea b.bad, .turn-ayuda-linea.bad { color: var(--bad); }
 .info { color: var(--muted); font-size: 12.5px; font-style: italic; }
 /* El agente que tarda en arrancar (`Arranque.tsx`): la barra crece a saltos, una vez por segundo. */
 .arranque { display: flex; flex-direction: column; gap: 6px; max-width: 420px; }
@@ -421,6 +432,8 @@ span.sub-avatar > .logo.chico svg { width: 13px; height: 13px; }
 .modal h2 { margin: 0 0 8px; font-size: 17px; font-weight: 650; }
 .modal-body { color: var(--muted); font-size: 13.5px; }
 .modal-body code { font-family: var(--mono); font-size: 12.5px; color: var(--amber); }
+/* Lo que el aviso no puede dejar pasar: quitar algo también quita otra cosa. */
+.modal-body .aviso-grande { margin: 4px 0 12px; padding: 12px 14px; border: 1px solid var(--bad); border-radius: 12px; background: rgba(224, 108, 85, 0.13); color: var(--bad); font-size: 15px; font-weight: 600; line-height: 1.4; }
 .modal-actions { display: flex; justify-content: flex-end; align-items: center; gap: 16px; margin-top: 20px; }
 .primary.danger { background: var(--bad); color: var(--sobre-ambar); }
 .primary.danger:hover:not(:disabled) { background: var(--bad); filter: brightness(1.1); }

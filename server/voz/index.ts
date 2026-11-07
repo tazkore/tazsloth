@@ -10,20 +10,21 @@ import type { McpStdioServerConfig } from '@anthropic-ai/claude-agent-sdk'
 import type { Browser, Page } from 'playwright-core'
 import { WebSocket } from 'ws'
 import { conectarCDP } from '../playwright.ts'
-import { type EstadoVoz, NAVEGADOR_VOZ, type TrabajoVoz, type VozStudio } from '../../shared/types.ts'
+import { type EstadoVoz, type ProveedorVoz, NAVEGADOR_VOZ, type TrabajoVoz, type VozStudio } from '../../shared/types.ts'
 import { VENTA } from '../../shared/venta.ts'
-import { segundosWav, textoParaVoz, vocesDelPanel } from '../../shared/voz.ts'
+import { MOTORES, motorDe, segundosWav, textoParaVoz, vocesDelPanel } from '../../shared/voz.ts'
 import { chromiumDelSistema, lanzarChromium, nombreDe, paginaNueva, SIN_CHROMIUM, SIN_VENTANA } from '../chromium.ts'
 import { guardar } from '../disco.ts'
-import { DATOS } from '../secretos.ts'
-import { cuerpo } from '../http.ts'
+import { bytes, cuerpo } from '../http.ts'
 import { integrado } from '../navegador-agente.ts'
+import { vozPorApi } from './apis.ts'
+// v!d: Chatterbox (local, gratis) y el MCP `avatar` viajan junto a la voz (`server/avatar/`).
 import { mcpAvatar } from '../avatar/index.ts'
 import { leerConfig } from '../avatar/config.ts'
-import { generar as generarEleven, listarVoces as vocesEleven, buscarVoz } from '../avatar/elevenlabs.ts'
-import { leerLlave } from '../avatar/llaves.ts'
 import { asegurarServidor, generar as generarChatterbox } from '../avatar/chatterbox.ts'
 import { estadoChatterbox, estadoChatterboxVivo, raizChatterbox } from '../avatar/local.ts'
+import { DATOS } from '../secretos.ts'
+import { voicesCloning } from './voices-cloning.ts'
 
 /**
  * La voz de los videos, generada en Google AI Studio («Generate speech», Gemini 3.8 Flash TTS) con la cuenta de Google
@@ -45,6 +46,11 @@ import { estadoChatterbox, estadoChatterboxVivo, raizChatterbox } from '../avata
  *
  * Los botones se buscan por su texto en inglés, que es como sale AI Studio en cualquier idioma de la cuenta (solo
  * cambian los de la cuenta y el de cerrar el panel). Si la página cambia, falla con una captura en `data/voz/error.png`.
+ *
+ * Las voces de Fish Audio y ElevenLabs (`fish:<id>`, `elevenlabs:<id>`) van por su API, con la llave de cada quien
+ * (`apis.ts`): no pasan por la página ni esperan su fila, y dejan el WAV en el mismo sitio, con la misma huella. Igual
+ * las de Voices Cloning (`vc:<id>`, `voices-cloning.ts`), el proveedor de voces del servicio, que van por el cobro con los créditos
+ * que da.
  */
 
 const URL_VOZ = 'https://aistudio.google.com/generate-speech'
@@ -60,11 +66,14 @@ const edgeVoz = nuevoNavegador()
 /** Lo más que espera una petición a que acabe su voz: el MCP repite, y Codex corta una herramienta a los 60 s. */
 const ESPERA_MAXIMA = 50_000
 
-type Trabajo = TrabajoVoz & { texto: string; salida: string; huella: string; proveedor?: 'gemini' | 'elevenlabs' | 'chatterbox' }
+type Trabajo = TrabajoVoz & { texto: string; salida: string; huella: string; }
 type Cookie = { name: string; value: string; domain: string; path: string; expires: number; httpOnly: boolean; secure: boolean; sameSite?: string; partitionKey?: unknown }
 
-/** Lo que el servidor monta: su API, si está generando y la configuración del MCP para los agentes. */
-export function voz(app: string) {
+/**
+ * Lo que el servidor monta: su API, si está generando y la configuración del MCP para los agentes. `socio`: con qué se
+ * habla al cobro para Voices Cloning (tu cuenta o tu apoyo, o la llave del creador) y si esta es la computadora del creador.
+ */
+export function voz(app: string, socio: Parameters<typeof voicesCloning>[1] = { credencial: () => undefined, creador: () => undefined }) {
   const carpeta = join(app, 'data', 'voz')
   const descargas = join(carpeta, 'descargas')
   // El perfil donde se entra con Google, uno por navegador (`perfilDe`). En Edge, el del script viejo de El Diff ya tiene
@@ -90,6 +99,11 @@ export function voz(app: string) {
   let conectando = false
   let error: string | undefined
   const guardarCuenta = () => (mkdirSync(carpeta, { recursive: true }), guardar(archivoCuenta, JSON.stringify({ correo: cuenta, voces }, null, 1)))
+
+  const apis = vozPorApi(carpeta)
+  const vc = voicesCloning(carpeta, socio)
+  /** Las que se están generando por API, que no hacen fila. */
+  let porApi = 0
 
   const trabajos = new Map<string, Trabajo>()
   const fila: Trabajo[] = []
@@ -469,6 +483,27 @@ export function voz(app: string) {
     }
   }
 
+  /** Una voz de Fish Audio o ElevenLabs: por su API, sin la página. */
+  async function generarPorApi(t: Trabajo) {
+    t.estado = 'generando'
+    porApi++
+    try {
+      const { motor, id } = motorDe(t.voz)
+      const { wav, segundos } = motor === 'vc' ? await vc.generar(id, t.texto) : await apis.generar(t.voz, t.texto)
+      mkdirSync(dirname(t.salida), { recursive: true })
+      guardar(t.salida, wav)
+      guardar(`${t.salida}.huella`, t.huella)
+      t.segundos = Math.round(segundos * 10) / 10
+      t.archivo = t.salida
+      t.estado = 'lista'
+    } catch (e) {
+      t.estado = 'error'
+      t.error = mensaje(e)
+    } finally {
+      porApi--
+    }
+  }
+
   function pedir(texto: string, nombre: string, salida: string): Trabajo {
     const huella = createHash('sha1').update(`${nombre.toLowerCase()}\n${texto}`).digest('hex')
     const t: Trabajo = { id: randomBytes(6).toString('hex'), estado: 'en-fila', voz: nombre, palabras: texto.split(/\s+/).length, texto, salida, huella }
@@ -478,50 +513,21 @@ export function voz(app: string) {
     const igual = existsSync(salida) && existsSync(`${salida}.huella`) && readFileSync(`${salida}.huella`, 'utf8') === huella
     const segundos = igual ? segundosWav(readFileSync(salida)) : null
     if (segundos) return Object.assign(t, { estado: 'lista', archivo: salida, segundos: Math.round(segundos * 10) / 10 })
-    fila.push(t)
-    void seguir()
+    if (motorDe(nombre).motor !== 'ai-studio') void generarPorApi(t)
+    else fila.push(t), void seguir()
     return t
   }
 
   /**
-   * La voz con ElevenLabs (`server/avatar/elevenlabs.ts`): sin la página de AI Studio ni la fila de Edge, directo a la API
-   * con la llave del usuario. Deja el mismo WAV (24 kHz, mono) que AI Studio. `explicito`: el agente pidió ElevenLabs; si
-   * fue la preferencia global y la voz que trae es de AI Studio (Fola, Kore…), se usa la voz de ElevenLabs por omisión.
-   */
-  function pedirEleven(texto: string, nombre: string, salida: string, explicito: boolean): Trabajo {
-    const llave = leerLlave('elevenlabs')
-    const config = leerConfig()
-    const huella = createHash('sha1').update(`eleven\n${nombre.toLowerCase()}\n${config.modeloElevenlabs ?? ''}\n${texto}`).digest('hex')
-    const t: Trabajo = { id: randomBytes(6).toString('hex'), estado: 'generando', voz: nombre, palabras: texto.split(/\s+/).length, texto, salida, huella, proveedor: 'elevenlabs' }
-    trabajos.set(t.id, t)
-    for (const id of [...trabajos.keys()].slice(0, -100)) trabajos.delete(id)
-    const igual = existsSync(salida) && existsSync(`${salida}.huella`) && readFileSync(`${salida}.huella`, 'utf8') === huella
-    const segundos = igual ? segundosWav(readFileSync(salida)) : null
-    if (segundos) return Object.assign(t, { estado: 'lista', archivo: salida, segundos: Math.round(segundos * 10) / 10 })
-    void (async () => {
-      try {
-        let voz = nombre
-        if (!explicito && config.vozElevenlabs && !buscarVoz(await vocesEleven(llave), nombre)) voz = config.vozElevenlabs
-        const r = await generarEleven({ llave, voz, texto, salida, modelo: config.modeloElevenlabs })
-        guardar(`${salida}.huella`, huella)
-        Object.assign(t, { estado: 'lista', archivo: r.archivo, segundos: r.segundos, voz: r.voz })
-      } catch (e) {
-        Object.assign(t, { estado: 'error', error: mensaje(e) })
-      }
-    })()
-    return t
-  }
-
-  /**
-   * La voz con Chatterbox (`server/avatar/chatterbox.ts`), local y gratis. Solo si está instalado (`local.ts`): si no, el
-   * llamador recibe el texto que dice qué falta. La voz que se clona es el audio de referencia: la ruta absoluta que
-   * trae `nombre`, `data/avatar/voces/<nombre>.wav` o la `chatterboxReferencia` de Opciones; sin ninguna, la voz de siempre.
+   * v!d: la voz con Chatterbox (`server/avatar/chatterbox.ts`), local y gratis. Solo si está instalado (`local.ts`). La
+   * voz que se clona es el audio de referencia: la ruta absoluta que trae `nombre`, `data/avatar/voces/<nombre>.wav` o la
+   * `chatterboxReferencia` de Opciones → Avatares y voz; sin ninguna, la voz de siempre.
    */
   function pedirChatterbox(texto: string, nombre: string, salida: string): Trabajo {
     const config = leerConfig()
     const referencia = [isAbsolute(nombre) ? nombre : '', join(DATOS, 'avatar', 'voces', `${nombre}.wav`), config.chatterboxReferencia ?? ''].find((r) => r && existsSync(r))
     const huella = createHash('sha1').update(`chatterbox\n${referencia ?? ''}\n${texto}`).digest('hex')
-    const t: Trabajo = { id: randomBytes(6).toString('hex'), estado: 'generando', voz: referencia ? nombre : 'Chatterbox', palabras: texto.split(/\s+/).length, texto, salida, huella, proveedor: 'chatterbox' }
+    const t: Trabajo = { id: randomBytes(6).toString('hex'), estado: 'generando', voz: referencia ? nombre : 'Chatterbox', palabras: texto.split(/\s+/).length, texto, salida, huella }
     trabajos.set(t.id, t)
     for (const id of [...trabajos.keys()].slice(0, -100)) trabajos.delete(id)
     const igual = existsSync(salida) && existsSync(`${salida}.huella`) && readFileSync(`${salida}.huella`, 'utf8') === huella
@@ -534,26 +540,25 @@ export function voz(app: string) {
         guardar(`${salida}.huella`, huella)
         Object.assign(t, { estado: 'lista', archivo: r.archivo, segundos: r.segundos })
       } catch (e) {
-        Object.assign(t, { estado: 'error', error: mensaje(e) })
+        Object.assign(t, { estado: 'error', error: e instanceof Error ? e.message : String(e) })
       }
     })()
     return t
   }
 
-  const publico = ({ texto: _t, salida: _s, huella: _h, proveedor: _p, ...t }: Trabajo): TrabajoVoz => t
+  const publico = ({ texto: _t, salida: _s, huella: _h, ...t }: Trabajo): TrabajoVoz => t
   const estado = (): EstadoVoz => {
     const elegido = elegirNavegador(leerPreferencia(), detectados())
     return {
       cuenta,
       conectando,
-      voces,
-      enFila: fila.length + (trabajando ? 1 : 0),
-      proveedor: leerConfig().vozProveedor,
-      elevenlabs: !!leerLlave('elevenlabs'),
       navegador: elegido ? nombreMarca(elegido.marca) : undefined,
       // Había sesión en el perfil de Edge y el de Chrome aún no existe: hay que entrar una vez en Chrome.
       entrarEnChrome: (elegido?.marca === 'chrome' && (existsSync(nuevo) || existsSync(viejo)) && !existsSync(join(perfilDe(nuevo, 'chrome'), MARCA_SESION))) || undefined,
-      ...(error ? { error } : {})
+      voces, enFila: fila.length + (trabajando ? 1 : 0) + porApi,
+      ...(error ? { error } : {}),
+      motores: apis.estado(),
+      vc: vc.estado()
     }
   }
 
@@ -596,19 +601,41 @@ export function voz(app: string) {
       }
       if (!texto || !d.voz?.trim() || !d.salida || !isAbsolute(d.salida) || !/\.wav$/i.test(d.salida))
         return enviar(400, { error: 'Pide el texto (o el archivo con él), la voz y la ruta absoluta del .wav donde va.' }), true
-      // El proveedor: el que pide el agente (la línea `Voz:` se lo dice) o, si no, la preferencia de Opciones.
-      const proveedor = d.proveedor === 'elevenlabs' || d.proveedor === 'gemini' || d.proveedor === 'chatterbox' ? d.proveedor : leerConfig().vozProveedor
-      if (proveedor === 'chatterbox') {
+      // v!d: Chatterbox local, si el agente lo pide (`proveedor: chatterbox`) o es la preferencia de Avatares y voz.
+      if (d.proveedor === 'chatterbox' || (!d.proveedor && leerConfig().vozProveedor === 'chatterbox')) {
         const e = estadoChatterbox()
-        if (!e.listo) return enviar(409, { error: `${e.texto} Mientras, usa otra voz (AI Studio o ElevenLabs).` }), true
+        if (!e.listo) return enviar(409, { error: `${e.texto} Mientras, usa otra voz (AI Studio, Fish Audio o ElevenLabs).` }), true
         return enviar(200, publico(pedirChatterbox(texto, d.voz.trim(), resolve(d.salida)))), true
       }
-      if (proveedor === 'elevenlabs') {
-        if (!leerLlave('elevenlabs')) return enviar(409, { error: 'No hay llave de ElevenLabs: que el usuario la pegue en Opciones → Avatares y voz. Mientras, pídele la voz o usa AI Studio.' }), true
-        return enviar(200, publico(pedirEleven(texto, d.voz.trim(), resolve(d.salida), d.proveedor === 'elevenlabs'))), true
-      }
-      if (!cuenta) return enviar(409, { error: 'No hay cuenta de Google conectada para AI Studio: que el usuario la conecte en Opciones → Voz (o en el selector Voz del compositor). Mientras, pídele la voz.' }), true
+      const { motor } = motorDe(d.voz)
+      if (motor === 'vc' && !vc.puede()) await vc.refrescar()
+      if (motor === 'vc' && !vc.puede())
+        return enviar(409, { error: 'Las voces de Voices Cloning no están disponibles en esta computadora (hace falta la cuenta de v!d y créditos de voz). Mientras, pídele la voz al usuario.' }), true
+      if (motor !== 'ai-studio' && motor !== 'vc' && !apis.tieneLlave(motor))
+        return enviar(409, { error: `No hay llave de ${MOTORES[motor]}: que el usuario la ponga en Opciones → Voz. Mientras, pídele la voz.` }), true
+      if (motor === 'ai-studio' && !cuenta)
+        return enviar(409, { error: 'No hay cuenta de Google conectada para AI Studio: que el usuario la conecte en Opciones → Voz (o en el selector Voz del compositor). Mientras, pídele la voz.' }), true
       return enviar(200, publico(pedir(texto, d.voz.trim(), resolve(d.salida)))), true
+    }
+    if (await vc.api(req, res, path, estado)) return true
+    // Fish Audio y ElevenLabs: poner o quitar la llave, volver a leer sus voces y clonar la tuya.
+    const m = /^\/api\/voz\/(fish|elevenlabs)\/(llave|voces|clonar)$/.exec(path)
+    if (m && metodo === 'POST') {
+      const motor = m[1] as ProveedorVoz
+      try {
+        if (m[2] === 'llave') await apis.guardarLlave(motor, (await cuerpo<{ llave?: string | null }>(req)).llave || null)
+        if (m[2] === 'voces') await apis.actualizar(motor)
+        if (m[2] === 'clonar') {
+          const q = new URL(req.url ?? '', 'http://x').searchParams
+          const audio = await bytes(req)
+          if (audio.length < 1000) return enviar(400, { error: 'Elige una grabación de tu voz.' }), true
+          if (audio.length > 25e6) return enviar(400, { error: 'La grabación pesa más de 25 MB: con un minuto basta.' }), true
+          await apis.clonar(motor, q.get('nombre')?.trim() || 'Mi voz', audio, String(req.headers['content-type'] ?? ''), q.get('archivo') || 'voz.wav')
+        }
+        return enviar(200, estado()), true
+      } catch (e) {
+        return enviar(400, { error: mensaje(e) }), true
+      }
     }
     const t = /^\/api\/voz\/trabajos\/(\w+)$/.exec(path)
     if (t && metodo === 'GET') {
@@ -623,8 +650,10 @@ export function voz(app: string) {
 
   return {
     api,
+    /** La sección Administrador del creador (`/api/admin*`, `voices-cloning.ts`). */
+    admin: vc.apiAdmin,
     /** Por qué no se puede reiniciar el servidor: cortaría una voz a medias. */
-    ocupado: () => (trabajando ? 'v!d está generando una voz en AI Studio. Espera a que termine.' : null),
+    ocupado: () => (trabajando || porApi ? 'v!d está generando una voz. Espera a que termine.' : null),
     /** Lo que Flow (`server/flow/`) toma de aquí: la cuenta y el Edge con la sesión, en el turno de la voz (ver `enTurno`). */
     google: {
       cuenta: () => cuenta,

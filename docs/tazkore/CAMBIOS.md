@@ -3,6 +3,13 @@
 TazSloth es el fork de Tazkore de [Sloth](https://github.com/Vancci-sloth/sloth) (Apache 2.0 + Commons Clause).
 Uso interno, sin venta. Los cambios propios viven en la rama `tazkore`; `main` sigue a `upstream`.
 
+## v1.1.4 — Comunidad de Sloth y lo nuevo de Sloth (6-nov-2026, base upstream 9e4a2be)
+
+- **Comunidad (vuelve, sin cobro):** botón «Comunidad» en la barra lateral con avisos sin leer; ver el feed, publicar, comentar, dar me gusta, compartir uno de «Mis videos» (sus primeros 5 s) y **compartir/instalar estilos** («Compartir» en la card de un estilo tuyo, sección Estilos). Vive en el Worker de Sloth (`api.sloth.vancci.org`): `server/comunidad.ts` le pasa `/api/comunidad/*` con la credencial. Se entra con una **cuenta gratis de Sloth** (`server/licencia.ts`, `data/licencia.json`; la pantalla de la comunidad la crea si falta). v!d no muestra apoyo, pagos ni recordatorios: no hay grupo «Apoyo» en Opciones ni `Recordatorio`.
+- **De Sloth (49 commits, 14332fc → 9e4a2be):** voz con Fish Audio o ElevenLabs con la llave de cada quien (Opciones → Voz), Omni 1.2 Flash en Flow (barra de 3–10 s), seguir con otro agente cuando uno llega a su límite, aviso «límite de tu plan de Claude» con «Usar otra cuenta», errores de disco lleno legibles, y lo demás de esa rama.
+- **Fuera a propósito:** cobro (`licencias/`, PayPal/Stripe/Mercado Pago, Fundador), `publicar`, Voices Cloning y Administrador del creador, actualizador `electron-updater` y «Cambiar de disco» (mudanza) en la ventana: v!d guarda sus datos en `C:\vid-datos` con su propio esquema.
+- Merge en worktree `C:\vid-114` (rama `vid-1.1.4`) para no tocar la v!d que estaba corriendo.
+
 ## v1.1.3 — Sesión de Anthropic que no caduca y mejoras de Sloth (5-nov-2026, base upstream 14332fc)
 
 - **Arreglo «401 OAuth access token has expired»** (el Radar semana 45 no arrancó con Claude): la 1.1.0 copiaba una sola vez `.credentials.json` de `~/.claude` a `C:\vid-datos\data\claude`; el token dura horas y su `refreshToken` cambia al renovarse, así que en cuanto el Claude Code de la PC renovaba, la copia de v!d quedaba muerta. Ahora `sincronizarSesion` (`server/skills.ts`) deja viva una sola sesión: gana la que vence más tarde y se copia al otro lado (sin tocar `mcpOAuth`), solo si es la misma cuenta. Corre al arrancar, antes de cada hilo de Claude y cada 5 min. Prueba: `server/sesion.test.ts`.

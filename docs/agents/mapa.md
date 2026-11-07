@@ -34,6 +34,8 @@ Este es el mapa:
   agentes lo conservan hasta comprobar que retoman. `npm run hilo -- <id>` (`scripts/hilo.mjs`) resume un hilo desde esos archivos.
   Una sesión de Antigravity que se desborda o se calla no se recupera, ni retomándola: el turno acaba con `relevo` y el hilo
   sigue en otra, con el resumen que v!d saca de su historial (`relevar`, `server/relevo.ts`). `/compact` hace lo mismo.
+  Elegir un modelo de otro agente en un hilo (`setModel`) lo pasa a ese agente con el mismo resumen, la skill y la ruta
+  del historial, como el traspaso de T3 Code (`vieneDe`); el aviso de un límite de uso lo ofrece con «Seguir con…»; el de Claude dice además cuánto queda y deja entrar con otra cuenta (`LimiteClaude.tsx`).
 - Lo que aguanta la máquina (ADR 0011): el aviso antes de pasar de dos videos a la vez (`shared/limites.ts`,
   `web/src/AvisoVideos.tsx`), el tope de subagentes de Claude (`server/tope-agentes.ts`), el de navegadores (`turnoNavegador` en `video-base/scripts/chrome.mjs`),
   Whisper cargado mientras trabaja un video (`server/voz-viva.ts`) y la fila de la GPU, con la voz primero (`vid.py`).
@@ -45,7 +47,9 @@ Este es el mapa:
   globs `listo`. Los videos terminados son los de la etapa «Video» (los `_*` son a medias); `server/reglas-repo.test.ts`
   comprueba que ningún glob cuente un borrador. Los estilos que cada quien hace con la card «Nuevo estilo» (skill
   `crear-estilo`) van en `data/tus-cards.json` y `skills/<id>`, que ninguna actualización toca. Son las únicas que la
-  venta deja borrar (`tuya`); la skill sale a `data/skills-tuyas` (`guardarSkillTuya`).
+  venta deja borrar (`tuya`); la skill sale a `data/skills-tuyas` (`guardarSkillTuya`). «Compartir» en su card lo
+  empaqueta en un `.sloth-estilo` (`server/estilos.ts`, ADR 0017): como archivo, o en la comunidad, en Estilos, donde
+  sale cuando el creador lo aprueba; «Importar» o «Instalar» lo pone entre los tuyos, con su `origen`.
 - Lo que el estudio ve en vivo: `server/claude.ts` saca los borradores de lo que escribe el agente (Write y los heredocs
   de Bash), el WebSocket los lleva a `web/src/App.tsx` y `Etapas.tsx` los dibuja.
 - El estudio de video (`web/src/Estudio.tsx`): toda card cuyas etapas tengan `fase` se ve igual, con las cinco fases
@@ -73,13 +77,18 @@ Este es el mapa:
 - `server/voz/` y `web/src/Voz.tsx`: la voz de los videos con Google AI Studio (Gemini 3.8 Flash TTS), en la cuenta de
   Google de cada quien (Opciones → Voz). La genera el servidor en la página `voz` del navegador integrado, con su propio
   perfil; los agentes la piden con el MCP `voz` (`mcp.mjs`), y el menú «Voz» del compositor manda la línea `Voz:` que
-  siguen las skills (`skills/video-base/VOZ.md`). ADR 0011.
+  siguen las skills (`skills/video-base/VOZ.md`). ADR 0011. Fish Audio y ElevenLabs van por su API con la llave de cada
+  quien (`server/voz/apis.ts`, voces `fish:<id>` y `elevenlabs:<id>`), también clonando la voz del usuario. Voices
+  Cloning (voces `vc:<id>`, `server/voz/voices-cloning.ts`, ADR 0018) va por un servicio con credencial propia, que lleva
+  la cuenta de los créditos de cada quien; v!d no cobra y la deja apagada salvo que se le dé credencial (`voz(app, { credencial })`).
+- Administrador (`web/src/Admin.tsx`, `/api/admin*`): solo responde en la computadora del creador de Voices Cloning; en v!d
+  nunca aplica (`creador` devuelve `undefined`).
 - `server/avatar/` y `web/src/Avatar.tsx` (v!d Fase 5): el motor de avatar y la voz de ElevenLabs. Los agentes lo piden con
   el MCP `avatar` (`mcp.mjs`: `motores`, `generar_avatar`, `estado_avatar`, `avatares_heygen`), que `mcpVoz()` entrega junto al
   de la voz. Motores: `sprites` (el de siempre), `comfyui-local` (`comfy.ts` cliente de la API de ComfyUI, `flujos.ts` los
   cuatro flujos con sus nodos, pesos y VRAM, `comfy-instalar.ts` instalación y arranque), `nube-gratis` y HeyGen con
-  Chrome (`nube.ts`), `heygen` (`heygen.ts`, API v3) y `codex` (orquesta; no genera). `elevenlabs.ts` es el segundo proveedor de
-  `generar_voz`. Llaves cifradas en `data/avatar/llaves.json` (`llaves.ts`); preferencias en `config.ts`. La línea
+  Chrome (`nube.ts`), `heygen` (`heygen.ts`, API v3) y `codex` (orquesta; no genera). `elevenlabs.ts` solo lista las voces de ElevenLabs de Avatares (la
+  voz de `generar_voz` va por `server/voz/apis.ts`). Llaves cifradas en `data/avatar/llaves.json` (`llaves.ts`); preferencias en `config.ts`. La línea
   `Avatar:` del primer mensaje (`shared/avatar.ts`) la documenta `skills/video-base/AVATAR.md`; las skills oficiales de
   HeyGen están en `skills/heygen-*`. Nada que baje gigas o gaste créditos corre solo: lo pide un botón de Opciones →
   Avatares y voz o el agente.
@@ -133,7 +142,9 @@ Este es el mapa:
   sin NVIDIA), el hilo nuevo lo ofrece arriba.
 - `server/espacio.ts` y `web/src/Espacio.tsx`: Opciones → Espacio en disco. Lo que dejan los videos y no hace falta
   (temporales de Remotion, pedazos de render, `node_modules` repetidos, cachés viejas); lo seguro lo borra solo cada
-  6 horas si nada trabaja. Las skills evitan dejarlo con `espacio.py` y `remotion.cjs` de video-base.
+  6 horas si nada trabaja. Las skills evitan dejarlo con `espacio.py` y `remotion.cjs` de video-base. «Cambiar de disco…»
+  (`electron/mudanza.ts`) lleva los videos, la IA local, los agentes y `sloth-modulos` a otra carpeta y deja enlaces en
+  su sitio, con las mismas rutas; el instalador de Windows deja elegir la carpeta (`scripts/instalador.nsh`).
 - `python/procesos/`: lo que las skills corren con el Python de v!d (transcribir la voz o un video ajeno), lanzado por
   `proceso()` de `vid.py` o `comun.py`. Con NVIDIA transcribe Whisper, ya cargado en `video-base/scripts/voz_viva.py`
   (ADR 0008); sin ella, Parakeet y `alineador.py` (`parakeet.py` dice cuál y por qué).

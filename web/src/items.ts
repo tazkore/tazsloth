@@ -7,7 +7,7 @@ export type Item =
   | { kind: 'text'; key: string; text: string; parent?: string; opciones?: string[] }
   | { kind: 'thinking'; key: string; text: string; parent?: string; at?: number }
   | { kind: 'tool'; key: string; id: string; name: string; input: any; output: string; largo?: number; done: boolean; error: boolean; parent?: string; subagente?: Subagente }
-  | { kind: 'turn_end'; key: string; ok: boolean; error?: string; caida?: boolean; costUsd?: number; ms: number }
+  | { kind: 'turn_end'; key: string; ok: boolean; error?: string; caida?: boolean; costUsd?: number; agente?: Proveedor; ms: number }
   | { kind: 'info'; key: string; text: string }
   | { kind: 'arranque'; key: string; nombre: string; desde: number; dura: number; acabado?: boolean }
 
@@ -155,7 +155,7 @@ function leer(a: Armado, e: AgentEvent, i: number) {
     }
     case 'turn_end':
       acabarArranque(a)
-      poner({ kind: 'turn_end', key: `end${i}`, ok: e.ok, error: e.error, caida: e.caida, costUsd: e.costUsd, ms: a.turnStart ? e.at - a.turnStart : 0 })
+      poner({ kind: 'turn_end', key: `end${i}`, ok: e.ok, error: e.error, caida: e.caida, costUsd: e.costUsd, agente: e.agente, ms: a.turnStart ? e.at - a.turnStart : 0 })
       // Lo que quedó a medias cuando el turno acabó (cortado o con error) ya no va a terminar. Lo de un subagente sí
       // puede: trabaja aparte, y lo suyo se cierra con él.
       for (const k of a.abiertas) {
@@ -354,8 +354,12 @@ export const REINTENTAR = 'Sigue donde te quedaste.'
  * Un turno que acabó mal, en palabras de todos los días: qué pasó y qué hacer. `reintentar`: pedirle que siga puede
  * bastar. `tuyo`: lo detuviste tú, no es un fallo. El error tal cual se ve al pasar el ratón. `agente`: el del hilo, que
  * nombra el plan y la cuenta (con Codex, los de ChatGPT). Con OpenCode, sus modelos gratis se saturan o se acaba el uso gratis.
+ * `limite`: se acabó el uso de ese agente, y el hilo puede seguir ya con otro (`Fallo` en Timeline.tsx).
  */
-export function errorLlano(error = '', caida = false, agente: Proveedor = 'claude'): { titulo: string; ayuda: string; reintentar: boolean; tuyo?: boolean } {
+/** Que no cupo en el disco: Node dice ENOSPC; npm, «insufficient space»; Windows, «not enough space». */
+export const discoLleno = (error = '') => /ENOSPC|no space left|insufficient space|not enough space|disk (is )?full/i.test(error)
+
+export function errorLlano(error = '', caida = false, agente: Proveedor = 'claude'): { titulo: string; ayuda: string; reintentar: boolean; tuyo?: boolean; limite?: boolean } {
   const nombre = NOMBRE_AGENTE[agente]
   // La caída la marca el servidor. Los hilos de antes de la marca traen la frase con que sessions.ts cierra el turno.
   if (caida || /^el servidor se cerró a mitad del turno/.test(error)) {
@@ -367,15 +371,17 @@ export function errorLlano(error = '', caida = false, agente: Proveedor = 'claud
   }
   // El uso gratis se acaba en todos los modelos gratis a la vez: cambiar a otro gratis no sirve.
   if (agente === 'opencode' && /uso gratis|free usage/i.test(error)) {
-    return { titulo: 'Se acabó tu uso gratis de OpenCode', ayuda: 'Vuelve solo, en unas horas o al día siguiente: OpenCode no dice cuándo. Es de tu computadora: cambiar de cuenta no lo repone. Mientras, elige abajo un modelo de pago de OpenCode, Claude o ChatGPT, y pulsa «Reintentar».', reintentar: true }
+    return { titulo: 'Se acabó tu uso gratis de OpenCode', ayuda: 'Vuelve solo, en unas horas o al día siguiente: OpenCode no dice cuándo. Es de tu computadora: cambiar de cuenta no lo repone. Mientras, elige abajo un modelo de pago de OpenCode, Claude o ChatGPT, y pulsa «Reintentar».', reintentar: true, limite: true }
   }
   if (agente === 'opencode' && /modelo gratis|rate.?limit|too many requests|\b429\b/i.test(error)) {
     return { titulo: 'El modelo gratis está saturado', ayuda: 'Espera unos minutos y pulsa «Reintentar», o elige otro modelo gratis.', reintentar: true }
   }
-  if (agente === 'antigravity' && /^Se acabó tu cuota/.test(error)) return { titulo: 'Se acabó tu cuota de Antigravity', ayuda: error, reintentar: true }
+  if (agente === 'antigravity' && /^Se acabó tu cuota/.test(error)) return { titulo: 'Se acabó tu cuota de Antigravity', ayuda: error, reintentar: true, limite: true }
   if (/hit your .*limit|usage limit|rate.?limit|out of usage|spend limit|credit balance|\b429\b/i.test(error)) {
     const cuando = reinicio(error)
-    return { titulo: `Llegaste al límite de tu plan de ${nombre}`, ayuda: `${cuando ? `Se reinicia: ${cuando}.` : 'En Opciones ves cuándo se reinicia.'} Entonces pulsa «Reintentar».`, reintentar: true }
+    // Con Claude, el aviso deja entrar con otra cuenta (`LimiteClaude.tsx`).
+    const otra = agente === 'claude' ? 'otra cuenta o con otra IA' : 'otra IA'
+    return { titulo: `Llegaste al límite de tu plan de ${nombre}`, ayuda: `${cuando ? `Se reinicia: ${cuando}.` : 'En «Uso» ves cuándo se reinicia.'} Entonces pulsa «Reintentar», o sigue ya con ${otra}: le pasa lo hablado.`, reintentar: true, limite: true }
   }
   if (/\/login|not logged in|authenticat|oauth|\b401\b|invalid api key|credential/i.test(error)) {
     return { titulo: `Tu cuenta de ${nombre} se desconectó`, ayuda: 'Vuelve a conectarla en Opciones y pulsa «Reintentar».', reintentar: true }
@@ -389,7 +395,7 @@ export function errorLlano(error = '', caida = false, agente: Proveedor = 'claud
   if (/prompt is too long|too many tokens|context (window|length)/i.test(error)) {
     return { titulo: 'La conversación ya es demasiado larga', ayuda: 'Abre un hilo nuevo y cuéntale dónde se quedó este.', reintentar: false }
   }
-  if (/ENOSPC|no space left/i.test(error)) return { titulo: 'El disco está lleno', ayuda: 'Libera espacio y pulsa «Reintentar».', reintentar: true }
+  if (discoLleno(error)) return { titulo: 'El disco está lleno', ayuda: 'Libera espacio y pulsa «Reintentar».', reintentar: true }
   // Casi siempre es que lo detuviste, en los hilos de antes de que el servidor lo dijera.
   if (error === 'error_during_execution') return { titulo: 'Se detuvo antes de terminar', ayuda: 'Si lo detuviste tú, dile qué cambiar. Si no, pulsa «Reintentar».', reintentar: true }
   return { titulo: 'Se detuvo por un error', ayuda: `${error ? `El error dice: «${error.slice(0, 160)}». ` : ''}Pulsa «Reintentar» o cuéntale qué pasó.`, reintentar: true }

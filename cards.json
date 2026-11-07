@@ -376,6 +376,7 @@
     "skill": "frutinovela",
     "icon": "personas",
     "voz": false,
+    "clips": true,
     "etapas": [
       {
         "nombre": "Guion",

@@ -1,4 +1,4 @@
-> **v!d by Kold.Gold** es el fork de uso interno de Tazkore basado en Sloth de Vancci. No está afiliado a Vancci ni se vende. Cambios: [docs/tazkore/CAMBIOS.md](docs/tazkore/CAMBIOS.md).
+> **v!d by Kold.Gold** es el fork de uso interno de Tazkore basado en v!d de Vancci. No está afiliado a Vancci ni se vende. Cambios: [docs/tazkore/CAMBIOS.md](docs/tazkore/CAMBIOS.md).
 
 <p align="center">
   <img src="docs/imagenes/portada.png" alt="v!d: videos verticales que se hacen casi solos" width="100%">
@@ -13,10 +13,11 @@
 ---
 
 **v!d** es una app de escritorio que hace videos verticales para TikTok, Reels y Shorts. Eliges un estilo, le das
-un tema o un enlace, y un agente de Claude investiga, escribe el guion, te pide tu voz y edita el video en tu
+un tema o un enlace, y un agente de IA investiga, escribe el guion, te pide tu voz y edita el video en tu
 computadora. No es una caja negra: lo ves trabajar paso a paso y le pides cambios con tus palabras.
 
-Es gratis, sin tarjeta y sin límite de videos. Trabaja con tu propia cuenta de Claude.
+Es gratis, sin tarjeta y sin límite de videos. Trabaja con la IA que ya tengas: Claude, ChatGPT, OpenCode (que tiene
+modelos gratis) u otra.
 
 ## Ejemplos
 
@@ -56,8 +57,8 @@ Cada estilo de video es una **card**. Escribes qué quieres y el agente avanza p
 v!d no tiene descargas públicas ni se actualiza sola: el instalador sale de `npm run compilar` (ver
 [`docs/agents/publicacion.md`](docs/agents/publicacion.md)) y una versión nueva se instala encima de la anterior.
 
-Necesitas tu propia cuenta de **Claude Pro o Max** (con Max alcanza para varios videos). Opcional: tu cuenta de
-ChatGPT, para que haga las imágenes. FFmpeg, Python y lo que pide cada estilo los instala la propia app.
+Necesitas una IA conectada, con una basta: **Claude**, **ChatGPT**, **OpenCode** (tiene modelos gratis) u otro agente.
+Con ChatGPT, v!d además hace las imágenes. FFmpeg, Python y lo que pide cada estilo los instala la propia app.
 
 ## Correrla desde el código
 
@@ -110,7 +111,7 @@ abras un issue: sigue [`SECURITY.md`](SECURITY.md).
 
 ## Créditos
 
-**v!d by Kold.Gold** está basado en [Sloth](https://github.com/Vancci-sloth/sloth), de
+**v!d by Kold.Gold** está basado en [v!d](https://github.com/Vancci-sloth/sloth), de
 [Vancci](https://vancci.org), y conserva su licencia y su [`NOTICE`](NOTICE).
 
 El estilo **Documental** parte de EDITOR V1, de [NextPhase AI](https://www.skool.com/nextphase-5790/about), que
@@ -127,4 +128,4 @@ Remotion, que arma los videos, tiene su [propia licencia](https://www.remotion.d
 equipos pequeños; las empresas más grandes pagan la suya. v!d no está afiliada, patrocinada ni respaldada por
 Anthropic ni por OpenAI.
 
-<p align="center"><sub>Sloth original hecho por Vancci en México · v!d by Kold.Gold</sub></p>
+<p align="center"><sub>v!d original hecho por Vancci en México · v!d by Kold.Gold</sub></p>

@@ -1,4 +1,4 @@
-import { type ReactNode, useEffect, useRef, useState } from 'react'
+import { type ReactNode, type Ref, useEffect, useRef, useState } from 'react'
 import { type CuentaClaude as Cuenta, type Opciones as Datos, type EstadoAgente, type LimitesClaude, type Model, NAVEGADOR_REDES, type Requisito, type VersionClaude } from '../../shared/types'
 import { api } from './api'
 import { Arranque } from './Arranque'
@@ -6,8 +6,9 @@ import { type Proveedor, proveedorDe } from '../../shared/providers'
 import { encender, encendido, notificar, sonar, usePermiso } from './avisos'
 import { abrirBienvenida } from './Bienvenida'
 import { Picker } from './Composer'
-import { EspacioDisco } from './Espacio' // espacio en disco
 import { HistorialSloth } from './HistorialSloth' // historial de Sloth
+import { ESPACIO_DISCO, EspacioDisco } from './Espacio' // espacio en disco
+import { discoLleno } from './items'
 import { TuEquipo } from './Equipo' // tu equipo
 import { Icono } from './Iconos'
 import { Logo } from './Logos'
@@ -17,9 +18,9 @@ import { RadarOpciones } from './RadarOpciones' // radar
 import { Segmento } from './Segmento'
 import { ConNavegadorRedes, RedesOpciones } from './Redes' // redes
 import { YoutubeOpciones } from './Youtube'
-import { VozOpciones } from './Voz' // voz de AI Studio
 import { AgenciaOpciones } from './AgenciaOpciones' // agencia
 import { AvatarOpciones } from './Avatar' // avatares y voz
+import { useVoz, VozOpciones } from './Voz' // voz de AI Studio
 import { FlowOpciones } from './Flow' // Google Flow
 import { VENTA } from '../../shared/venta'
 import './Opciones.css'
@@ -40,8 +41,18 @@ export function Opciones({ onDone }: { onDone(): void }) {
   )
 }
 
+/** Opciones abierta en la sección de Agentes: a ella lleva el aviso de la cuenta que falta. */
+const AGENTES = '/opciones/agentes'
+
 function Ajustes({ onDone, iniciando, onIniciando }: { onDone(): void; iniciando: boolean; onIniciando(si: boolean): void }) {
   const req = useRequisitos(true)
+  const agentes = useRef<HTMLElement>(null)
+  // Uno para Voz y Google Flow: la cuenta de la voz también genera en Flow, y quitarla en uno la quita en el otro.
+  const voz = useVoz()
+  // Lo de arriba (Redes) crece al cargar; el anclaje del scroll del navegador mantiene Agentes donde quedó.
+  useEffect(() => {
+    if (location.hash === `#${AGENTES}`) requestAnimationFrame(() => agentes.current?.scrollIntoView({ block: 'start' }))
+  }, [])
   return (
     <div className="opciones">
       <button className="ghost" onClick={onDone}>
@@ -74,7 +85,7 @@ function Ajustes({ onDone, iniciando, onIniciando }: { onDone(): void; iniciando
         <p className="grupo-nota">Los verticales salen en TikTok e Instagram; los largos, en YouTube. v!d tiene que estar abierto mientras sube a TikTok y a YouTube; Instagram publica aunque la computadora esté apagada.</p>
       </section>
       <AgenciaOpciones /> {/* agencia */}
-      <Grupo titulo="Agentes" nota="Cada agente se descarga la primera vez que lo eliges. Claude y ChatGPT necesitan un plan de pago o una llave de API; OpenCode, solo tu cuenta, que es gratis. Los demás, la cuenta o la llave de cada uno.">
+      <Grupo ref={agentes} titulo="Agentes" nota="Cada agente se descarga la primera vez que lo eliges. Claude y ChatGPT necesitan un plan de pago o una llave de API; OpenCode, solo tu cuenta, que es gratis. Los demás, la cuenta o la llave de cada uno.">
         <Agentes />
         <CuentaCodex />
         <CuentaOpenCode />
@@ -85,8 +96,8 @@ function Ajustes({ onDone, iniciando, onIniciando }: { onDone(): void; iniciando
       <Grupo titulo="Navegador" nota="Con qué abre v!d sus ventanas (entrar con Google para la voz, TikTok Studio, las cuentas de Ideas) y dónde navega el agente. Siempre con un perfil de v!d, nunca el tuyo.">
         <NavegadorOpciones />
       </Grupo>
-      <Grupo titulo="Voz" nota="Al pedir un video eliges en «Voz» si la mandas tú o si el agente la genera aquí. La sesión de Google vive en un perfil aparte del navegador de v!d: ningún agente la usa.">
-        <VozOpciones />
+      <Grupo titulo="Voz" nota="Al pedir un video eliges en «Voz» si la mandas tú o si el agente la genera con una de estas (AI Studio, Fish Audio o ElevenLabs). La sesión de Google vive en un perfil aparte del navegador de v!d: ningún agente la usa; las llaves, cifradas en tu usuario de esta computadora.">
+        <VozOpciones voz={voz} />
       </Grupo>
       <Grupo titulo="Avatares y voz" nota="Cómo se anima el personaje de tus videos y con qué voz habla. Nada se descarga ni se paga sin que pulses el botón: ComfyUI son unos 2 GB y cada modelo, de 5 a 35 GB. En «Avatar» del compositor eliges el motor de cada video.">
         <AvatarOpciones />
@@ -95,7 +106,7 @@ function Ajustes({ onDone, iniciando, onIniciando }: { onDone(): void; iniciando
         titulo="Google Flow"
         nota="Los agentes generan imágenes y videos con tus cuentas de Google: la de la Voz y las que agregues aquí, hasta 50. Las imágenes son gratis; los videos gastan créditos de Flow, y si una cuenta se queda sin ellos, v!d sigue con otra. Agrega solo cuentas tuyas: Google puede limitar o bloquear las que usa de más."
       >
-        <FlowOpciones />
+        <FlowOpciones voz={voz} />
       </Grupo>
       {/* Solo sirven a Ideas: sin la de YouTube, las recomendaciones van con el canal conectado. */}
       {!VENTA && (
@@ -118,9 +129,9 @@ function Ajustes({ onDone, iniciando, onIniciando }: { onDone(): void; iniciando
   )
 }
 
-function Grupo({ titulo, extra, nota, children }: { titulo: string; extra?: ReactNode; nota?: string; children: ReactNode }) {
+function Grupo({ ref, titulo, extra, nota, children }: { ref?: Ref<HTMLElement>; titulo: string; extra?: ReactNode; nota?: string; children: ReactNode }) {
   return (
-    <section className="grupo">
+    <section className="grupo" ref={ref}>
       <div className="grupo-titulo">
         <h2>{titulo}</h2>
         {extra}
@@ -128,6 +139,30 @@ function Grupo({ titulo, extra, nota, children }: { titulo: string; extra?: Reac
       <div className="panel">{children}</div>
       {nota && <p className="grupo-nota">{nota}</p>}
     </section>
+  )
+}
+
+/**
+ * El error de una fila. Con el disco lleno, lo que dicen npm o Node no se entiende: se cambia por qué pasó y un botón a
+ * Espacio en disco, y el texto de antes queda al pasar el ratón.
+ */
+function Fallo({ error, className = '' }: { error?: string; className?: string }) {
+  if (!error) return null
+  if (!discoLleno(error)) return <p className={`bad small fila-extra ${className}`}>{error}</p>
+  return (
+    <p className={`bad small fila-extra ${className}`} title={error}>
+      Tu disco está lleno y no cupo lo que había que descargar. Libera espacio y vuelve a intentarlo.{' '}
+      {/* Sin cambiar el hash, que es la ruta de la app. */}
+      <a
+        href={`#${ESPACIO_DISCO}`}
+        onClick={(e) => {
+          e.preventDefault()
+          document.getElementById(ESPACIO_DISCO)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+        }}
+      >
+        Ir a Espacio en disco
+      </a>
+    </p>
   )
 }
 
@@ -429,12 +464,14 @@ function useLlave(c: UsoCuenta, proveedor: 'claude' | 'codex') {
 
 /**
  * Lo que ve quien abre la app sin cuenta de Claude: encima del compositor, y solo entonces. `onFalta` dice si falta
- * (`undefined` mientras no se sabe), para no dejar mandar un video que no va a poder empezar.
+ * (`undefined` mientras no se sabe), para no dejar mandar un video que no va a poder empezar. Con `aAgentes`, el de
+ * Claude no habla de Claude: pide conectar el primer agente y lleva a Opciones → Agentes. A quien empieza, «Conectar con
+ * Claude» y la llave de API lo confundían.
  */
-export function CuentaClaude({ model, onFalta }: { model?: string; onFalta?(falta?: boolean): void }) {
+export function CuentaClaude({ model, onFalta, aAgentes }: { model?: string; onFalta?(falta?: boolean): void; aAgentes?: boolean }) {
   const p = proveedorDe(model ?? '')
   if ((OTROS_AGENTES as readonly string[]).includes(p)) return <CuentaAgente key={p} p={p as OtroAgente} aviso onFalta={onFalta} />
-  return p === 'codex' ? <CuentaCodex aviso onFalta={onFalta} /> : p === 'opencode' ? <CuentaOpenCode aviso onFalta={onFalta} /> : <AvisoClaude onFalta={onFalta} />
+  return p === 'codex' ? <CuentaCodex aviso onFalta={onFalta} /> : p === 'opencode' ? <CuentaOpenCode aviso onFalta={onFalta} /> : <AvisoClaude onFalta={onFalta} aAgentes={aAgentes} />
 }
 
 const CUENTA_CONECTADA = 'vid-cuenta-conectada'
@@ -446,15 +483,27 @@ const CUENTA_CONECTADA = 'vid-cuenta-conectada'
  * al conectar una cuenta.
  */
 export function useSinClaude(models: Model[] = []) {
-  const [cuentas, setCuentas] = useState<'codex' | 'opencode' | 'ninguna' | false>()
+  const { cuentas, otro } = useCuentas(models)
+  const sin: Proveedor | false | undefined = cuentas === 'ninguna' ? (otro ?? false) : cuentas === 'claude' ? false : cuentas
+  return sin
+}
+
+/** Si hay alguna IA conectada, la que sea (`undefined` mientras no se sabe): la bienvenida pide la primera si no. */
+export function useConAgente(models: Model[] = []) {
+  const { cuentas, otro } = useCuentas(models)
+  return cuentas && (cuentas !== 'ninguna' || !!otro)
+}
+
+/** Qué cuenta hay de Claude, ChatGPT u OpenCode, por ese orden, y el primero de los demás agentes que tenga modelos. */
+function useCuentas(models: Model[]) {
+  const [cuentas, setCuentas] = useState<'claude' | 'codex' | 'opencode' | 'ninguna'>()
   const otro = OTROS_AGENTES.find((p) => models.some((m) => proveedorDe(m.id) === p))
-  const sin: Proveedor | false | undefined = cuentas === 'ninguna' ? (otro ?? false) : cuentas
   useEffect(() => {
     let vivo = true
     const leer = () =>
       Promise.all([api<Cuenta>('/api/claude/cuenta'), api<Cuenta>('/api/codex/cuenta'), api<Cuenta>('/api/opencode/cuenta')]).then(
-        ([claude, codex, opencode]) => vivo && setCuentas(claude.conectada ? false : codex.conectada ? 'codex' : opencode.conectada ? 'opencode' : 'ninguna'),
-        () => vivo && setCuentas(false)
+        ([claude, codex, opencode]) => vivo && setCuentas(claude.conectada ? 'claude' : codex.conectada ? 'codex' : opencode.conectada ? 'opencode' : 'ninguna'),
+        () => vivo && setCuentas('claude')
       )
     void leer()
     addEventListener(CUENTA_CONECTADA, leer)
@@ -463,7 +512,7 @@ export function useSinClaude(models: Model[] = []) {
       removeEventListener(CUENTA_CONECTADA, leer)
     }
   }, [])
-  return sin
+  return { cuentas, otro }
 }
 
 /**
@@ -607,7 +656,7 @@ export function CuentaOpenCode({ aviso = false, onFalta }: { aviso?: boolean; on
           </a>
         </p>
       </div>
-      {(c.error || error || a?.error) && <p className="bad small fila-extra">{c.error || error || a?.error}</p>}
+      <Fallo error={c.error || error || a?.error} />
       {version.aviso}
     </div>
   )
@@ -823,7 +872,7 @@ export function CuentaAgente({ p, aviso = false, onFalta }: { p: OtroAgente; avi
           <Interruptor on={cuenta.llavesVid.usar} disabled={c.ocupado} onCambiar={(usar) => void c.pedir(`/api/${p}/llaves`, { usar })} etiqueta="Usarlas en Pi" />
         </div>
       )}
-      {(c.error || error || a?.error) && <p className="bad small fila-extra">{c.error || error || a?.error}</p>}
+      <Fallo error={c.error || error || a?.error} />
       {version.aviso}
     </div>
   )
@@ -831,15 +880,37 @@ export function CuentaAgente({ p, aviso = false, onFalta }: { p: OtroAgente; avi
 }
 
 /** La cuenta de ChatGPT, solo si falta, como la de Claude: en la bienvenida. */
-export const CuentaChatGPT = ({ onFalta }: { onFalta?(falta?: boolean): void }) => <CuentaCodex aviso onFalta={onFalta} />
+/**
+ * A quien empieza no se le habla de Claude ni de llaves: se le manda a elegir su IA, en Opciones → Agentes. Lo ven el
+ * compositor y la bienvenida, que se cierra al ir (`onIr`).
+ */
+export function AvisoPrimerAgente({ onIr }: { onIr?(): void }) {
+  return (
+    <section className="panel cuenta-aviso">
+      <div className="item">
+        <div className="fila">
+          <Logo de="python-sloth" />
+          <div className="fila-nombre">
+            <strong>Conecta tu primer agente</strong>
+            <span>Sloth hace los videos con una IA: Claude, ChatGPT, OpenCode (gratis) u otra. Elige una en Opciones y conéctala una sola vez.</span>
+          </div>
+          <button className="primary" onClick={() => (onIr?.(), (location.hash = AGENTES))}>
+            Conectar la IA
+          </button>
+        </div>
+      </div>
+    </section>
+  )
+}
 
-function AvisoClaude({ onFalta }: { onFalta?(falta?: boolean): void }) {
+function AvisoClaude({ onFalta, aAgentes }: { onFalta?(falta?: boolean): void; aAgentes?: boolean }) {
   const c = useCuenta()
   const { agentes } = useAgentes(!!c.cuenta?.conectando)
   const llave = useLlave(c, 'claude')
   const falta = c.cuenta ? !c.cuenta.conectada : undefined
   useEffect(() => onFalta?.(falta), [falta])
   if (!c.cuenta || !falta) return null
+  if (aAgentes) return <AvisoPrimerAgente />
   return (
     <section className="panel cuenta-aviso">
       <div className="item">
@@ -864,7 +935,7 @@ function AvisoClaude({ onFalta }: { onFalta?(falta?: boolean): void }) {
         </div>
         {llave.formulario}
         <Autorizando c={c} />
-        {c.error && <p className="bad small fila-extra">{c.error}</p>}
+        <Fallo error={c.error} />
       </div>
     </section>
   )
@@ -944,7 +1015,7 @@ function CuentaCodex({ aviso = false, onFalta }: { aviso?: boolean; onFalta?(fal
       {llave.formulario}
       {url && <p className="fila-extra small"><a href={url} target="_blank" rel="noreferrer">Abrir inicio de sesión de ChatGPT ↗</a>. Vuelve aquí después de autorizar.</p>}
       {!aviso && cuenta?.conectada && <Limites proveedor="codex" />}
-      {c.error && <p className="bad small fila-extra">{c.error}</p>}
+      <Fallo error={c.error} />
       {version.aviso}
     </div>
   )
@@ -1014,7 +1085,7 @@ export function Requisitos({ skill, onListo }: { skill?: string; onListo?(listo?
             </button>
           )}
         </div>
-        {error && <p className="bad small fila-extra">{error}</p>}
+        <Fallo error={error} />
       </div>
       {lista
         ?.filter((r) => (!r.listo && !r.opcional) || r.estado || r.error)
@@ -1073,7 +1144,7 @@ function Herramientas({ req }: { req: UsoRequisitos }) {
       ) : (
         lista.map((r) => <RequisitoFila key={r.id} r={r} onBajar={() => req.bajar([r.id])} />)
       )}
-      {req.lista && req.error && <p className="bad small fila-extra">{req.error}</p>}
+      {req.lista && <Fallo error={req.error} />}
     </Grupo>
   )
 }
@@ -1096,7 +1167,7 @@ function RequisitoFila({ r, onBajar }: { r: Requisito; onBajar?(): void }) {
           </button>
         )}
       </div>
-      {r.error && <p className="bad small fila-extra requisito-error">{r.error}</p>}
+      <Fallo error={r.error} className="requisito-error" />
     </div>
   )
 }
@@ -1186,7 +1257,7 @@ function Agentes() {
         <Autorizando c={c} />
         {/* Con una llave de API no hay plan ni límites: se paga por uso. */}
         {cuenta?.conectada && cuenta.plan && <Limites proveedor="claude" />}
-        {c.error && <p className="bad small fila-extra">{c.error}</p>}
+        <Fallo error={c.error} />
         {version.aviso}
       </div>
     </>

@@ -396,7 +396,8 @@ function arrancar() {
     dialog.showErrorBox('v!d by Kold.Gold', `No se pudo abrir v!d: ${e.message}`)
     salir()
   })
-  s.on('exit', termino)
+  // Solo el que sigue siendo el de v!d.
+  s.on('exit', (codigo) => s === servidor && termino(codigo))
 }
 
 function escribir(d: Buffer) {

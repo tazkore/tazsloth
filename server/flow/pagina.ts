@@ -14,8 +14,9 @@ import { creditosDe, FORMATOS_IMAGEN, FORMATOS_VIDEO, gastoDeRechazo, PALABRA_CR
  * un chat con un agente, que decide por su cuenta y no da el costo: por eso `ANCHO`.
  *
  * Un video se hace en uno de dos modos del panel: «Ingredientes» (texto y, si hay, referencias: los personajes) o
- * «Fotogramas» (empieza en una imagen y, si se pide, acaba en otra). Los dos aceptan los cuatro modelos y cuestan igual
- * (comprobado el 3 de noviembre de 2026: Omni Flash 6, Lite 10, Fast 20, Quality 100). Los huecos de los fotogramas se
+ * «Fotogramas» (empieza en una imagen y, si se pide, acaba en otra). Los dos aceptan todos los modelos y cuestan igual
+ * (comprobado el 6 de noviembre de 2026: Lite 10, Fast 20, Quality 100, Omni 1.2 Flash 24 en 720p y 8 en 360p, Omni 1.1
+ * Flash 12 y 6; Veo sale siempre en 720p y Omni, si no se elige, en 360p). Los huecos de los fotogramas se
  * vacían al recargar el proyecto, y cada pedido lo recarga.
  */
 
@@ -59,6 +60,8 @@ export interface PedidoFlow {
   prompt: string
   formato: string
   modelo: string
+  /** Solo en Omni (`RESOLUCIONES_OMNI`): Veo no deja elegirla. */
+  resolucion?: string
   /** Lo más que puede costar: si cuesta más, no se genera. */
   tope: number
   /** Las imágenes de referencia, en rutas absolutas. Quien las pide ya confirmó sus derechos (ver `subir`). */
@@ -114,7 +117,10 @@ export async function ponerAportar(page: Page, quiere: boolean) {
 export async function leerSaldo(page: Page): Promise<Saldo | null> {
   await page.locator('.header-user-button').first().click({ timeout: 15_000 })
   const suyo = page.locator('mat-icon:text-is("movie_filter_auto")').first()
-  if (!(await suyo.waitFor({ timeout: 10_000 }).then(() => true, () => false))) return null
+  if (!(await suyo.waitFor({ timeout: 10_000 }).then(() => true, () => false))) {
+    await page.keyboard.press('Escape').catch(() => {})
+    return null
+  }
   const texto = await suyo.evaluate((d) => {
     let e = d as HTMLElement
     for (let i = 0; i < 4 && e.parentElement && !/\d.*\n.*\d/.test(e.innerText); i++) e = e.parentElement
@@ -148,6 +154,29 @@ async function entrar(page: Page, proyecto: string | undefined): Promise<string>
   return page.url().split('?')[0]
 }
 
+/**
+ * Mueve la barra de la duración con las flechas hasta que diga `segundos`. Se lee lo que enseña («8 s»), no su valor: la
+ * barra va de 0 a 7 y no dice qué duración es cada paso.
+ */
+async function ponerSegundos(page: Page, segundos: number) {
+  const barra = page.getByRole('slider').first()
+  const dice = () =>
+    barra.evaluate((d) => {
+      let e = d as HTMLElement
+      while (e.parentElement && !/\d+\s*s\b/.test(e.innerText)) e = e.parentElement
+      return Number(e.innerText.match(/(\d+)\s*s\b/)?.[1] ?? NaN)
+    })
+  await barra.focus({ timeout: 5000 })
+  for (let i = 0; i < 12; i++) {
+    const ahora = await dice()
+    if (ahora === segundos) return
+    if (Number.isNaN(ahora)) break
+    await page.keyboard.press(ahora < segundos ? 'ArrowRight' : 'ArrowLeft')
+    await page.waitForTimeout(150)
+  }
+  throw new Error(`No pude poner el video en ${segundos} s en Flow. No se generó nada.`)
+}
+
 /** Elige en el panel del compositor lo pedido y devuelve lo que cuesta. Cierra el panel. */
 async function elegir(page: Page, p: PedidoFlow): Promise<number> {
   await page.locator('.base-prompt-box button:has(mat-icon:text-matches("^crop_"))').first().click({ timeout: 15_000 })
@@ -159,6 +188,14 @@ async function elegir(page: Page, p: PedidoFlow): Promise<number> {
   await page.getByRole('radio', { name: 'x1', exact: true }).click({ timeout: 10_000 })
   await page.locator('button:has(mat-icon:text-is("arrow_drop_down"))').first().click({ timeout: 10_000 })
   await page.getByRole('menuitem').filter({ hasText: p.modelo }).first().click({ timeout: 10_000 })
+  // Omni enseña además la resolución (sin elegirla, 360p) y la duración: se eligen siempre, y 8 s como Veo. En 1.1 la
+  // duración son botones (4 a 10 s); en 1.2, una barra (3 a 10 s).
+  if (p.resolucion) {
+    await page.getByRole('radio', { name: p.resolucion, exact: true }).click({ timeout: 10_000 })
+    const boton = page.getByRole('radio', { name: /^8\s*s$/ })
+    if (await boton.count()) await boton.click({ timeout: 5000 })
+    else await ponerSegundos(page, 8)
+  }
   // El costo se rehace tras elegir: se lee cuando dos lecturas seguidas coinciden.
   const panel = () =>
     page.locator('[role=radio]').first().evaluate((d, palabra) => {
@@ -299,8 +336,10 @@ export async function prepararEnFlow(page: Page, proyecto: string | undefined, p
  * sabe si se puede pedir de nuevo sin pagarlo dos veces.
  */
 export async function generarEnFlow(b: Browser, page: Page, proyecto: string | undefined, p: PedidoFlow, carpeta: string, alEntrar: (proyecto: string) => void) {
+  // El saldo, antes de entrar al proyecto: el menú de la cuenta no siempre se cierra con Escape, y abierto tapa el
+  // compositor (el clic en la caja del prompt fallaba). Entrar al proyecto recarga la página y lo cierra.
+  const saldoAntes = p.tipo === 'video' ? await saldoEnFlow(page).catch(() => null) : null
   const creditos = await prepararEnFlow(page, proyecto, p, alEntrar)
-  const saldoAntes = p.tipo === 'video' ? await leerSaldo(page).catch(() => null) : null
   // Después de preparar: cada imagen subida también es una tarjeta del proyecto.
   const tarjeta = page.locator('flow-tile-container').first()
   const antes = (await tarjeta.count()) ? await tarjeta.evaluate((d) => `${(d as HTMLElement).innerText} ${d.querySelector('img')?.src ?? ''}`) : ''

@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
-import { lineaVoz, segundosWav, textoParaVoz, valorEleven, vocesDelPanel, vozEleven } from './voz.ts'
+import { lineaVoz, motorDe, pcmDeWav, segundosWav, textoParaVoz, trozosParaVoz, vocesDelPanel, wavDePcm } from './voz.ts'
 
 // El principio del panel de voces de AI Studio, como lo dio su `innerText` el 29 de octubre de 2026.
 const PANEL = `Speaker settings
@@ -89,13 +89,30 @@ test('del guion se narra lo de debajo de los encabezados, sin ellos ni comentari
   assert.equal(textoParaVoz(md), 'Hola, esto se dice.\n\nY esto también.')
 })
 
-test('lineaVoz: una voz de ElevenLabs lleva el proveedor y su id; las de AI Studio no cambian', () => {
-  const v = valorEleven({ id: 'abc123', nombre: 'Tazkore IA' })
-  assert.equal(v, 'eleven:abc123|Tazkore IA')
-  assert.deepEqual(vozEleven(v), { id: 'abc123', nombre: 'Tazkore IA' })
-  assert.equal(vozEleven('Fola'), null)
-  const linea = lineaVoz({}, v)
-  assert.match(linea, /^Voz: genérala tú con ElevenLabs, voz Tazkore IA \(id abc123; pasa proveedor "elevenlabs"/)
-  assert.match(lineaVoz({}, 'Fola'), /^Voz: genérala tú en AI Studio con la voz Fola/)
-  assert.equal(lineaVoz({ voz: false }, v), '')
+test('las voces de Fish Audio, ElevenLabs y Voices Cloning van con su prefijo; lo demás es AI Studio', () => {
+  assert.deepEqual(motorDe('vc:voz-123'), { motor: 'vc', id: 'voz-123' })
+  assert.equal(lineaVoz({}, 'vc:voz-123', 'Enya'), 'Voz: genérala tú con Voices Cloning, voz «Enya»: en generar_voz pon la voz vc:voz-123 (cómo, en video-base/VOZ.md).')
+  assert.deepEqual(motorDe('fish:8ef4a238'), { motor: 'fish', id: '8ef4a238' })
+  assert.deepEqual(motorDe('elevenlabs:21m00Tcm'), { motor: 'elevenlabs', id: '21m00Tcm' })
+  assert.deepEqual(motorDe('Fola'), { motor: 'ai-studio', id: 'Fola' })
+  assert.equal(lineaVoz({}, 'fish:8ef4a238', 'Mi voz'), 'Voz: genérala tú con Fish Audio, voz «Mi voz»: en generar_voz pon la voz fish:8ef4a238 (cómo, en video-base/VOZ.md).')
+  assert.match(lineaVoz({ voz: { propia: 'Voz de edge-tts' } }, 'elevenlabs:x'), /^Voz: genérala tú con ElevenLabs/)
+})
+
+test('el guion se parte por párrafos en trozos que caben, y una frase larga por frases', () => {
+  assert.deepEqual(trozosParaVoz('Uno.\n\nDos.\n\nTres.', 12), ['Uno.\n\nDos.', 'Tres.'])
+  assert.deepEqual(trozosParaVoz('Una frase. Otra frase. Y otra.', 15), ['Una frase.', 'Otra frase.', 'Y otra.'])
+  assert.ok(trozosParaVoz('x'.repeat(25), 10).every((t) => t.length <= 10))
+  assert.equal(trozosParaVoz('x'.repeat(25), 10).join(''), 'x'.repeat(25))
+})
+
+test('los trozos de PCM se juntan en un WAV entero, con su respiro entre uno y otro', () => {
+  const uno = pcmDeWav(wav(24000))!
+  assert.deepEqual({ ...uno, datos: uno.datos.length }, { frecuencia: 24000, canales: 1, bits: 16, datos: 48000 })
+  const junto = wavDePcm([uno.datos, uno.datos], 24000, 1, 16, 0.5)
+  assert.equal(segundosWav(junto), 2.5)
+  // Uno que se mandó a trozos no dice su tamaño: se lee hasta el final.
+  const sinTam = Buffer.from(wav(100))
+  sinTam.writeUInt32LE(0, 40)
+  assert.equal(pcmDeWav(sinTam)!.datos.length, 200)
 })

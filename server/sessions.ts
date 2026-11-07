@@ -286,8 +286,9 @@ export class Sessions {
         console.error(`No se pudo leer la memoria del proyecto de ${meta.id}: ${error instanceof Error ? error.message : error}`)
       }
     }
-    // Un chat que se pasó del tamaño del modelo sigue en una sesión nueva con el resumen de lo hablado (upstream).
-    const antes = meta.resumir ? `${resumenDelHilo(this.load(meta.id), meta.carpeta ?? meta.lote?.carpeta)}\n\n` : ''
+    // Un chat que se pasó del tamaño del modelo, o que pasa a otro agente, sigue en una sesión nueva con el resumen de lo hablado.
+    const traspaso = meta.vieneDe ? { de: NOMBRE_AGENTE[meta.vieneDe], historial: join(this.dir, `${meta.id}.jsonl`) } : undefined
+    const antes = meta.resumir ? `${resumenDelHilo(this.load(meta.id), meta.carpeta ?? meta.lote?.carpeta, traspaso)}\n\n` : ''
     this.emit(meta.id, { t: 'turn_start', at: Date.now() })
     this.runFor(meta).send(contexto + antes + conRutas(text, images), pide, images)
   }
@@ -459,15 +460,31 @@ export class Sessions {
     }
   }
 
-  /** Cambia el modelo de las siguientes respuestas. Se cierra el agente y el siguiente mensaje lo retoma con el nuevo. */
+  /**
+   * Cambia el modelo de las siguientes respuestas. Se cierra el agente y el siguiente mensaje lo retoma con el nuevo.
+   * Con otro proveedor (Claude llegó a su límite y sigue ChatGPT), su conversación no le sirve al nuevo: el hilo pasa a
+   * una sesión nueva que empieza con el resumen de lo hablado y vuelve a pedir la skill del hilo, como el traspaso de
+   * T3 Code.
+   */
   setModel(id: string, model: string, effort?: string) {
     const meta = this.metas.get(id)
     // Cerrar el agente mataría lo que corre en segundo plano.
     if (!meta || meta.running || meta.background?.length) return
-    if (proveedorDe(meta.model) !== proveedorDe(model)) throw new Error(`Para cambiar de ${NOMBRE_AGENTE[proveedorDe(meta.model)]} a ${NOMBRE_AGENTE[proveedorDe(model)]}, abre un hilo nuevo. Cada proveedor conserva su propia conversación.`)
+    const antes = proveedorDe(meta.model)
+    const ahora = proveedorDe(model)
     meta.model = model
     meta.effort = effort
     this.cerrar(id)
+    // Un hilo que ya habló, aunque el agente no llegara a abrir su sesión (el límite le llegó en el primer mensaje).
+    if (antes !== ahora && this.load(id).some((e) => e.t === 'user')) {
+      // Dos cambios seguidos sin mensaje en medio: el resumen sigue nombrando a quien llevó el hilo.
+      if (meta.providerSessionId || !meta.vieneDe) meta.vieneDe = antes
+      if (meta.vieneDe === ahora) delete meta.vieneDe
+      delete meta.providerSessionId
+      delete meta.conLlave
+      meta.resumir = true
+      this.emit(id, { t: 'info', text: `El hilo pasa de ${NOMBRE_AGENTE[antes]} a ${NOMBRE_AGENTE[ahora]}: tu próximo mensaje le lleva lo hablado, la carpeta y la skill.` })
+    }
     this.save(meta)
   }
 
@@ -478,6 +495,11 @@ export class Sessions {
     meta.archived = archived || undefined
     if (archived) this.cerrarQuieto(id)
     this.save(meta)
+  }
+
+  /** Cierra los procesos quietos de un agente: tras cambiar de cuenta, el siguiente mensaje abre uno con la nueva. */
+  soltarQuietos(proveedor: string) {
+    for (const [id] of this.runs) if (proveedorDe(this.metas.get(id)?.model ?? '') === proveedor) this.cerrarQuieto(id)
   }
 
   /** Le pone otro nombre. Sin tocar `updatedAt`: renombrarlo no lo sube en la lista ni lo marca como terminado. */
@@ -668,6 +690,7 @@ export class Sessions {
         meta.providerSessionId = providerId
         meta.conLlave = conLlave || undefined
         delete meta.resumir
+        delete meta.vieneDe
         this.save(meta)
       }
     })
@@ -686,6 +709,8 @@ export class Sessions {
       this.save(meta)
     }
     if (event.t === 'thinking') event.at ??= Date.now() // panel de etapas
+    // El error nombra el plan de quien falló, aunque el hilo pase luego a otro agente.
+    if (event.t === 'turn_end' && !event.ok) event.agente ??= proveedorDe(meta.model)
     const list = this.load(id)
     list.push(event)
     this.anotar(id, JSON.stringify(event) + '\n')

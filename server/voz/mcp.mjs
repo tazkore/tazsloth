@@ -1,9 +1,8 @@
 /**
  * El MCP `voz`: las herramientas con que un agente (Claude, Codex u OpenCode) pide la voz de un video a v!d, que la
- * genera en Google AI Studio con la cuenta del usuario (`index.ts`). Solo habla con la API del servidor (`VID_URL`, con
- * el token `VID_TOKEN` en la cabecera `x-vid-token`):
- * la sesión de Google no pasa por aquí. Es JavaScript sin paquetes, para que el Node de v!d lo corra igual en el repo
- * y en la app compilada (`scripts/compilar.mjs` lo copia tal cual). Habla MCP por stdio, un JSON por renglón.
+ * genera en Google AI Studio con la cuenta del usuario, o con Fish Audio o ElevenLabs con su llave (`index.ts`). Solo
+ * habla con la API del servidor (`VID_URL`, con el token `VID_TOKEN` en la cabecera `x-vid-token`): ni la sesión de Google ni las llaves pasan por aquí.
+ * Es JavaScript sin paquetes, para que el Node de v!d lo corra igual en el repo y en la app compilada (`scripts/compilar.mjs` lo copia tal cual). Habla MCP por stdio, un JSON por renglón.
  *
  * Cada herramienta espera como mucho 40 s a que acabe la voz: Codex corta una herramienta a los 60. Si no acabó, dice
  * el id para seguir esperando con `estado_voz`.
@@ -18,27 +17,26 @@ const HERRAMIENTAS = [
   {
     name: 'voces',
     description:
-      'Las voces con que v!d puede generar la narración. Con `proveedor` "gemini" (el de siempre) son las de Google AI Studio (Gemini 3.8 Flash TTS), cada una con cómo suena y su grupo (Podcast, Storyteller…); AI Studio tiene más de 2.000 y cualquier nombre de su buscador sirve, y dice si hay una cuenta de Google conectada. Con "elevenlabs" son las de la cuenta de ElevenLabs del usuario, con sus clones (como «Tazkore IA»), cada una con su id.',
+      'Las voces con que v!d puede generar la narración: las de Google AI Studio (Gemini 3.8 Flash TTS, por grupos; cualquier nombre de su buscador sirve, tiene más de 2.000) y, si el usuario puso su llave, las de Fish Audio y ElevenLabs con el id que va en generar_voz (fish:… o elevenlabs:…), y las de Voices Cloning, el proveedor de voces del servicio, que el usuario eligió en su ventana (vc:…); «tuya» es una que el usuario clonó de su voz. Cada una con cómo suena. Dice también qué está conectado.',
     inputSchema: {
       type: 'object',
       properties: {
-        buscar: { type: 'string', description: 'Solo las que tengan esto en su nombre, cómo suenan o su grupo («deep», «Podcast»)' },
-        proveedor: { type: 'string', enum: ['gemini', 'elevenlabs', 'chatterbox'], description: 'De quién son las voces. Sin él, el proveedor por omisión de Opciones.' }
+        buscar: { type: 'string', description: 'Solo las que tengan esto en su nombre, cómo suenan o su grupo («deep», «Podcast»)' }
       }
     }
   },
   {
     name: 'generar_voz',
     description:
-      'Genera la narración con la voz pedida y deja el WAV (24 kHz, mono) en `salida`, igual venga de Google AI Studio (la cuenta de Google del usuario) o de ElevenLabs (su llave): el audio pasa por el mismo pipeline. `proveedor` sale de la línea `Voz:` del mensaje. Pasa el texto tal como se narra, o `archivo`: un guion en Markdown se narra sin títulos ni encabezados. Las etiquetas de AI Studio, como <laugh> o <short pause>, van dentro del texto. Una frase tarda unos 5 s y 6 minutos de guion unos 100 s; si no acaba en 40 s, devuelve un id para esperarla con estado_voz. Si el texto y la voz no cambiaron desde el último WAV de esa ruta, sale al momento.',
+      'Genera la narración con la voz pedida y deja el WAV (mono) en `salida`: en Google AI Studio con la cuenta de Google del usuario, o en Fish Audio o ElevenLabs con su llave si la voz es fish:… o elevenlabs:…, o en Chatterbox local si se pasa proveedor "chatterbox". Pasa el texto tal como se narra, o `archivo`: un guion en Markdown se narra sin títulos ni encabezados. Las etiquetas van dentro del texto: en AI Studio como <laugh> o <short pause>; en Fish Audio y ElevenLabs entre corchetes, como [laughs] o [whispers]. En AI Studio una frase tarda unos 5 s y 6 minutos de guion unos 100 s; si no acaba en 40 s, devuelve un id para esperarla con estado_voz. Si el texto y la voz no cambiaron desde el último WAV de esa ruta, sale al momento.',
     inputSchema: {
       type: 'object',
       properties: {
-        voz: { type: 'string', description: 'El nombre de la voz en AI Studio, como Fola o Kore; con elevenlabs, el id o el nombre de la voz (como Tazkore IA)' },
-        proveedor: { type: 'string', enum: ['gemini', 'elevenlabs', 'chatterbox'], description: 'gemini (AI Studio), elevenlabs o chatterbox (local y gratis, clona la voz de un audio de referencia). Sin él, el proveedor por omisión de Opciones → Avatares y voz.' },
+        voz: { type: 'string', description: 'El nombre de la voz en AI Studio, como Fola o Kore, o el id de una de Fish Audio, ElevenLabs o Voices Cloning tal cual (fish:…, elevenlabs:… o vc:…)' },
         texto: { type: 'string', description: 'Lo que se narra' },
         archivo: { type: 'string', description: 'O la ruta absoluta de un .md o .txt con lo que se narra' },
-        salida: { type: 'string', description: 'La ruta absoluta del .wav que deja, como <carpeta del video>/fuentes/voz/ai-studio.wav' }
+        salida: { type: 'string', description: 'La ruta absoluta del .wav que deja, como <carpeta del video>/fuentes/voz/ai-studio.wav' },
+        proveedor: { type: 'string', enum: ['chatterbox'], description: 'Solo si la línea Voz: lo pide: "chatterbox" genera local y gratis con Chatterbox (la voz es el nombre del audio de referencia o su ruta absoluta)' }
       },
       required: ['voz', 'salida']
     }
@@ -64,20 +62,37 @@ function contar(t) {
 }
 
 const LLAMADAS = {
-  async voces({ buscar, proveedor } = {}) {
+  async voces({ buscar } = {}) {
     const e = await pedir('/api/voz')
-    if ((proveedor ?? e.proveedor) === 'elevenlabs') {
-      if (!e.elevenlabs) return 'No hay llave de ElevenLabs: que el usuario la pegue en Opciones → Avatares y voz. Mientras, pídele la voz o usa proveedor gemini.'
-      const { voces } = await pedir('/api/avatar/elevenlabs/voces')
-      const q = buscar?.toLowerCase()
-      const lista = voces.filter((v) => !q || `${v.nombre} ${v.descripcion} ${v.categoria}`.toLowerCase().includes(q))
-      return [`ElevenLabs: ${lista.length} voces${q ? ` con «${buscar}»` : ''} (los clones, primero):`, ...[...lista].sort((a, b) => Number(b.clon) - Number(a.clon)).map((v) => `${v.nombre} [${v.id}]${v.clon ? ' · clon' : ''}${v.descripcion ? ` · ${v.descripcion}` : ''}`)].join('\n')
-    }
-    if (!e.cuenta) return 'No hay cuenta de Google conectada para AI Studio: que el usuario la conecte en Opciones → Voz. Mientras, pídele la voz.'
     const b = buscar?.toLowerCase()
-    const voces = e.voces.filter((v) => !b || `${v.nombre} ${v.descripcion} ${v.grupo}`.toLowerCase().includes(b))
-    const grupos = Map.groupBy(voces, (v) => v.grupo)
-    return [`Cuenta: ${e.cuenta}. ${voces.length} voces${b ? ` con «${buscar}»` : ''}:`, ...[...grupos].map(([g, vs]) => `${g}: ${vs.map((v) => `${v.nombre} (${v.descripcion})`).join('; ')}`)].join('\n')
+    const con = (...t) => !b || t.join(' ').toLowerCase().includes(b)
+    const renglones = []
+    if (e.cuenta) {
+      const voces = e.voces.filter((v) => con(v.nombre, v.descripcion, v.grupo))
+      const grupos = Map.groupBy(voces, (v) => v.grupo)
+      renglones.push(`AI Studio, cuenta ${e.cuenta}. ${voces.length} voces${b ? ` con «${buscar}»` : ''}:`, ...[...grupos].map(([g, vs]) => `${g}: ${vs.map((v) => `${v.nombre} (${v.descripcion})`).join('; ')}`))
+    } else renglones.push('AI Studio: sin cuenta de Google conectada.')
+    for (const [motor, nombre] of [['fish', 'Fish Audio'], ['elevenlabs', 'ElevenLabs']]) {
+      const m = e.motores?.[motor]
+      if (!m?.llave) {
+        renglones.push(`${nombre}: sin llave.`)
+        continue
+      }
+      const voces = m.voces.filter((v) => con(v.nombre, v.descripcion, v.propia ? 'tuya' : ''))
+      renglones.push(`${nombre}, ${voces.length} voces${b ? ` con «${buscar}»` : ''}: ${voces.map((v) => `${v.nombre}${v.propia ? ' (tuya)' : ''}${v.descripcion ? ` (${v.descripcion})` : ''} = ${motor}:${v.id}`).join('; ')}`)
+    }
+    // Voices Cloning, el proveedor de voces del servicio: las que el usuario eligió o clonó en su ventana (el agente no la abre).
+    if (e.vc?.disponible) {
+      const voces = e.vc.voces.filter((v) => con(v.nombre, v.descripcion, v.propia ? 'tuya' : ''))
+      const creditos = typeof e.vc.creditos === 'number' ? `, ${e.vc.creditos} créditos` : ''
+      renglones.push(
+        voces.length
+          ? `Voices Cloning${creditos}, ${voces.length} voces${b ? ` con «${buscar}»` : ''}: ${voces.map((v) => `${v.nombre}${v.propia ? ' (tuya)' : ''}${v.descripcion ? ` (${v.descripcion})` : ''} = vc:${v.id}`).join('; ')}`
+          : `Voices Cloning${creditos}: sin voces elegidas. El usuario las elige en el menú Voz («Abrir voces y funciones…»).`
+      )
+    }
+    if (!e.cuenta && !e.motores?.fish?.llave && !e.motores?.elevenlabs?.llave && !e.vc?.disponible) renglones.push('Nada conectado: que el usuario conecte una en Opciones → Voz. Mientras, pídele la voz.')
+    return renglones.join('\n')
   },
   async generar_voz({ voz, texto, archivo, salida, proveedor }) {
     const t = await pedir('/api/voz/generar', { voz, texto, archivo, salida, proveedor })

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import type { Card, SessionMeta } from '../../shared/types'
+import type { AvisoComunidad, Card, SessionMeta } from '../../shared/types'
 
 /**
  * Los avisos: cuando un hilo termina, te espera o se detiene con un error mientras miras otra cosa, una notificación de
@@ -125,6 +125,18 @@ function repasar(claves: string[], { sessions, cards, openId, abrir }: { session
       ? notas[0]
       : { titulo: `${notas.length} hilos te esperan`, cuerpo: notas.map((n) => n.titulo).join('\n'), abre: notas[0].abre, ids: notas.flatMap((n) => n.ids) }
   void notificar(nota, abrir)
+}
+
+/** El anuncio más nuevo sin leer y posterior a `ultimo`, el último del que ya se avisó. La lista viene del más nuevo al más viejo. */
+export const anuncioPorAvisar = (avisos: AvisoComunidad[], ultimo: string) => avisos.find((a) => a.tipo === 'anuncio' && !a.leido && a.creado > ultimo)
+
+/** Un anuncio nuevo de la comunidad de Sloth: notificación y tono, una vez. Pulsarla abre el anuncio. */
+export function avisarAnuncio(avisos: AvisoComunidad[], abrir: (publicacion: string) => void) {
+  const a = anuncioPorAvisar(avisos, localStorage.getItem('avisos:anuncio') ?? '')
+  if (!a) return
+  localStorage.setItem('avisos:anuncio', a.creado)
+  if (encendido('sonido')) sonar()
+  void notificar({ titulo: `${a.de.nombre || 'Comunidad de Sloth'} publicó un anuncio`, cuerpo: a.sobre, abre: a.publicacion, ids: [] }, abrir)
 }
 
 /** Las notificaciones que siguen en la esquina de Windows, por cada hilo que nombran. */

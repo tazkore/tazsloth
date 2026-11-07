@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { IMAGEN_CHATGPT, MODELOS_IMAGEN } from '../../shared/flow'
+import { IMAGEN_CHATGPT, MODELOS_IMAGEN, OPCIONES_CLIPS } from '../../shared/flow'
 import type { CuentaClaude, CuentaEnFlow, EstadoFlow, GastoFlow } from '../../shared/types'
 import { api } from './api'
 import { Picker } from './Composer'
@@ -11,7 +11,8 @@ import type { UsoVoz } from './Voz'
  * Google Flow en la interfaz (`server/flow/`). En Opciones: usa la cuenta de la voz y las que agregues, y la primera vez
  * con cada una hay que abrir Flow y aceptar su aviso, que es de cada quien. «Ayudar a mejorar Flow» sale apagado: cada quien decide si Google usa lo que
  * genera. Quien manda referencias confirma que tiene sus derechos (`AvisoDerechos`). En el compositor de un video, el menú
- * «Imágenes»: con ChatGPT o con un modelo de Flow (`lineaImagenes`, `shared/flow.ts`).
+ * «Imágenes»: con ChatGPT o con un modelo de Flow (`lineaImagenes`, `shared/flow.ts`), y en los estilos que hacen clips,
+ * «Clips»: el modelo de Veo u Omni (`lineaClips`).
  */
 
 const POLITICA = 'https://policies.google.com/terms/generative-ai/use-policy'
@@ -135,16 +136,40 @@ export function SelectorImagenes({ valor, hayChatGPT, voz, flow, onCambio }: { v
   )
 }
 
+/** El menú «Clips» del compositor de un estilo con `clips`: con qué modelo de Flow se hacen y cuánto cuesta cada uno. */
+export function SelectorClips({ valor, onCambio }: { valor: string; onCambio(modelo: string): void }) {
+  return (
+    <Picker
+      label={`Clips: ${valor}`}
+      value={valor}
+      menuWidth={300}
+      groups={[
+        {
+          label: 'Google Flow · créditos por clip de 8 s',
+          options: Object.entries(OPCIONES_CLIPS).map(([id, o]) => ({ value: id, label: `${id} · ${o.creditos}` }))
+        }
+      ]}
+      onChange={onCambio}
+    />
+  )
+}
+
 /**
  * Opciones → Google Flow: las cuentas de Google con que genera (la de la voz y las que agregues, para tener más créditos),
  * cada una con cómo está, lo que le queda y su menú; lo gastado en videos hoy y este mes, y los dos ajustes. Al abrirse
  * lee lo que les queda a las que nunca se leyeron; a todas, con «Actualizar créditos» (abre su Flow sin ventana).
  */
-export function FlowOpciones() {
+export function FlowOpciones({ voz }: { voz: UsoVoz }) {
   const { estado: e, error, recibir, poner } = useFlow()
   const [pidiendo, setPidiendo] = useState(false)
   const [quitando, setQuitando] = useState<string>()
   const n = e?.cuentas.length ?? 0
+  // La de la voz se conecta y se quita en Voz o aquí: al cambiar, la lista de Flow se vuelve a leer.
+  const deLaVoz = voz.estado?.cuenta
+  useEffect(() => {
+    if (e) void recibir(api('/api/flow'))
+  }, [deLaVoz])
+  const quitandoVoz = !!quitando && quitando === e?.cuentas.find((c) => c.deLaVoz)?.correo
   const agregar = () => void recibir(api('/api/flow/cuentas/agregar', {}))
   const leer = (faltan: boolean) => void recibir(api('/api/flow/saldos', { faltan }))
   // Al abrirse, en cuanto se sabe cuáles faltan: las que se agreguen después se leen solas en el servidor.
@@ -204,7 +229,10 @@ export function FlowOpciones() {
                   groups={[
                     {
                       label: 'Cuenta',
-                      options: [{ value: 'abrir', label: 'Abrir Flow' }, ...(c.deLaVoz ? [] : [{ value: 'conectar', label: 'Volver a conectar' }, { value: 'quitar', label: 'Quitar de v!d' }])]
+                      options: [
+                        { value: 'abrir', label: 'Abrir Flow' },
+                        ...(c.deLaVoz ? [{ value: 'quitar', label: 'Quitar de v!d (también de AI Studio)' }] : [{ value: 'conectar', label: 'Volver a conectar' }, { value: 'quitar', label: 'Quitar de v!d' }])
+                      ]
                     }
                   ]}
                   onChange={(q) => (q === 'quitar' ? setQuitando(c.correo) : q === 'conectar' ? agregar() : void recibir(api('/api/flow/abrir', { correo: c.correo })))}
@@ -243,11 +271,17 @@ export function FlowOpciones() {
         </div>
       )}
       {pidiendo && <AvisoDerechos onHecho={poner} onCerrar={() => setPidiendo(false)} />}
-      {quitando && (
-        <Confirm title="Quitar la cuenta" action="Quitar" danger onConfirm={() => api<EstadoFlow>('/api/flow/cuentas/quitar', { correo: quitando }).then(poner)} onClose={() => setQuitando(undefined)}>
-          v!d deja de generar con {quitando} y borra su sesión. Lo que ya generó sigue en su Flow. Para volver a usarla, agrégala otra vez.
-        </Confirm>
-      )}
+      {quitando &&
+        (quitandoVoz ? (
+          <Confirm title="Quitar la cuenta de Flow y de AI Studio" action="Quitar de los dos" danger onConfirm={voz.desconectar} onClose={() => setQuitando(undefined)}>
+            <p className="aviso-grande">{quitando} también es la cuenta de la Voz: se quita de AI Studio, y el agente ya no podrá generar la voz de tus videos.</p>
+            v!d deja de generar con ella en Flow y en AI Studio. Lo que ya generó sigue en tu cuenta. Para volver a usarla, conéctala otra vez en Voz.
+          </Confirm>
+        ) : (
+          <Confirm title="Quitar la cuenta" action="Quitar" danger onConfirm={() => api<EstadoFlow>('/api/flow/cuentas/quitar', { correo: quitando }).then(poner)} onClose={() => setQuitando(undefined)}>
+            v!d deja de generar con {quitando} y borra su sesión. Lo que ya generó sigue en su Flow. Para volver a usarla, agrégala otra vez.
+          </Confirm>
+        ))}
       {(error ?? e?.error) && !e?.agregando && <p className="bad small fila-extra">{error ?? e?.error}</p>}
     </div>
   )

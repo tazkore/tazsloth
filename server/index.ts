@@ -22,10 +22,10 @@ import { conectandoOtro, OTROS, sinLimites } from './proveedores.ts'
 import { PROVEEDORES, type Proveedor, proveedorDe } from '../shared/providers.ts'
 import { paraMandar, salidaDe, sinSalidasLargas } from '../shared/historial.ts'
 import { conectandoCodex, conectarCodex, cuentaCodex, limitesCodex } from './cuenta-codex.ts'
-import { conectando, conectarClaude, cuentaClaude, limitesClaude } from './cuenta.ts'
+import { alEntrarClaude, conectando, conectarClaude, cuentaClaude, limitesClaude } from './cuenta.ts'
 import { cancelarOpenCode, conectandoOpenCode, conectarOpenCode, cuentaOpenCode, limitesOpenCode, quitarCuentaOpenCode, usarCuentaOpenCode } from './cuenta-opencode.ts'
 import { enlacesApi } from './enlaces.ts' // tarjeta de los enlaces
-import { cerrarVigilantesOciosos, etapasApi, folderOf, mismaCwd, queFalta, videosApi } from './etapas.ts' // panel de etapas
+import { cerrarVigilantesOciosos, etapasApi, folderOf, mismaCwd, queFalta, videosApi, videosDe } from './etapas.ts' // panel de etapas
 import { cerrarMotoresOciosos } from './motor.ts'
 import { modelos3d } from './modelos3d.ts' // modelos 3D
 import { modelos3dHilos } from './modelos3d-hilos.ts' // modelos 3D
@@ -36,6 +36,9 @@ import { miniaturas } from './miniaturas.ts' // panel de etapas
 import { cargarVariables, guardarMeta, guardarYoutube, leer, opciones } from './opciones.ts'
 import { previas } from './previas.ts' // previas de las cards
 import { radar } from './radar/index.ts' // radar
+import { comunidad, llaveDelCreador } from './comunidad.ts' // comunidad
+import { desempacar, estilos } from './estilos.ts' // estilos compartidos
+import { licencia } from './licencia.ts' // cuenta de Sloth para la comunidad
 import { redes } from './redes/index.ts' // redes
 import { voz } from './voz/index.ts' // voz de AI Studio
 import { avatar } from './avatar/index.ts' // motor de avatar
@@ -90,6 +93,8 @@ const TOKEN = tokenDelServidor(join(APP, 'data', 'servidor-token'))
 process.env.VID_TOKEN = TOKEN
 // Fuera de Windows, las llaves de Opciones guardadas (cifradas) pasan al entorno.
 cargarVariables()
+// v1.1.4: la cuenta gratis de Sloth, solo para entrar a su comunidad (ver y compartir). v!d abre igual sin ella.
+const cuentaSloth = licencia(APP) // comunidad
 if (VENTA) {
   // La app que se vende usa siempre sus skills (`<app>/skills`, v1.1.1): Claude, desde su configuración (`configClaude`,
   // abajo), y Codex, enlazadas a ellas en sus carpetas. En ~/.claude ya no escribe.
@@ -139,6 +144,8 @@ sessions.contexto = (meta) => proyectos.contexto(meta.proyecto, meta.serie)
 // Agencia y Social Media (v!d Fase 4): la llave de vid-api por proyecto; exporta VID_AGENCIA_LLAVE y VID_API_URL.
 const social = agencia({ dir: join(APP, 'data', 'agencia'), skills: SKILLS, proyectos, programaClaude })
 sessions.esVideo = (meta) => !!cards().find((c) => c.id === meta.cardId)?.etapas?.some((e) => e.fase)
+// Con otra cuenta de Claude, los hilos quietos sueltan su Claude Code: el siguiente mensaje ya va con ella.
+alEntrarClaude(() => sessions.soltarQuietos('claude'))
 // Mientras un video trabaja, Whisper se queda cargado: el primero que empieza lo carga, antes de que sus agentes llenen la memoria.
 setInterval(() => {
   if (sessions.videosTrabajando()) void mantenerVoz(SKILLS)
@@ -233,14 +240,32 @@ const retroalimentacion = feedback({
   }
 }) // feedback
 const noticias = radar(APP) // radar
+// Tus estilos en un archivo para compartirlos, y los de otros, instalados entre los tuyos.
+const estilosLocal = estilos(APP, cards) // estilos compartidos
+// v1.1.4: la comunidad de Sloth (sloth.vancci.org) dentro de v!d, para ver y compartir videos y estilos. Se entra con
+// una cuenta gratis de Sloth (`server/licencia.ts`, data/licencia.json); v!d no cobra ni pide apoyo.
+const comunidadApi = comunidad(APP, {
+  credencial: () => llaveDelCreador() ?? cuentaSloth.credencial(),
+  sessions,
+  video: (ruta) => cards().flatMap((c) => (c.etapas?.length ? videosDe(c, sessions) : [])).find((v) => v.ruta === ruta),
+  cuadro,
+  avisar: broadcast,
+  estilos: estilosLocal,
+  // Un estilo por aprobar se abre en el trabajo, fuera de las skills: ahí nadie lo usa.
+  revisar: (paquete, publicacion) => {
+    const carpeta = join(carpetaTrabajo(APP), 'estilos-por-revisar', publicacion)
+    return { carpeta, manifiesto: desempacar(paquete, carpeta) }
+  }
+}) // comunidad
 // En qué fase va cada video y cuántas etapas lleva, para la barra lateral.
 avance = avances(sessions, cards, broadcast)
 // Opciones → Espacio en disco: lo que dejan los videos y ya no hace falta. Lo seguro lo borra solo, cada 6 horas.
 const disco = espacio({ app: APP, sessions, cards, ocupado, python: () => pythonVidEntero(APP) }) // espacio en disco
 // Opciones → Tu equipo: con qué transcribe la voz y cuánto tarda cada cosa en esta computadora.
 const maquina = equipo({ app: APP, ocupado }) // tu equipo
-// La voz de los videos, que los agentes piden a v!d y v!d genera en AI Studio con la cuenta de Google del usuario.
-const narrar = voz(APP) // voz de AI Studio
+// La voz de los videos, que los agentes piden a v!d y v!d genera en AI Studio con la cuenta de Google del usuario (o con
+// Fish Audio / ElevenLabs y la llave de cada quien). Voices Cloning del creador de Sloth no aplica en v!d.
+const narrar = voz(APP, { credencial: () => llaveDelCreador() ?? cuentaSloth.credencial(), creador: () => undefined }) // voz de AI Studio
 // El motor de avatar (ComfyUI, nube gratis, HeyGen, Codex) y la voz de ElevenLabs: llaves cifradas en data/avatar.
 const animar = avatar({ datos: DATOS, codexListo: async () => (await cuentaCodex().catch(() => null))?.conectada ?? false })
 // Las imágenes y videos de Google Flow, con esa misma cuenta y en ese mismo navegador.
@@ -534,15 +559,17 @@ async function api(req: IncomingMessage, res: ServerResponse, url: URL): Promise
     return true
   }
 
+  // Un estilo tuyo pide lo mismo que el de Sloth del que partió (`basadoEn`).
+  const pide = (skill?: string) => (skill && cards().find((c) => c.skill === skill)?.basadoEn) || skill
   if (path === '/api/requisitos' && method === 'GET') {
-    send(res, 200, await requisitos(APP, url.searchParams.has('fresco'), url.searchParams.get('skill') ?? undefined))
+    send(res, 200, await requisitos(APP, url.searchParams.has('fresco'), pide(url.searchParams.get('skill') ?? undefined)))
     return true
   }
 
   // Sin `ids`, todo lo que falta; con `skill`, de lo que pide esa skill.
   if (path === '/api/requisitos/instalar' && method === 'POST') {
     const { ids, skill } = await body<{ ids?: string[]; skill?: string }>(req)
-    send(res, 200, await instalar(APP, ids, skill))
+    send(res, 200, await instalar(APP, ids, pide(skill)))
     return true
   }
 
@@ -683,6 +710,9 @@ async function api(req: IncomingMessage, res: ServerResponse, url: URL): Promise
   if (await retroalimentacion.api(req, res, url)) return true // feedback
   if (await biblioteca3d.api(req, res, url)) return true // modelos 3D
   if (await noticias.api(req, res, url)) return true // radar
+  if (await cuentaSloth.api(req, res, url)) return true // cuenta de Sloth para la comunidad
+  if (await comunidadApi.api(req, res, url)) return true // comunidad
+  if (await estilosLocal.api(req, res, url)) return true // estilos compartidos
   if (await enlacesApi(req, res, url)) return true // tarjeta de los enlaces
 
   const m = /^\/api\/sessions\/([\w-]+)(?:\/(\w+))?$/.exec(path)
@@ -793,6 +823,9 @@ async function api(req: IncomingMessage, res: ServerResponse, url: URL): Promise
     send(res, 200, { ok: true })
     return true
   }
+
+  // La ventana lo pregunta antes de parar el servidor para llevar lo pesado a otro disco (electron/mudanza.ts).
+  if (path === '/api/ocupado' && method === 'GET') return send(res, 200, { ocupado: ocupado() }), true
 
   if (path === '/api/restart' && method === 'POST') {
     if (ocupado()) return send(res, 409, { error: ocupado() }), true

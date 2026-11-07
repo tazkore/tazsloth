@@ -1,4 +1,5 @@
 /** Lo que comparten el servidor y la interfaz. */
+import type { Proveedor } from './providers.ts'
 
 /** Una card de la pantalla de inicio. Si trae `skill`, el primer mensaje de cada sesión la invoca. */
 export interface Card {
@@ -27,6 +28,26 @@ export interface Card {
    * hace el estilo si no eliges AI Studio, cuando no es mandándola tú.
    */
   voz?: false | { propia: string }
+  /** Hace sus clips con `generar_video` en Google Flow: el compositor deja elegir el modelo (menú «Clips», `lineaClips`). */
+  clips?: true
+  /**
+   * El estilo de Sloth del que partió uno tuyo (lo copió «Nuevo estilo»): pide los paquetes de Python de ese
+   * (`server/requisitos.ts`) y es con el que se compara al compartirlo (`server/estilos.ts`).
+   */
+  basadoEn?: string
+  /** Un estilo que instalaste de otro: de dónde vino. Al volver a instalarlo de ahí, se pone al día. */
+  origen?: OrigenEstilo
+}
+
+/** De dónde vino un estilo instalado: de un archivo (sin `publicacion`) o de la comunidad, y de qué versión de Sloth. */
+export interface OrigenEstilo {
+  /** La publicación de la sección Estilos y la llave de su paquete. */
+  publicacion?: string
+  llave?: string
+  /** Quién lo compartió, como se llama en la comunidad. */
+  autor?: string
+  /** La versión de Sloth donde se hizo. */
+  sloth: string
 }
 
 /** Un modelo con su esfuerzo. `medido` dice dónde se midió; sin él, es el de por defecto. */
@@ -244,8 +265,11 @@ export type AgentEvent =
    * turno según el SDK, con los subagentes (con Codex, a precio de la API: server/precios.ts); faltan si no se
    * sabe (se cortó antes de que el SDK lo diera, es el primer turno tras retomar la sesión o el modelo no tiene precio).
    */
-  /** `relevo`: la sesión del agente ya no sirve; el hilo sigue en otra con un resumen, sola (`sigue`) o con el siguiente mensaje. */
-  | { t: 'turn_end'; at: number; ok: boolean; error?: string; costUsd?: number; tokens?: Tokens; caida?: boolean; relevo?: 'sigue' | 'espera' }
+  /**
+   * `relevo`: la sesión del agente ya no sirve; el hilo sigue en otra con un resumen, sola (`sigue`) o con el siguiente
+   * mensaje. `agente`: de un turno que falló, quién lo llevaba (el hilo puede pasar luego a otro).
+   */
+  | { t: 'turn_end'; at: number; ok: boolean; error?: string; costUsd?: number; tokens?: Tokens; caida?: boolean; relevo?: 'sigue' | 'espera'; agente?: Proveedor }
   | { t: 'info'; text: string }
   /** El agente tarda en arrancar: `dura`, lo que se espera en ms, desde `desde`. `listo`: ya arrancó. El fin del turno también lo acaba. */
   | { t: 'arranque'; nombre: string; desde: number; dura: number; listo?: boolean }
@@ -301,6 +325,8 @@ export interface SessionMeta {
   acaboBien?: boolean
   /** La sesión del agente se cambió por otra: la siguiente que se abra empieza con el resumen del hilo (`relevar` en sessions.ts). */
   resumir?: boolean
+  /** Con `resumir`: el hilo pasó de este agente a otro (`setModel`), y el resumen se lo dice al nuevo. */
+  vieneDe?: Proveedor
   /**
    * La skill que invoca el primer mensaje. Mientras el agente no haya respondido (sin `providerSessionId`), cada turno la
    * vuelve a pedir: un hilo que se cayó antes de la primera respuesta no la olvida al retomarse.
@@ -1010,6 +1036,141 @@ export interface CuentaInvestigacion {
   instagram?: string | null
 }
 
+/** De dónde sale una mejora pedida desde un hilo (el símbolo de su agente): el hilo y lo que pasó (lo que elegiste, o el error). */
+export interface OrigenMejora {
+  hilo: string
+  titulo: string
+  cita?: string
+}
+
+/** Lo que el agente del hilo (o Claude, sin hilo) propone al ayudarte a decir algo (`POST /api/comunidad/redactar`). */
+export interface AyudaMejora {
+  /** Lo que entendió que pasó o que quieres, en llano. */
+  entendi: string
+  /** El texto propuesto. */
+  mejora: string
+  /** Lo que le falta saber para decirlo bien (0 a 2). */
+  preguntas: string[]
+}
+
+/** Las secciones de la comunidad (`licencias/src/comunidad.ts`). En Anuncios solo publica el creador. */
+export type CategoriaComunidad = 'general' | 'hice' | 'ayuda' | 'mejoras' | 'estilos' | 'anuncios'
+
+/** Lo que los demás ven de un miembro de la comunidad. */
+export interface Autor {
+  id: string
+  nombre: string
+  /** La URL de su foto. */
+  foto?: string
+  /** El creador de Sloth. */
+  creador?: boolean
+  /** Fundador (mientras tenga pagado el precio de Fundador), Donador PRO (`grande`) o Apoya, mientras apoya. */
+  insignia?: 'fundador' | 'grande' | 'apoya'
+  /** Solo en tu perfil: si sales en los créditos de sloth.vancci.org (los Fundadores que lo piden). */
+  creditos?: boolean
+}
+
+/** Una imagen o un video de una publicación. `llave` es su nombre en la comunidad y `url`, de donde se carga. */
+export interface AdjuntoComunidad {
+  /** `estilo`: un estilo tuyo empaquetado (`server/estilos.ts`), solo en la sección Estilos. */
+  tipo: 'imagen' | 'video' | 'estilo'
+  llave: string
+  url: string
+  /** El nombre del estilo. */
+  nombre?: string
+  /** La portada de un video: su llave y su URL. */
+  poster?: string
+  posterUrl?: string
+  vertical?: boolean
+}
+
+/** Una publicación de la comunidad. Las fechas, en ISO. */
+export interface PublicacionComunidad {
+  id: string
+  autor: Autor
+  categoria: CategoriaComunidad
+  titulo: string
+  texto: string
+  adjuntos: AdjuntoComunidad[]
+  fijada: boolean
+  /** Solo en Mejoras: cómo va, según el creador. */
+  estado?: 'haciendo' | 'hecha'
+  creada: string
+  editada?: string
+  /** Lo último que pasó en ella: se publicó o se comentó. Ordena el feed. */
+  actividad: string
+  likes: number
+  /** Si te gusta a ti. */
+  megusta: boolean
+  comentarios: number
+  ultimoComentario?: string
+  /** Los últimos que comentaron (hasta 5), el más reciente primero, para enseñar sus caras. */
+  comentaron: Autor[]
+  /** Cuántos la reportaron. Solo lo ve el creador; con 3 o más, los demás ya no la ven hasta que la revise. */
+  reportes?: number
+  /** Un estilo que el creador aún no aprueba: solo lo ven quien lo compartió y él. */
+  porAprobar?: true
+}
+
+export interface ComentarioComunidad {
+  id: string
+  autor: Autor
+  texto: string
+  creada: string
+  /** El comentario al que responde, siempre uno de primer nivel. */
+  responde?: string
+  /** Sus imágenes, si las lleva. */
+  adjuntos?: AdjuntoComunidad[]
+  likes: number
+  megusta: boolean
+  /** Como en `PublicacionComunidad`. */
+  reportes?: number
+}
+
+/** Lo que le pasó a lo tuyo en la comunidad: te comentaron, te respondieron, te dieron me gusta… */
+export interface AvisoComunidad {
+  id: string
+  tipo: 'comento' | 'respondio' | 'gusta' | 'gustaComentario' | 'estado' | 'reporte' | 'anuncio' | 'estilo' | 'aprobado'
+  de: Autor
+  publicacion: string
+  /** El título de la publicación, o el principio de su texto. */
+  sobre: string
+  comentario?: string
+  /** El estado nuevo de una mejora, o el motivo de un reporte. */
+  texto?: string
+  creado: string
+  leido: boolean
+}
+
+/** `GET /api/comunidad`: quién eres, los números de la comunidad y una página del feed. */
+/** La votación de qué sigue en el roadmap: cada meta con sus votos (el de un Fundador vale dos) y la que votaste. */
+export interface RoadmapComunidad {
+  metas: { id: string; titulo: string; votos: number }[]
+  mio?: string
+}
+
+export interface FeedComunidad {
+  /** Con lo que llevas hecho, para «Comienza aquí». */
+  yo: Autor & { publicaciones: number; comentarios: number }
+  /** Las licencias activas. */
+  miembros: number
+  /** Las que abrieron Sloth en las últimas 24 horas. */
+  activos: number
+  /** Tus avisos sin leer. */
+  avisos: number
+  roadmap: RoadmapComunidad
+  publicaciones: PublicacionComunidad[]
+  /** Hay otra página. */
+  mas: boolean
+}
+
+/** `/api/comunidad/liberar`, solo del creador: la última versión de un sistema y, mientras es solo de quien apoya, desde cuándo será de todos. */
+export interface VersionLiberable {
+  so: 'windows' | 'mac' | 'mac-arm64' | 'mac12' | 'linux'
+  version: string
+  todos?: string
+}
+
 /** Lo que el servidor empuja por el WebSocket. */
 export type ServerPush =
   | { type: 'events'; sessionId: string; from: number; events: AgentEvent[] }
@@ -1027,6 +1188,8 @@ export type ServerPush =
   | { type: 'ideas'; canalId: string; trabajo?: TrabajoYT }
   /** Redes: cambió algo de lo programado (va cada vez que se guarda), con lo que pide atención; con `acabo`, al terminar lo que mandaste. */
   | { type: 'redes'; aviso: AvisoRedes; acabo?: TandaRedes }
+  /** Comunidad: se publicó algo desde esta computadora fuera de la sección (desde un hilo, o el agente). */
+  | { type: 'comunidad' }
 
 /**
  * Una fuente del radar (`server/radar/fuentes.ts`), como se guarda en `data/radar/fuentes.json`. `pagina` es una página
@@ -1057,8 +1220,54 @@ export interface FuenteProbada {
   detalle: string
 }
 
+/**
+ * La clave de la app que se vende (`server/licencia.ts`), en `GET /api/licencia`: una cuenta gratis o un apoyo. Sin
+ * `clave`, nunca creó cuenta ni apoyó en esta computadora; con `enlace`, espera el pago.
+ */
+export interface Licencia {
+  activa: boolean
+  clave?: string
+  email?: string
+  /**
+   * `mensual`, `anual` o `unico` (de una vez, vale un mes): un apoyo; `gratis`: uno de los lugares gratis de por vida
+   * (de cuando Sloth se vendía); `cuenta`: una cuenta gratis.
+   */
+  plan?: 'mensual' | 'anual' | 'unico' | 'gratis' | 'cuenta'
+  /** Lo que se cobra cada mes o cada año, en la moneda con que empezó el apoyo. */
+  monto?: number
+  /**
+   * Con los nombres de Mercado Pago, también los de PayPal: `pending` (sin pagar), `authorized`, `paused` o `cancelled`;
+   * `gratis`; o `pagado`, un año pagado de una vez que no se renueva solo.
+   */
+  estado?: string
+  /** Hasta cuándo está pagada (ISO): el próximo cobro o, cancelada o pagada de una vez, cuando se cierra. */
+  pagadaHasta?: string
+  /** El folio de su cancelación, si la canceló. */
+  folio?: string
+  /** De las primeras personas que apoyaron: fundadora para siempre, aunque cancele. */
+  fundador?: boolean
+  error?: string
+}
+
+/** La versión de esta app y, si la hay, la nueva y cómo va su descarga (electron/main.ts). */
+export interface ActualizacionSloth {
+  actual: string
+  nueva?: string
+  /** Lo que trae la nueva, en un renglón: se ve al pasar el cursor sobre «Actualizar». */
+  novedad?: string
+  /** De 0 a 1 mientras baja; 1, ya bajó y Sloth se cierra para ponerla. */
+  avance?: number
+  /** Bajando, se fue el internet: sigue sola cuando vuelva. */
+  sinRed?: boolean
+  error?: string
+  /** En Mac sin firma de Apple: «Actualizar» abre su descarga en el navegador, y se instala encima. */
+  aMano?: boolean
+}
+
 /** Lo que la ventana de v!d (electron/preload.ts) le da a la interfaz como `window.vid`. En un navegador no está. */
 export interface PuenteVid {
+  /** La de Mac con macOS 12 (Electron 43): al abrirla, el aviso de lo que puede no andar ahí (`AvisoMacViejo`). */
+  macViejo?: boolean
   /** La ventana al frente (al pulsar un aviso). */
   traer(): void
   /** Si v!d está anclada a la barra de tareas; `null` donde no se puede ofrecer (fuera de la app instalada en Windows). */
@@ -1067,6 +1276,13 @@ export interface PuenteVid {
   anclar(): Promise<'anclada' | 'no' | 'windows'>
   /** El navegador integrado de cada hilo. No está en una ventana de antes de que existiera. */
   navegador?: PuenteNavegador
+  /** Dónde está lo pesado y llevarlo a otro disco (electron/mudanza.ts). No está en una ventana de antes. */
+  disco?: {
+    /** La carpeta de tus videos; `null` fuera de la app instalada. */
+    donde(): Promise<string | null>
+    /** Pregunta dónde, lo lleva y vuelve a abrir Sloth. Devuelve por qué no se pudo, si fue antes de empezar. */
+    llevar(): Promise<{ error?: string }>
+  }
 }
 
 /**
@@ -1123,6 +1339,52 @@ export interface EstadoVoz {
   navegador?: string
   /** Se pasó a Chrome y su perfil aún no tiene la sesión: hay que entrar una vez en Chrome. */
   entrarEnChrome?: boolean
+  /** Los proveedores que van con una llave de API (`server/voz/apis.ts`). */
+  motores: Record<ProveedorVoz, EstadoProveedorVoz>
+  /** Voices Cloning, el proveedor de Sloth (`server/voz/voices-cloning.ts`). */
+  vc: EstadoVoicesCloning
+}
+
+/** Los proveedores de voz con llave de API, además de AI Studio. */
+export type ProveedorVoz = 'fish' | 'elevenlabs'
+
+/** Los motores de voz que no son AI Studio: los de llave y Voices Cloning (`vc:<id>`). */
+export type FuenteVoz = ProveedorVoz | 'vc'
+
+/**
+ * Voices Cloning, el proveedor de voz de Sloth: sin llave propia, con los créditos que da Sloth (su cobro guarda la del
+ * socio, `licencias/src/voz.ts`). `disponible`: si se puede usar aquí (con cuenta de Sloth, la llave puesta y créditos, o
+ * siendo el creador). `voces`: las que elegiste o clonaste en su ventana, para el menú. `error`: lo último que falló.
+ */
+export interface EstadoVoicesCloning {
+  disponible: boolean
+  creador: boolean
+  creditos?: number
+  usados?: number
+  hoy?: number
+  generaciones?: number
+  /** `active` o `suspended`, como lo dice Voices Cloning. */
+  estado?: string
+  voces: VozApi[]
+  error?: string
+}
+
+/**
+ * Una voz de Fish Audio o ElevenLabs. `id`: el suyo allí (en Sloth va como `fish:<id>`, `shared/voz.ts`). `propia`: una
+ * que clonaste o creaste tú; las demás son de su biblioteca.
+ */
+export interface VozApi {
+  id: string
+  nombre: string
+  descripcion: string
+  propia: boolean
+}
+
+/** Un proveedor con llave: los cuatro últimos de la llave (`null`: sin poner) y sus voces. `error`: lo último que falló. */
+export interface EstadoProveedorVoz {
+  llave: string | null
+  voces: VozApi[]
+  error?: string
 }
 
 /**
@@ -1203,6 +1465,8 @@ export interface TrabajoFlow {
   estado: 'en-fila' | 'generando' | 'lista' | 'error'
   tipo: 'imagen' | 'video'
   modelo: string
+  /** La de Omni; Veo, siempre 720p. */
+  resolucion?: string
   /** La cuenta de Google con que se genera o se generó. */
   cuenta?: string
   archivo?: string
