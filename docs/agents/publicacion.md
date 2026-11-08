@@ -37,6 +37,9 @@ esa PC.
 activar solo `useZip` crea un 7z que luego se intenta abrir como ZIP. `electron/instalador.test.ts` compila y ejecuta el
 extractor real, simula el DLL incompatible y comprueba que se escriba en la carpeta y se conserven los datos al
 instalar encima.
+También desactiva `preCompressedFileExtensions`: el builder excluye los videos del ZIP y solo los repone desde
+`resources`, pero en Windows los de v!d van en `app/web`. La prueba usa el empaquetado real de NSIS y comprueba que
+lleguen los `.mp4` y `.webm`.
 
 Si a alguien le sale: «Anular» (no «Omitir», que deja incompleta la instalación), cerrar v!d y el instalador, reiniciar
 e instalar encima la versión corregida en la misma carpeta, sin desinstalar ni borrar `app/data`, `app/trabajo` o
@@ -51,7 +54,7 @@ ramas ni bloquea por sí solo un push a `venta`.
 v!d (Fase 1) no tiene pagos, comunidad ni actualizaciones automáticas: se quitaron `licencias/`, `npm run publicar`,
 `scripts/anuncio.mjs` y electron-updater. El instalador sale de `npm run compilar` y una versión nueva se instala encima
 de la anterior. La distribución propia se definirá en otra fase. Una versión grande puede llevar su guía animada
-(`web/src/Novedades.tsx`, la 1.1.6 en `web/public/novedades/1.1.6.html`), que sale una vez al abrirla a quien la
+(`web/src/Novedades.tsx`, la 1.1.7 en `web/public/novedades/1.1.7.html`), que sale una vez al abrirla a quien la
 instaló encima de otra; su número va en `VERSION` de `Novedades.tsx`.
 
 ## Publicaciones de Instagram: nube/

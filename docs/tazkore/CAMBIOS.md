@@ -3,6 +3,46 @@
 TazSloth es el fork de Tazkore de [Sloth](https://github.com/Vancci-sloth/sloth) (Apache 2.0 + Commons Clause).
 Uso interno, sin venta. Los cambios propios viven en la rama `tazkore`; `main` sigue a `upstream`.
 
+## v1.1.7 — El menú «Voz» nuevo de Sloth (7-nov-2026, base upstream a4c7f8e)
+
+- **De Sloth (17 commits, 9ebd68c → a4c7f8e):**
+  - **Menú «Voz» rehecho** (0543800): `web/src/ElegirVoz.tsx`/`.css` con pestañas por motor y su logo (voces de Sloth,
+    ElevenLabs, Fish Audio, AI Studio, favoritas), búsqueda y filtro de género, muestra de cada voz sin gastar
+    (`server/voz/muestras.ts`, `/api/voz/probar` para tu frase) y clonar en una vista propia (Fish Audio, ElevenLabs o
+    Sloth). ElevenLabs lee el plan (`/v1/user/subscription`): voces de biblioteca «Plan de pago» al final y letras del
+    mes. La pestaña de Sloth cuenta sus voces y dice los créditos. Con `server/voz/apis.ts`, `server/voz/index.ts`,
+    `server/voz/voices-cloning.ts`, `shared/voz.ts`, `shared/types.ts`, sus pruebas, `docs/agents/eval-voz.md` y
+    `scripts/eval-voz*.mjs`.
+  - **Opciones → Voz → Voces de Sloth**: pegar la clave de la cuenta de Sloth (`/api/licencia/clave`, que v!d ya
+    tenía) y ver los créditos con su barra de consumo.
+  - **Aviso de créditos de voz** (`web/src/CreditosVoz.tsx`): sale una vez si la cuenta de Sloth trae créditos
+    mensuales (`vc.mensuales`, la de Alan es de plan mensual). «Ver aviso de créditos» solo fuera de `VENTA`.
+  - **Rifa en la comunidad de Sloth** (`web/src/Rifa.tsx`/`.css`, `web/src/GanasteRifa.tsx`): arriba del feed, para
+    participar; si ganas, aviso a pantalla completa (llega con los avisos de la comunidad).
+  - `server/comunidad.ts`: la llave del creador también desde `admin.txt` (no aplica en v!d). «Ver novedades» en
+    Opciones (`abrirNovedades`). Iconos (`buscar`, `microfono`, `estrella`, `boleto`, `regalo`), logo `sloth` en
+    `Logos.tsx`, `.gitignore` con llaves y certificados, ADR 0018 actualizado.
+  - Instalador: `preCompressedFileExtensions: []` en `scripts/instalador-config.ts` (los `.mp4`/`.webm` de `app/web`
+    no se quedaban fuera del ZIP) y `electron/instalador.test.ts` con el empaquetado real de NSIS.
+- **Conflictos resueltos:**
+  - `server/voz/index.ts`: se quedan los imports de Chatterbox/avatar de v!d junto a `muestras.ts`; `generar_voz` con
+    `proveedor: "chatterbox"` sigue igual. Chatterbox no estaba en el menú (va por Opciones → Avatares y voz) y sigue así.
+  - `web/src/Voz.tsx`: gana el selector de Sloth (`ElegirVoz`); se conserva `e.navegador ?? 'Chrome'`. Textos de pago
+    de Sloth («apoyar con $15», «Opciones → Apoyo») cambiados por la cuenta/plan de Sloth.
+  - `server/index.ts`: se queda `cuentaSloth = licencia(APP)` de v!d (ya pasaba la credencial a la voz).
+  - `web/src/App.tsx`: `AvisoAgentes` de v!d sin `ActualizarSloth`; entran `CreditosVoz` y `GanasteRifa`.
+  - `web/src/Logos.tsx`: `python-vid` o `sloth`. `web/src/Novedades.tsx`: v!d 1.1.7 con `abrirNovedades`.
+  - `skills/video-base/VOZ.md`: «voces de Sloth». `docs/agents/mapa.md`, `publicacion.md`: los de v!d con lo nuevo.
+  - `web/public/novedades/1.1.5.html`: git emparejó la 0.4.0 de Sloth con la 1.1.5; se queda la de v!d.
+  - `licencias/` → `nube/`: git creyó que `licencias/` se renombró a `nube/` y metía ahí la rifa, voz mensual y sus
+    migraciones; se quitaron todas (`nube/` es de v!d).
+- **Fuera a propósito:** `licencias/` (cobro, rifa del Worker, voz mensual, migraciones 0023–0025, los archivos
+  basura `licencias/299))`), `web/src/Admin.*` y `RifaAdmin.tsx` (solo del creador), `.github/workflows/venta.yml` y
+  `recuperar-mac.yml`, `scripts/publicar.mjs`, `anuncio.mjs` y `fundador.mjs`, ADR 0006 (firma de Mac para venta),
+  `novedad.txt` y la guía 0.4.0 con `baile.webm` (v!d tiene sus novedades).
+- `npm run typecheck` limpio; `npm test` 448/450 con las dos fallas conocidas (`datos-fuera`, `proyectos` inestable);
+  `npm run comprobar-skills` bien; `npx vite build web` bien.
+
 ## v1.1.6 — Piloto automático de contenido por agencia (7-nov-2026)
 
 Con vid-api 1.3.0 (ops `perfil` y `guardar_contenido`; `crear_post` acepta `cuentas: "todas"`; contrato en

@@ -82,6 +82,14 @@ Este es el mapa:
   quien (`server/voz/apis.ts`, voces `fish:<id>` y `elevenlabs:<id>`), también clonando la voz del usuario. Voices
   Cloning (voces `vc:<id>`, `server/voz/voices-cloning.ts`, ADR 0018) va por un servicio con credencial propia, que lleva
   la cuenta de los créditos de cada quien; v!d no cobra y la deja apagada salvo que se le dé credencial (`voz(app, { credencial })`).
+  En v!d la credencial es la cuenta de Sloth (`server/licencia.ts`), y al usuario se le dice «voces de Sloth». El menú
+  «Voz» es `web/src/ElegirVoz.tsx` (v!d 1.1.7): pestañas por motor, buscar en español, oír la muestra
+  (`server/voz/muestras.ts` la guarda) o tu frase (`/api/voz/probar`) y clonar grabando ahí. Su eval:
+  `docs/agents/eval-voz.md` (`node scripts/eval-voz.mjs <puerto>`). Chatterbox local sigue fuera del menú: va con
+  `proveedor: "chatterbox"` o la preferencia de Opciones → Avatares y voz.
+- La comunidad de Sloth (`web/src/Comunidad.tsx`, `server/comunidad.ts`): vive en el Worker de Sloth y se entra con la
+  cuenta de Sloth. Arriba sale la rifa cuando hay una abierta (`Rifa.tsx`); si ganas, el aviso a pantalla completa
+  (`GanasteRifa.tsx`). Armar y sortear rifas es del creador de Sloth y no está en v!d.
 - Administrador (`web/src/Admin.tsx`, `/api/admin*`): solo responde en la computadora del creador de Voices Cloning; en v!d
   nunca aplica (`creador` devuelve `undefined`).
 - `server/avatar/` y `web/src/Avatar.tsx` (v!d Fase 5): el motor de avatar y la voz de ElevenLabs. Los agentes lo piden con

@@ -1230,6 +1230,68 @@ export interface FeedComunidad {
   mas: boolean
 }
 
+/** Un premio de la rifa que ganaste y aún no ves en tu Sloth (`GET /api/comunidad/avisos?cuenta` y `/rifa`). */
+export interface RifaGanada {
+  rifa: string
+  premio: string
+  /** Los créditos de voz que te llevas; 0, un premio que el creador te da a mano. */
+  creditos: number
+  /** Ya están en tu cuenta. */
+  entregados: boolean
+}
+
+/** La rifa de la comunidad (`licencias/src/rifa.ts`), como la ve cada quien: `GET /api/comunidad/rifa`. */
+export interface RifaComunidad {
+  /**
+   * La abierta: sin qué se rifa, que el creador elige en cada sorteo. Sigue abierta entre sorteos hasta que la cierra;
+   * `ganadores`, los nombres de quienes ya ganaron en ella.
+   */
+  abierta?: { id: string; creada: string; participantes: number; ganadores: string[] }
+  /** Ya participas en la abierta. */
+  participo: boolean
+  /** Ya ganaste en la abierta: lo que te llevaste (nadie gana dos veces en una rifa). */
+  ganaste?: string
+  /** Por qué no puedes participar (quien ya recibe los créditos de cada mes o es Fundador); sin él, puedes. */
+  fuera?: string
+  /** Tu correo, adonde llega el aviso si ganas. */
+  correo?: string
+  /** La última que se cerró con ganadores, mientras es reciente: quién ganó qué. */
+  ultima?: { ganadores: { nombre: string; premio: string }[]; terminada: string }
+  gane?: RifaGanada
+}
+
+/** Un ganador, como lo ve el creador en Administrador. */
+export interface GanadorRifa {
+  rifa: string
+  externo: string
+  nombre: string
+  email: string
+  premio: string
+  creditos: number
+  /** Cuándo ganó. */
+  cuando: string
+  estado: 'pendiente' | 'preparando' | 'enviando' | 'entregado' | 'revisar' | 'a-mano'
+  correo: string | null
+  visto: string | null
+  error: string | null
+}
+
+/** `GET /api/comunidad/rifa/admin`, solo el creador. */
+export interface RifaAdmin {
+  /** Si las voces de Sloth ya se abrieron a todos: sin eso no se rifan créditos. */
+  vozAbierta: boolean
+  /** La abierta, con quién participa y, de quien ya ganó en ella, qué (`gano`). */
+  abierta?: RifaComunidad['abierta'] & { lista: { externo: string; nombre: string; email: string; desde: string; fuera?: string; gano?: string }[] }
+  /** Los ganadores de las últimas rifas, del más nuevo al más viejo. */
+  ganadores: GanadorRifa[]
+}
+
+/** `POST /api/comunidad/rifa/sortear`: quiénes entraron a este sorteo (para la ruleta: los que aún no ganan) y quiénes ganaron qué, en orden (el premio mayor primero). */
+export interface SorteoRifa {
+  participantes: { externo: string; nombre: string }[]
+  ganadores: { externo: string; nombre: string; premio: string }[]
+}
+
 /** `/api/comunidad/liberar`, solo del creador: la última versión de un sistema y, mientras es solo de quien apoya, desde cuándo será de todos. */
 export interface VersionLiberable {
   so: 'windows' | 'mac' | 'mac-arm64' | 'mac12' | 'linux'
@@ -1385,6 +1447,10 @@ export interface VozStudio {
   nombre: string
   descripcion: string
   grupo: string
+  /** Un MP3 o WAV público con cómo suena, si AI Studio lo da: el menú lo oye sin gastar la cuota. */
+  muestra?: string
+  /** Como la filtra AI Studio (Feminine, Masculine). */
+  genero?: 'mujer' | 'hombre'
 }
 
 /**
@@ -1425,6 +1491,8 @@ export type FuenteVoz = ProveedorVoz | 'vc'
 export interface EstadoVoicesCloning {
   disponible: boolean
   creador: boolean
+  /** Créditos que se suman cada mes natural por el apoyo o el lugar de Fundador. */
+  mensuales?: number
   creditos?: number
   usados?: number
   hoy?: number
@@ -1444,12 +1512,32 @@ export interface VozApi {
   nombre: string
   descripcion: string
   propia: boolean
+  /** Un MP3 público con cómo suena (el `preview_url` de ElevenLabs, la muestra de Fish Audio): se oye sin gastar nada. */
+  muestra?: string
+  /** Cuántas veces la han usado en su biblioteca (Fish Audio), para ordenar las de todos. */
+  usos?: number
+  /** En Voices Cloning, de cuál de los suyos sale (`elevenlabs`, `edge`, `minimax`, `vbee`, `fishaudio`, `clone`). */
+  de?: string
+  /** Por qué tu plan no deja generar con ella (su muestra sí se oye): las de la biblioteca de ElevenLabs en el gratis. */
+  bloqueo?: string
+}
+
+/**
+ * El plan de tu cuenta en un proveedor (por ahora ElevenLabs, `/v1/user/subscription`): si es el gratis, si deja clonar
+ * y cuántas letras del mes llevas de cuántas.
+ */
+export interface PlanVoz {
+  gratis: boolean
+  nombre: string
+  clonar: boolean
+  letras?: { usadas: number; limite: number }
 }
 
 /** Un proveedor con llave: los cuatro últimos de la llave (`null`: sin poner) y sus voces. `error`: lo último que falló. */
 export interface EstadoProveedorVoz {
   llave: string | null
   voces: VozApi[]
+  plan?: PlanVoz
   error?: string
 }
 
