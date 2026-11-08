@@ -61,6 +61,7 @@ import { eventosEnVivo } from './eventos-en-vivo.ts'
 import { enviarCliente } from './enviar-cliente.ts'
 import { anteriorDe, conservarAnterior, olvidarAnterior } from './anteriores.ts'
 import { cambiosDeCard, carpetaSkill, configClaude, duplicateCard, enlazarSkillsCodex, skillsDeClaude, guardarSkillTuya, readCards, removeCard, seriesDe, sincronizarSesion, SKILLS, skillRef, volverAOriginal } from './skills.ts'
+import { cuidarEstilos, mudarTuyas } from './estilos-perdidos.ts'
 import { estaticos } from './estaticos.ts'
 import { type Agente, version } from './version.ts'
 import { cargarPreciosCodex } from './precios.ts'
@@ -74,6 +75,17 @@ const CARDS = join(APP, 'cards.json')
  * que ninguna versión nueva toca, y sus skills en `<app>/skills/<id>`, que tampoco.
  */
 const CARDS_TUYAS = join(APP, 'data', 'tus-cards.json')
+/** Con las skills como las trae esta versión, que dicen qué es de v!d; sin ellas (el repo) no hace nada. */
+function cuidarTuyas(hacer: typeof cuidarEstilos) {
+  const originales = process.env.SLOTH_SKILLS_ORIGINALES
+  if (!originales) return
+  try {
+    const ids = hacer({ app: APP, originales })
+    if (ids.length) console.log(`Estilos tuyos con su card de vuelta en tus-cards.json: ${ids.join(', ')}`)
+  } catch (error) {
+    console.error(`No se pudieron revisar las cards de tus estilos: ${error instanceof Error ? error.message : error}`)
+  }
+}
 const ATTACHMENTS = join(APP, 'data', 'attachments')
 const ATTACHMENT_TYPES: Record<string, string> = { ...IMAGE_TYPES, '.wav': 'audio/wav', '.mp3': 'audio/mpeg', '.mp4': 'video/mp4', '.webm': 'video/webm' }
 /** Código de salida que le pide a `scripts/start.mjs` que vuelva a levantar el servidor. */
@@ -99,6 +111,8 @@ const cuentaSloth = licencia(APP) // comunidad
 if (VENTA) {
   // La app que se vende usa siempre sus skills (`<app>/skills`, v1.1.1): Claude, desde su configuración (`configClaude`,
   // abajo), y Codex, enlazadas a ellas en sus carpetas. En ~/.claude ya no escribe.
+  // Antes, los estilos tuyos que se quedaron sin card (server/estilos-perdidos.ts).
+  cuidarTuyas(cuidarEstilos)
   enlazarSkillsCodex(APP)
 }
 // Claude usa siempre la configuración propia de v!d (`configClaude`): solo las skills (las de v!d; en la que se vende,
@@ -217,10 +231,10 @@ function cards(): Card[] {
   return leidas?.cards ?? []
 }
 
-// Publicar los videos verticales terminados en TikTok e Instagram (y en las redes que se sumen), y los largos en YouTube.
-// La app que se vende aún no publica.
-const publicar = redes(APP, sessions, cards, broadcast) // redes
+// Publicar los videos verticales terminados en TikTok, Instagram y YouTube Shorts, y los largos en YouTube. Los Shorts
+// van con el canal que conecta YouTube.
 const subirLargos = youtube(APP, sessions, cards, `http://127.0.0.1:${PORT}/api/youtube/oauth`, undefined, () => modelos)
+const publicar = redes(APP, sessions, cards, broadcast, subirLargos.lectura) // redes
 
 // Cada card de estilo enseña su último video terminado, en pequeño.
 const previa = previas(join(APP, 'data', 'previas'), cards) // previas de las cards
@@ -301,8 +315,12 @@ const animar = avatar({ datos: DATOS, codexListo: async () => (await cuentaCodex
 // Las imágenes y videos de Google Flow, con esa misma cuenta y en ese mismo navegador.
 const generarFlow = flow(APP, narrar.google) // Google Flow
 
-// Si el agente (o tú) edita cards.json, las cards se actualizan solas.
-watch(CARDS, () => broadcast({ type: 'cards', cards: cards() }))
+// Si el agente (o tú) edita cards.json, las cards se actualizan solas. En la app que se vende, una card tuya que un
+// agente puso ahí pasa a tus-cards.json: la siguiente versión reemplaza cards.json.
+watch(CARDS, () => {
+  if (VENTA) cuidarTuyas(mudarTuyas)
+  broadcast({ type: 'cards', cards: cards() })
+})
 // Y si «Nuevo estilo» hizo uno: su skill se enlaza donde la buscan Claude y Codex antes del primer hilo con su card.
 watch(dirname(CARDS_TUYAS), (_, archivo) => {
   if (archivo !== basename(CARDS_TUYAS)) return
@@ -531,14 +549,24 @@ async function api(req: IncomingMessage, res: ServerResponse, url: URL): Promise
   }
 
   // La cuenta de los demás agentes (`server/proveedores.ts`): mirarla (`?fresco` vuelve a mirar), conectarla, dejar de
-  // esperarla, quitarla o darle las llaves de v!d (`{usar}`). Sus modelos dependen de la cuenta: cada cambio los vuelve a pedir.
-  const otro = /^\/api\/(\w+)\/(cuenta|conectar|cancelar|salir|llaves)$/.exec(path)
+  // esperarla, quitarla, darle las llaves de v!d (`{usar}`) o, con varias cuentas, usar o quitar una (`{id}`). Sus
+  // modelos dependen de la cuenta: cada cambio los vuelve a pedir.
+  const otro = /^\/api\/(\w+)\/(cuenta|conectar|cancelar|salir|llaves|usar|quitar)$/.exec(path)
   const o = otro && OTROS[otro[1] as Proveedor]
   if (otro && o && method === (otro[2] === 'cuenta' ? 'GET' : 'POST')) {
     try {
-      const usar = otro[2] === 'llaves' && !!(await body<{ usar?: boolean }>(req)).usar
-      const llaves = o.llaves
-      const hacer = { cuenta: () => o.cuenta(url.searchParams.has('fresco')), conectar: o.conectar, cancelar: o.cancelar, salir: o.salir, llaves: llaves && (() => llaves(usar)) }[otro[2] as 'cuenta']
+      const datos = otro[2] === 'llaves' || otro[2] === 'usar' || otro[2] === 'quitar' ? await body<{ usar?: boolean; id?: string }>(req) : {}
+      const { llaves, usar, quitar } = o
+      const id = String(datos.id ?? '')
+      const hacer = {
+        cuenta: () => o.cuenta(url.searchParams.has('fresco')),
+        conectar: o.conectar,
+        cancelar: o.cancelar,
+        salir: o.salir,
+        llaves: llaves && (() => llaves(!!datos.usar)),
+        usar: usar && (() => usar(id)),
+        quitar: quitar && (() => quitar(id))
+      }[otro[2] as 'cuenta']
       if (!hacer) throw new Error('Este agente no admite eso.')
       send(res, 200, await hacer())
       if (otro[2] !== 'cuenta' || url.searchParams.has('fresco')) pedirModelos()

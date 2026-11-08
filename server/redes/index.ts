@@ -17,6 +17,7 @@ import { hayNube, instagram } from './instagram.ts'
 import { abierto, conGoogle, contextoDeGoogle, deGoogle, deLaApp, desconectar, enGoogle, navegador, navegadorDeRedes, pasarDeEdge, sesionFuera, pestana, SinSesion, sinAviso, soltar } from './navegador.ts'
 import { integrado } from '../navegador-agente.ts'
 import { tiktok } from './tiktok.ts'
+import { type CanalYoutube, youtubeShorts } from './youtube.ts'
 import { redactar } from '../redactar.ts'
 import { NOMBRE_AGENTE, proveedorDe } from '../../shared/providers.ts'
 
@@ -39,12 +40,17 @@ export interface Sesion {
 }
 
 /**
- * Lo que sabe hacer cada red. Para sumar YouTube: otro archivo como `tiktok.ts` (por su página) o `instagram.ts` (por la
- * nube de v!d), y añadirlo a `REDES`.
+ * Lo que sabe hacer cada red: `tiktok.ts` (por su página), `instagram.ts` (por la nube de v!d) y `youtube.ts` (por su
+ * API, con el canal de Opciones → YouTube). Una red nueva es otro archivo así, añadido a `REDES`.
  */
 export interface ModuloRed {
   id: RedId
   nombre: string
+  /**
+   * Va con una cuenta que ya conectaste en otro lado (YouTube, con el canal de los largos): no pide token ni sesión, solo
+   * se enciende (`token('si')`) o se apaga (`token(null)`).
+   */
+  interruptor?: boolean
   /** La página donde se inicia sesión, en el navegador de las redes. Sin ella, la red va por su API y se conecta con `token`. */
   login?: string
   /** Hasta cuántos días antes deja programar la red. Lo que cae más lejos espera en la cola, sin error, hasta que entre. */
@@ -67,7 +73,7 @@ export interface ModuloRed {
    * error con `captura` (un PNG) guarda lo que se veía en la página al fallar. Si en un reintento ve que ya estaba (en
    * TikTok, con otra hora), devuelve la hora con la que quedó.
    */
-  programar(nav: Navegador, p: { ruta: string; huella: string; texto: string; tags: string[]; cuando: string; ref: string; reintento: boolean }): Promise<void | { cuando: string }>
+  programar(nav: Navegador, p: { ruta: string; huella: string; texto: string; tags: string[]; cuando: string; ref: string; reintento: boolean; infantil?: boolean; sintetico?: boolean }): Promise<void | { cuando: string }>
   /** Quita de la red lo que se dejó con esa `ref`. Si falla, v!d no la olvida: se puede volver a intentar. */
   quitar?(ref: string): Promise<void>
   /**
@@ -82,7 +88,6 @@ export interface ModuloRed {
   estados?(): Promise<Record<string, { estado: 'publicado' } | { estado: 'error'; error: string }>>
 }
 
-const REDES: ModuloRed[] = [tiktok, instagram]
 /** Lo más pronto que se programa: las redes piden un margen. */
 const MARGEN = 20 * 60000
 const DIA = 24 * 3600000
@@ -160,7 +165,8 @@ export function sinTagsEnTexto(texto: string, tags: string[]) {
   return { texto: limpio, tags: unirTags(tags, sueltos) }
 }
 
-export function redes(app: string, sessions: Sessions, cards: () => Card[], avisar: (msg: ServerPush) => void) {
+export function redes(app: string, sessions: Sessions, cards: () => Card[], avisar: (msg: ServerPush) => void, canal?: CanalYoutube) {
+  const REDES: ModuloRed[] = [tiktok, instagram, ...(canal ? [youtubeShorts(app, canal)] : [])]
   const archivo = join(app, 'data', 'redes', 'redes.json')
   const fallos = join(app, 'data', 'redes', 'fallos')
   let datos: Datos = { ritmo: RITMO_VERTICAL, cuentas: {}, estilos: {}, publicaciones: [] }
@@ -422,7 +428,7 @@ export function redes(app: string, sessions: Sessions, cards: () => Card[], avis
     const a = ajustes(card.id)
     // Si ya va a otra red, va el mismo texto: el video es el mismo.
     const otra = REDES.map((r) => publicacion(r.id, ruta)).find((p) => p?.texto)
-    if (otra) return { ruta, texto: otra.texto, tags: unirTags(a.tags, otra.tags) }
+    if (otra) return { ruta, texto: otra.texto, tags: unirTags(a.tags, otra.tags), infantil: otra.infantil, sintetico: otra.sintetico }
     const partes = ruta.split(`${sep}out${sep}`)
     const carpeta = partes.length > 1 ? partes[0] : dirname(ruta)
     // Primero lo que mejor dice de qué trata el video; luego lo demás, de lo más corto a lo más largo.
@@ -483,7 +489,7 @@ export function redes(app: string, sessions: Sessions, cards: () => Card[], avis
     const { texto, tags } = sinTagsEnTexto(b.texto, b.tags)
     const h = huella(b.ruta)
     // Con la `ref` del intento que falló: si había llegado a la red, el reintento lo encuentra en vez de duplicarlo.
-    datos.publicaciones.push({ red, cardId: card.id, ruta: b.ruta, huella: h, texto, tags, cuando, estado: 'cola', t: Date.now(), ...(previa?.ref ? { ref: previa.ref } : {}) })
+    datos.publicaciones.push({ red, cardId: card.id, ruta: b.ruta, huella: h, texto, tags, cuando, estado: 'cola', t: Date.now(), infantil: b.infantil === true, sintetico: b.sintetico === true, ...(previa?.ref ? { ref: previa.ref } : {}) })
     ;(tanda ??= new Set()).add(h)
   }
 
@@ -551,7 +557,7 @@ export function redes(app: string, sessions: Sessions, cards: () => Card[], avis
         subidos++
         guardar()
         try {
-          const ya = await red.programar(nav, { ruta: p.ruta, huella: p.huella, texto: p.texto, tags: p.tags, cuando: p.cuando!, ref: p.ref, reintento })
+          const ya = await red.programar(nav, { ruta: p.ruta, huella: p.huella, texto: p.texto, tags: p.tags, cuando: p.cuando!, ref: p.ref, reintento, infantil: p.infantil, sintetico: p.sintetico })
           if (ya) p.cuando = ya.cuando
           p.estado = 'programado'
           delete p.error
@@ -753,6 +759,7 @@ export function redes(app: string, sessions: Sessions, cards: () => Card[], avis
           cuenta: datos.cuentas[r.id] ?? null,
           ritmo: datos.ritmo,
           token: !!r.token,
+          interruptor: r.interruptor,
           sinSesion: sinSesion.has(r.id),
           enEdge: (enGoogle() && redDeLaApp() === r) || undefined,
           // Fuera de la app, la sesión de la red vive en el perfil del navegador instalado: al pasar a Chrome hay que entrar una vez.

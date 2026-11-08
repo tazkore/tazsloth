@@ -93,7 +93,7 @@ function Ajustes({ onDone, iniciando, onIniciando }: { onDone(): void; iniciando
           <RedesOpciones onIniciando={onIniciando} />
           <YoutubeOpciones />
         </div>
-        <p className="grupo-nota">Los verticales salen en TikTok e Instagram; los largos, en YouTube. v!d tiene que estar abierto mientras sube a TikTok y a YouTube; Instagram publica aunque la computadora esté apagada.</p>
+        <p className="grupo-nota">Los verticales salen en TikTok, Instagram y YouTube Shorts; los largos, en YouTube. v!d tiene que estar abierto mientras sube a TikTok y a YouTube; Instagram publica aunque la computadora esté apagada.</p>
       </section>
       <AgenciaOpciones /> {/* agencia */}
       <Grupo ref={agentes} titulo="Agentes" nota="Cada agente se descarga la primera vez que lo eliges. Claude y ChatGPT necesitan un plan de pago o una llave de API; OpenCode, solo tu cuenta, que es gratis. Los demás, la cuenta o la llave de cada uno.">
@@ -791,10 +791,15 @@ export function CuentaAgente({ p, aviso = false, onFalta }: { p: OtroAgente; avi
     })
   }
   const elegir = (que: string) => {
-    if (que === 'uso') window.open(cuenta?.uso ?? o.uso, '_blank', 'noreferrer')
-    else if (que === 'cambiar') o.como === 'llave' ? setPegando(true) : conectar()
-    else if (que === 'quitar') void (o.como === 'llave' ? guardarLlave(null) : c.pedir(`/api/${p}/salir`, {}))
+    const [accion, id] = que.split(':')
+    if (accion === 'uso') window.open(cuenta?.uso ?? o.uso, '_blank', 'noreferrer')
+    else if (accion === 'cambiar') o.como === 'llave' ? setPegando(true) : conectar()
+    else if (id) void c.pedir(`/api/${p}/${accion}`, { id })
+    else if (accion === 'quitar') void (o.como === 'llave' ? guardarLlave(null) : c.pedir(`/api/${p}/salir`, {}))
   }
+  // Con varias cuentas (Antigravity), como OpenCode: conectar otra, quitar la que está en uso o cambiar a otra.
+  const activa = cuenta?.cuentas?.find((x) => x.activa)
+  const otras = cuenta?.cuentas?.filter((x) => !x.activa) ?? []
   const contenido = (
     <div className="item">
       <div className="fila">
@@ -815,10 +820,13 @@ export function CuentaAgente({ p, aviso = false, onFalta }: { p: OtroAgente; avi
                   label: o.como === 'llave' ? 'Llave' : 'Cuenta',
                   options: [
                     ...(cuenta.uso || o.uso ? [{ value: 'uso', label: o.como === 'llave' ? 'Ver tu saldo ↗' : 'Ver tu uso ↗' }] : []),
-                    { value: 'cambiar', label: o.como === 'llave' ? 'Cambiar de llave' : 'Cambiar de cuenta' },
-                    { value: 'quitar', label: o.como === 'llave' ? 'Quitar la llave' : 'Cerrar sesión' },
+                    { value: 'cambiar', label: o.como === 'llave' ? 'Cambiar de llave' : activa ? 'Conectar otra cuenta' : 'Cambiar de cuenta' },
+                    activa && otras.length
+                      ? { value: `quitar:${activa.id}`, label: 'Quitar esta cuenta' }
+                      : { value: 'quitar', label: o.como === 'llave' ? 'Quitar la llave' : 'Cerrar sesión' },
                   ],
                 },
+                ...(otras.length ? [{ label: 'Cambiar a', options: otras.map((x) => ({ value: `usar:${x.id}`, label: x.quien })) }] : []),
               ]}
               onChange={elegir}
             />
@@ -846,6 +854,13 @@ export function CuentaAgente({ p, aviso = false, onFalta }: { p: OtroAgente; avi
           )
         )}
       </div>
+      {activa && !aviso && (
+        <p className="fila-extra muted small">
+          {otras.length
+            ? `Trabaja con ${activa.quien}. Cuando a una cuenta se le acaba la cuota, v!d sigue con la siguiente.`
+            : 'Puedes conectar más cuentas de Google con «Conectar otra cuenta», en el menú de la tuya: cuando a una se le acaba la cuota, v!d sigue con la siguiente.'}
+        </p>
+      )}
       {o.beta && <p className="fila-extra muted small">Está en beta: puedes probarlo, pero puede tener errores. Si te topas con uno, avísale a quien administra v!d.</p>}
       {pegando && (
         <form className="fila-extra" onSubmit={(e) => (e.preventDefault(), llave.trim() && void guardarLlave(llave.trim()))}>

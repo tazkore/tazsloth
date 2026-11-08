@@ -3,6 +3,41 @@
 TazSloth es el fork de Tazkore de [Sloth](https://github.com/Vancci-sloth/sloth) (Apache 2.0 + Commons Clause).
 Uso interno, sin venta. Los cambios propios viven en la rama `tazkore`; `main` sigue a `upstream`.
 
+## Sincronización con Sloth 8-nov-2026 (upstream d941f02)
+
+- **De Sloth (9 commits, a4c7f8e → d941f02), integrado:**
+  - **Antigravity con varias cuentas de Google** (fe00fc6): «Conectar otra cuenta» en Opciones → Antigravity; cuando
+    a una se le acaba la cuota de un grupo (Gemini, o Claude y GPT), el hilo sigue con la siguiente en una sesión nueva
+    con el resumen. Cada cuenta tiene su proceso y dice su correo y hasta cuándo no tiene cuota. Si falta el programa
+    de Antigravity, el primer mensaje lo vuelve a bajar. `server/antigravity.ts`, `server/acp.ts`,
+    `server/proveedores.ts`, rutas `/api/<proveedor>/usar|quitar` en `server/index.ts`.
+  - **YouTube Shorts en la cola de redes** (b8e6cc4, 024128b): los verticales también suben al canal de Opciones →
+    YouTube, privados y con su hora; se enciende aparte con «Activar» en su fila de Redes. Cada video pregunta «Creado
+    para niños» y «Material sintético». `server/redes/youtube.ts` (solo APIs de Google), `RedId` con `youtube`.
+  - **Sin conexión, en llano** (f6c948f): reconoce ConnectionRefused, conexión cortada, proxy y certificados, y
+    «Reintentar» vuelve a mandar el pedido tal cual si el turno falló antes de empezar (`web/src/items.ts`).
+  - **Estilos tuyos sin card la recuperan** (fef65e8): `server/estilos-perdidos.ts` (`cuidarEstilos` al arrancar y
+    `mudarTuyas` al cambiar cards.json, solo con `VENTA` y `SLOTH_SKILLS_ORIGINALES`); `crear-estilo` ya no escribe
+    en cards.json.
+  - **Mac: El Diff codifica con la CPU** (a3ca000): VideoToolbox causó un kernel panic en una M3; Windows sigue con la
+    tarjeta.
+  - **Windows sin Edge** (2025acb): `chromiumDelSistema` usa el predeterminado si es Chrome, Brave o Vivaldi. En v!d
+    aplica al inicio de sesión con Google (`electron/google.ts`).
+- **Descartado:**
+  - `scripts/mejoras.mjs`, `scripts/pedidos.json` y el paso 5 de `docs/agents/publicacion.md` (1da4deb, d941f02):
+    comentan en la comunidad de Sloth a nombre de Vancci al publicar; es flujo del creador.
+  - En `server/redes/navegador.ts` y `server/ideas/navegador-investigacion.ts` se queda el navegador de v!d
+    (`navegador-sistema.ts`/`navegador-seguro.ts`, Chrome o Edge a elección) en vez de `chromiumDelSistema`.
+- **Conflictos resueltos:** textos con «Sloth» → «v!d» (Opciones, Redes, tipos, comentarios); en `Ritmos.tsx` los
+  títulos nuevos con los eventos `vid-redes`/`vid-youtube`; en `Redes.tsx` el botón dice «Activar», «Iniciar sesión
+  en Chrome» o «Conectar»; el aviso de beta sigue diciendo «avísale a quien administra v!d»; en `server/index.ts` se
+  queda `configClaude` de v!d (sin `enlazarSkills` en ~/.claude) y se suma `cuidarTuyas`.
+- **Arreglo propio:** `server/avatar-local.test.ts` aísla también `LOCALAPPDATA`: con ComfyUI instalado por
+  «Instalar modelo» en la PC, la prueba de «sin ComfyUI» fallaba.
+- **Seguridad:** sin telemetría ni dominios del creador en el código nuevo; los únicos dominios son de Google
+  (oauth2/googleapis, YouTube Data API, studio.youtube.com).
+- **Pruebas:** typecheck limpio, `npm test` 469/469, `comprobar-skills` bien.
+
 ## v1.1.7 — El menú «Voz» nuevo de Sloth (7-nov-2026, base upstream a4c7f8e)
 
 - **De Sloth (17 commits, 9ebd68c → a4c7f8e):**

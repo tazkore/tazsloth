@@ -16,7 +16,12 @@ function aislado(t: { after: (fn: () => void) => void }) {
   const dir = mkdtempSync(join(tmpdir(), 'vid-local-'))
   const antes = process.env.VID_IA_RAIZ
   process.env.VID_IA_RAIZ = join(dir, 'sin-ia')
+  // Y LOCALAPPDATA a otra vacía: ahí deja ComfyUI «Instalar modelo» (`carpetaComfy`), y uno real hace fallar la prueba.
+  const local = process.env.LOCALAPPDATA
+  process.env.LOCALAPPDATA = join(dir, 'sin-local')
   t.after(() => {
+    if (local === undefined) delete process.env.LOCALAPPDATA
+    else process.env.LOCALAPPDATA = local
     if (antes === undefined) delete process.env.VID_IA_RAIZ
     else process.env.VID_IA_RAIZ = antes
     rmSync(dir, { recursive: true, force: true })

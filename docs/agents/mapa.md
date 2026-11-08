@@ -24,7 +24,7 @@ Este es el mapa:
   nueva, la de la app o la bajada.
 - Los demás agentes, como en T3 Code (ADR 0012), cada uno con su cuenta y su catálogo en `server/proveedores.ts` y su fila
   en Opciones (`CuentaAgente`): DeepSeek es Claude Code con la API de DeepSeek (`server/deepseek.ts`); Grok,
-  Antigravity y Gemini CLI hablan ACP (`server/acp.ts`, `grok.ts`, `antigravity.ts`, `gemini.ts`; Antigravity, un proceso para todos sus hilos; Gemini, con llave de API, ADR 0013); Cursor corre su SDK en un puente aparte
+  Antigravity y Gemini CLI hablan ACP (`server/acp.ts`, `grok.ts`, `antigravity.ts`, `gemini.ts`; Antigravity, con las cuentas de Google que conectes y un proceso por cuenta para todos sus hilos: al acabarse la cuota de una, el hilo sigue con la siguiente; Gemini, con llave de API, ADR 0013); Cursor corre su SDK en un puente aparte
   (`cursor.ts`, `cursor-puente.mjs`); Muse Code, su MSP (`muse.ts`); Pi, su RPC con una extensión que le pasa los MCP de
   v!d (`pi.ts`). Lo que comparten (las instrucciones, la skill por su ruta, los MCP del hilo) está en
   `server/instrucciones.ts`; el JSON-RPC por líneas, en `server/rpc-lineas.ts`.
@@ -46,7 +46,9 @@ Este es el mapa:
   carpeta de v!d; sin él, `<trabajo>/<id>`, de `carpetaTrabajo` en `server/trabajo.ts`: fuera del repo en desarrollo). `etapas` es el avance, leído de los archivos del hilo (`server/etapas.ts`) con los
   globs `listo`. Los videos terminados son los de la etapa «Video» (los `_*` son a medias); `server/reglas-repo.test.ts`
   comprueba que ningún glob cuente un borrador. Los estilos que cada quien hace con la card «Nuevo estilo» (skill
-  `crear-estilo`) van en `data/tus-cards.json` y `skills/<id>`, que ninguna actualización toca. Son las únicas que la
+  `crear-estilo`) van en `data/tus-cards.json` y `skills/<id>`, que ninguna actualización toca. Si su card se pierde
+  (un agente la puso en `cards.json`, que cada versión reemplaza), la venta la devuelve al arrancar desde su hilo de
+  «Nuevo estilo» o rehecha con su SKILL.md (`server/estilos-perdidos.ts`). Son las únicas que la
   venta deja borrar (`tuya`); la skill sale a `data/skills-tuyas` (`guardarSkillTuya`). «Compartir» en su card lo
   empaqueta en un `.sloth-estilo` (`server/estilos.ts`, ADR 0017): como archivo, o en la comunidad, en Estilos, donde
   sale cuando el creador lo aprueba; «Importar» o «Instalar» lo pone entre los tuyos, con su `origen`.
@@ -114,7 +116,7 @@ Este es el mapa:
   Sus capturas y los logs de consola quedan en `data/navegador-capturas/`. Copia lo mejor del de T3 Code (`C:\dev\t3code`):
   pestañas (el agente solo usa la primera), tamaños fijos (`navegador-medidas.ts`) y bordes que se arrastran. T3 usa
   `<webview>` y v!d una vista nativa: el tamaño fijo es `enableDeviceEmulation`, y por eso el relevo reescala los clics.
-  Google no deja iniciar sesión dentro de la app: ese paso se da en Edge (Chrome en Mac) y la sesión pasa a sus páginas (`electron/google.ts`).
+  Google no deja iniciar sesión dentro de la app: ese paso se da en Edge (Chrome en Mac; en Windows sin Edge, tu predeterminado si es Chrome, Brave o Vivaldi, o el que haya: `server/chromium.ts`) y la sesión pasa a sus páginas (`electron/google.ts`).
 - `server/ideas/` y `web/src/Ideas.tsx`: Ideas, qué video hacer: largo en YouTube o vertical en TikTok e Instagram
   (`formato: 'vertical'`), en `trabajo/ideas/<id>/`. Investigar mide cada video contra su canal (outlier: 3× o más),
   transcribe lo dicho (`transcribir.ts`) y agrupa temas con vectores locales (`vectores.ts`); en vertical busca con

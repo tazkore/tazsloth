@@ -437,7 +437,7 @@ export interface Enlace {
 }
 
 /** Las redes donde v!d programa los videos verticales terminados (`server/redes/`). Cada una es un módulo. */
-export type RedId = 'tiktok' | 'instagram'
+export type RedId = 'tiktok' | 'instagram' | 'youtube'
 
 /**
  * El ritmo de publicación: `porDia` videos cada `cadaDias` días (contados desde `inicio`, `'2026-10-27'`), el primero a
@@ -464,7 +464,8 @@ export interface EstadoRitmo {
 
 /**
  * Una red en Opciones. `cuenta` es con quién está la sesión abierta, o `null` si falta conectarla. Con `token` se conecta
- * pegando un token de su API (Instagram); si no, iniciando sesión en la app o en la ventana de Chrome (o Edge).
+ * pegando un token de su API (Instagram); con `interruptor`, encendiéndola, porque va con el canal de Opciones → YouTube
+ * (YouTube Shorts); si no, iniciando sesión en la app o en la ventana de Chrome (o Edge).
  */
 export interface Red {
   id: RedId
@@ -472,6 +473,7 @@ export interface Red {
   cuenta: string | null
   ritmo: Ritmo
   token: boolean
+  interruptor?: boolean
   /** Estaba conectada y la red cerró la sesión: lo de su cola espera a que se vuelva a conectar. */
   sinSesion?: boolean
   /**
@@ -504,6 +506,9 @@ export interface Borrador {
   texto: string
   tags: string[]
   aviso?: string
+  /** Lo que YouTube pide declarar de cada video (en Shorts se marca al programar, como en los largos). */
+  infantil?: boolean
+  sintetico?: boolean
 }
 
 /**
