@@ -1,5 +1,5 @@
 import { spawn } from 'node:child_process'
-import { createWriteStream, existsSync, mkdirSync, readFileSync } from 'node:fs'
+import { createWriteStream, existsSync, mkdirSync, readFileSync, rmSync } from 'node:fs'
 import type { IncomingMessage, ServerResponse } from 'node:http'
 import { basename, join, resolve, sep } from 'node:path'
 import type { Card, SessionMeta } from '../shared/types.ts'
@@ -157,12 +157,14 @@ export function modelos3dHilos(d: Dependencias) {
       const categoria = (pedido.searchParams.get('categoria') ?? 'Objetos').trim()
       const licencia = (pedido.searchParams.get('licencia') ?? '').trim()
       if (!nombre) return json(res, 400, { error: 'Ponle nombre al modelo.' })
+      if (Number(req.headers['content-length'] ?? 0) > TOPE_GLB) return json(res, 413, { error: 'El archivo pasa de 300 MB.' })
       if (importando) return json(res, 409, { error: 'Ya se está importando un modelo. Espera a que termine.' })
       if (existe(idDe(nombre))) return json(res, 409, { error: `Ya hay un modelo «${idDe(nombre)}» en la biblioteca.` })
       importando = true
+      let archivo = ''
       try {
         mkdirSync(d.adjuntos, { recursive: true })
-        const archivo = join(d.adjuntos, `${Date.now()}-${nombreAdjunto(basename(pedido.searchParams.get('archivo') ?? 'modelo.glb'))}`)
+        archivo = join(d.adjuntos, `${Date.now()}-${nombreAdjunto(basename(pedido.searchParams.get('archivo') ?? 'modelo.glb'))}`)
         let recibidos = 0
         await new Promise<void>((ok, fail) => {
           const salida = createWriteStream(archivo)
@@ -180,10 +182,13 @@ export function modelos3dHilos(d: Dependencias) {
         if (licencia) args.push('--licencia', licencia)
         const r = await run(d.python(), args, card.cwd)
         if (r.codigo !== 0) return json(res, 500, { error: cola(r.salida) || 'No se pudo importar el modelo.' })
-        return json(res, 200, { id: idDe(nombre) })
+        // modelos.py dice con qué id quedó («importado: <id>»); sin esa línea, el que sale del nombre.
+        return json(res, 200, { id: /^importado: (\S+)$/m.exec(r.salida)?.[1] ?? idDe(nombre) })
       } catch (error) {
         return json(res, 500, { error: error instanceof Error ? error.message : String(error) })
       } finally {
+        // El .glb ya está en el proyecto de prueba y en la biblioteca: el que se subió sobra.
+        if (archivo) rmSync(archivo, { force: true })
         importando = false
       }
     }

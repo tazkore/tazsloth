@@ -1,6 +1,6 @@
 import { memo, type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { CANAL_CARD, IDEAS_CARD } from '../../shared/ideas' // ideas
-import type { AvanceCorto, AvisoComunidad, Card, RifaGanada, Model, Previa, Serie, ServerPush, SessionMeta, VideoHecho } from '../../shared/types'
+import type { AvanceCorto, AvisoComunidad, Card, Marcas, RifaGanada, Model, Previa, Serie, ServerPush, SessionMeta, VideoHecho } from '../../shared/types'
 import { NOMBRE_AGENTE, PROVEEDORES, proveedorDe } from '../../shared/providers'
 import { AvisoVideos } from './AvisoVideos'
 import { VENTA } from '../../shared/venta'
@@ -45,7 +45,7 @@ import { avisarTanda, AvisoRedes, ConNavegadorRedes, usePublicar } from './Redes
 import { NombreDelHilo, Renombrar } from './Renombrar'
 import { Segmento } from './Segmento'
 import { nombreDeVoz, SelectorVoz, useVoz, vozPosible } from './Voz' // voz de AI Studio, Fish Audio o ElevenLabs
-import { lineaVoz } from '../../shared/voz'
+import { lineaMusica, lineaVoz } from '../../shared/voz'
 import { lineaAvatar } from '../../shared/avatar' // motor de avatar
 import { SelectorAvatar, useAvatar } from './Avatar' // motor de avatar
 import { SelectorClips, SelectorImagenes, useChatGPT, useFlow } from './Flow' // Google Flow
@@ -342,7 +342,7 @@ export function App() {
     if (view.kind === 'draft' && view.id === id) go({ kind: 'new' })
   }
 
-  // Los hilos de Ideas son de una card que no sale en el inicio: les da su icono.
+  // Los hilos de Ideas y los de «Nuevo modelo» son de una card que no sale en el inicio: les da su icono.
   const cardOf = (id: string) => cards.find((c) => c.id === id) ?? [IDEAS_CARD, CANAL_CARD].find((c) => c.id === id)
   // Antes de dibujar: las etiquetas de hilo del compositor y de las burbujas lo leen al pintarse.
   threadIcons.clear()
@@ -911,6 +911,13 @@ function NewSession(props: {
     const igual = elegido?.serie && serieDelBanco(elegido.serie, series)
     if (igual) setSerie(igual.id)
   }, [elegido?.serie?.id, series])
+  // La marca (una por canal, en la carpeta de trabajo de la card): el selector sale con dos o más. Sin elegir, la de
+  // siempre; se elige en cada video, nada se queda «activo».
+  const marcas = useMarcas(card)
+  const [marca, setMarca] = useState('')
+  useEffect(() => setMarca(''), [card.id])
+  const conMarcas = (marcas.base !== undefined ? 1 : 0) + marcas.otras.length > 1
+  const laMarca = conMarcas && marcas.otras.includes(marca) ? marca : ''
   const lote = !!card.lote && enlaces.length > 1 && !!porEnlace[card.id]
   // Todo estilo de video hace los dos formatos (skills/video-base/FORMATO.md): la skill hace solo el elegido. La card
   // recuerda el último; una idea de YouTube ya lo trae escrito en el mensaje (`Formato: horizontal`), y ese manda.
@@ -930,6 +937,10 @@ function NewSession(props: {
   const avatar = useAvatar()
   const [avatares, setAvatares] = useStored<Record<string, string>>('avatar', {})
   const avatarElegido = avatares[card.id] ?? ''
+  // La música de fondo, en el menú «Voz» de los estilos que la saben poner (`card.musica`): apagada hasta que la
+  // enciendas, y la card recuerda la última elección.
+  const [musicas, setMusicas] = useStored<Record<string, boolean>>('musica', {})
+  const musica = !!card.musica && !!musicas[card.id]
   // Las imágenes: con ChatGPT o con un modelo de Google Flow (`Flow.tsx`), según lo que tengas conectado.
   const hayChatGPT = useChatGPT()
   const [imagenes, setImagenes] = useStored<string>('imagenes', '')
@@ -982,6 +993,22 @@ function NewSession(props: {
                 onChange={setSerie}
               />
             )}
+            {conMarcas && (
+              <Picker
+                label={`Marca: ${laMarca || (marcas.base !== undefined ? 'la de siempre' : 'sin elegir')}`}
+                value={laMarca}
+                groups={[
+                  {
+                    label: 'El tono, el nicho y el cierre del canal',
+                    options: [
+                      { value: '', label: marcas.base === undefined ? 'Sin elegir' : marcas.base ? `La de siempre (${marcas.base})` : 'La de siempre' },
+                      ...marcas.otras.map((m) => ({ value: m, label: m }))
+                    ]
+                  }
+                ]}
+                onChange={setMarca}
+              />
+            )}
             {conFormato && (
               <Segmento
                 label="Formato"
@@ -993,7 +1020,15 @@ function NewSession(props: {
                 onCambio={(f) => setFormatos({ ...formatos, [card.id]: f })}
               />
             )}
-            {conFormato && <SelectorVoz card={card} voz={voz} valor={vozElegida} onCambio={(v) => setVoces({ ...voces, [card.id]: v })} />}
+            {conFormato && (
+              <SelectorVoz
+                card={card}
+                voz={voz}
+                valor={vozElegida}
+                musica={{ encendida: musica, onCambio: (m) => setMusicas({ ...musicas, [card.id]: m }) }}
+                onCambio={(v) => setVoces({ ...voces, [card.id]: v })}
+              />
+            )}
             {conFormato && card.voz !== false && <SelectorAvatar avatar={avatar} valor={avatarElegido} onCambio={(m) => setAvatares({ ...avatares, [card.id]: m })} />}
             {conFormato && <SelectorImagenes valor={imagenElegida} hayChatGPT={hayChatGPT} voz={voz} flow={flow} onCambio={setImagenes} />}
             {conFormato && card.clips && <SelectorClips valor={clipsElegidos} onCambio={setClips} />}
@@ -1024,9 +1059,11 @@ function NewSession(props: {
           // La skill lo lee en el mensaje, debajo de lo que escribió el usuario.
           const pide = [
             laSerie && `Serie: ${laSerie.nombre} (${laSerie.archivo}; cómo se usa, en video-base/SERIES.md)${text ? '' : '. Elige tú el tema.'}`,
+            laMarca && `Marca: ${laMarca}`,
             conFormato && !formatoEscrito && `Formato: ${formato}`,
             conFormato && lineaVoz(card, vozElegida, nombreDeVoz(voz.estado, vozElegida)),
             conFormato && card.voz !== false && lineaAvatar(avatarElegido),
+            conFormato && lineaMusica(card, musica),
             conFormato && lineaImagenes(imagenElegida),
             conFormato && card.clips && lineaClips(clipsElegidos),
             // El modelo de cada subagente: lo medido, o lo que elegiste en «Avanzado». La skill lo lee aquí.
@@ -1088,6 +1125,11 @@ function NewSession(props: {
           <h1>{card.title}</h1>
           <p>{card.description}</p>
           {card.version && <p className="estilo-version">Versión {card.version}</p>}
+          {card.tuya && (
+            <button className="compartir-boton" onClick={() => setCompartiendo(card)}>
+              <Icono de="compartir" className="icon-trazo" /> Compartir en la comunidad
+            </button>
+          )}
           <TusCambios card={card} clave={hilos.map((s) => s.id + s.updatedAt).join()} />
         </div>
         {/* Hasta saber qué cuentas hay no sale: el aviso de Claude no se asoma a quien solo tiene ChatGPT u OpenCode. */}
@@ -1160,6 +1202,7 @@ const Carteles = memo(function Carteles({ cards, activa, previas, sessions, acci
               {!VENTA && (
                 <span
                   role="button"
+                  className="duplicar"
                   title={`Duplicar: sale una card nueva con la misma skill${c.skill ? ` /${c.skill}` : ''}, que puedes cambiar a tu gusto en cards.json`}
                   onClick={(e) => (e.stopPropagation(), acciones.duplicar(c))}
                 >
@@ -1167,7 +1210,7 @@ const Carteles = memo(function Carteles({ cards, activa, previas, sessions, acci
                 </span>
               )}
               {c.tuya && (
-                <span role="button" title="Compartir: en la comunidad o como archivo" onClick={(e) => (e.stopPropagation(), acciones.compartir(c))}>
+                <span role="button" className="compartir" title="Compartir: en la comunidad o como archivo" onClick={(e) => (e.stopPropagation(), acciones.compartir(c))}>
                   <Icono de="compartir" className="icon-trazo" />
                 </span>
               )}
@@ -1245,6 +1288,20 @@ function useSeries(card: Card) {
     }
   }, [card.id])
   return series
+}
+
+/** Las marcas de la carpeta de trabajo de una card (`GET /api/cards/<id>/marcas`). Si falla, ninguna. */
+function useMarcas(card: Card) {
+  const [marcas, setMarcas] = useState<Marcas>({ otras: [] })
+  useEffect(() => {
+    if (!card.etapas) return setMarcas({ otras: [] })
+    let vivo = true
+    api<Marcas>(`/api/cards/${card.id}/marcas`).then((m) => vivo && setMarcas(m), () => vivo && setMarcas({ otras: [] }))
+    return () => {
+      vivo = false
+    }
+  }, [card.id])
+  return marcas
 }
 
 /**

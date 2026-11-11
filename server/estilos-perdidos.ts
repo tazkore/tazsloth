@@ -8,7 +8,8 @@ import { nombreCopia } from './originales.ts'
 /**
  * Los estilos tuyos que se quedan sin card. Su skill vive en `<app>/skills/<id>`, que ninguna versión toca, pero su card
  * se pierde si no está en `data/tus-cards.json`: un agente de «Nuevo estilo» que la puso en `cards.json` (cada versión de
- * v!d lo reemplaza) o un `tus-cards.json` que no se puede leer. En la app que se vende, al arrancar:
+ * v!d lo reemplaza), uno que no llegó a escribirla o un `tus-cards.json` que no se puede leer. En la app que se vende,
+ * al arrancar y al acabar cada turno de un hilo de «Nuevo estilo»:
  * - `mudarTuyas`: una card de `cards.json` con una skill que no trae v!d pasa a `tus-cards.json`. También cada vez que
  *   cambia `cards.json`, para que la siguiente versión ya no se la lleve.
  * - `recuperarEstilos`: cada carpeta de `<app>/skills` que es un estilo (su SKILL.md usa video-base), que no trae v!d y
@@ -20,7 +21,7 @@ import { nombreCopia } from './originales.ts'
 const NUEVO_ESTILO = 'nuevo-estilo'
 const ID = /^[a-z0-9]+(-[a-z0-9]+)*$/
 /** Lo de la card del estilo de v!d que hereda uno tuyo rehecho. `lote` no: su prefijo es de ese estilo. */
-const HEREDA = ['icon', 'etapas', 'voz', 'clips', 'editor'] as const
+const HEREDA = ['icon', 'etapas', 'voz', 'clips', 'musica', 'editor'] as const
 
 interface Rutas {
   app: string

@@ -146,7 +146,10 @@ variante), mejóralo con (3) en vez de ampliar.
 lo carga con `useLoader(GLTFLoader, staticFile(…))` (centrado, apoyado en el piso, escalado a `alto`; quieto salvo que
 se le pase `giro`), arma su ficha y saca su vista. Revisa la licencia del archivo: si el usuario la dio, queda en el
 comentario y en la descripción. Solo importa `react`, `three`, `@react-three/fiber` y `remotion` (lo que ya permite
-`PERMITIDOS`); nada de `@react-three/drei`.
+`PERMITIDOS`); nada de `@react-three/drei`. Antes revisa que el `.glb` traiga todo dentro (sin texturas aparte) y que no pida
+extensiones que three no abre (KTX2, por ejemplo); los comprimidos con Draco o Meshopt sí se abren: el decodificador de
+Draco va con el modelo, en `public/modelos/<id>/draco/`. Al terminar dice `importado: <id>`; si algo falla, no queda a
+medias en la biblioteca.
 
 **Lo que ve v!d.** La card «Nuevo modelo 3D» enseña tres etapas, leídas de la carpeta `estado/` del proyecto de prueba:
 «Modelo escrito» (`estado/escrito`, al sacar la vista o guardar), «Vista generada» (`estado/vista`) y «Guardado en la

@@ -497,8 +497,7 @@ function relevar(archivo: string) {
   })
   let puerto = typeof antes.puerto === 'number' ? antes.puerto : 0
   http.on('error', (e: NodeJS.ErrnoException) => {
-    // Su puerto de la otra vez ya es de otro: cualquiera libre.
-    // EACCES: Windows reservó ese puerto (rangos excluidos de Hyper-V/WinNAT), así que también se cambia.
+    // Su puerto de la otra vez ya es de otro o Windows lo reservó (rangos excluidos de Hyper-V/WinNAT, EACCES): cualquiera libre.
     if ((e.code === 'EADDRINUSE' || e.code === 'EACCES') && puerto) http.listen((puerto = 0), '127.0.0.1')
     else console.error('El navegador integrado no puede escuchar al agente:', e.message)
   })

@@ -12,7 +12,7 @@ process.env.USERPROFILE = casa
 const originales = mkdtempSync(join(tmpdir(), 'vid-originales-'))
 mkdirSync(join(originales, 'video-base'))
 process.env.VID_SKILLS_ORIGINALES = originales
-const { configClaude, enlazarSkills, enlazarSkillsCodex, guardarSkillTuya, heredarSesion, skillsDeClaude, SKILLS } = await import('./skills.ts')
+const { configClaude, enlazarSkills, enlazarSkillsCodex, guardarSkillTuya, heredarSesion, marcasDe, skillsDeClaude, SKILLS } = await import('./skills.ts')
 
 test('SKILLS son las de v!d (<app>/skills), no las de ~/.claude/skills', () => {
   assert.equal(realpathSync(SKILLS), realpathSync(join(import.meta.dirname, '..', 'skills')))
@@ -142,4 +142,17 @@ test('borrar un estilo tuyo guarda su skill en una copia y quita sus enlaces, si
   assert.equal(guardarSkillTuya(app, 'video-base', join(app, 'data'), [enlaces]), undefined)
   assert.ok(existsSync(join(app, 'skills', 'video-base', 'SKILL.md')))
   assert.ok(existsSync(join(enlaces, 'video-base', 'SKILL.md')))
+})
+
+test('las marcas de una card: la de siempre (marca.json) y una por canal en marcas/', () => {
+  const cwd = mkdtempSync(join(tmpdir(), 'sloth-marcas-'))
+  assert.deepEqual(marcasDe(cwd), { base: undefined, otras: [] })
+  writeFileSync(join(cwd, 'marca.json'), JSON.stringify({ cierre: { nombre: '@tech' } }))
+  assert.deepEqual(marcasDe(cwd), { base: '@tech', otras: [] })
+  mkdirSync(join(cwd, 'marcas'))
+  writeFileSync(join(cwd, 'marcas', 'Cocina.json'), '{}')
+  writeFileSync(join(cwd, 'marcas', 'Autos.json'), '{}')
+  writeFileSync(join(cwd, 'marcas', 'notas.txt'), '')
+  assert.deepEqual(marcasDe(cwd), { base: '@tech', otras: ['Autos', 'Cocina'] })
+  rmSync(cwd, { recursive: true })
 })

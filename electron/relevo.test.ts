@@ -111,3 +111,17 @@ test('la entrada del agente pasa por la revisión: si la bloquean, la página no
   const error = salida.find((s) => s.id === 2) as { error: { message: string } }
   assert.equal(error.error.message, 'bloqueado por la persona')
 })
+
+test('el agente no abre archivos de la computadora, páginas internas ni scripts; lo demás sí llega a la página', async () => {
+  const { enviados, salida, mandar } = probar()
+  await mandar({ id: 1, method: 'Target.setAutoAttach' })
+  const sessionId = (salida[1].params as { sessionId: string }).sessionId
+  for (const [id, url] of [[2, 'file:///C:/Users/ana/secreto.txt'], [3, ' JavaScript:alert(1)'], [4, 'chrome://settings'], [5, 'view-source:https://x.com']] as const) {
+    await mandar({ id, method: 'Page.navigate', params: { url }, sessionId })
+    const r = salida.find((m) => m.id === id) as { error?: { message: string } }
+    assert.match(r.error?.message ?? '', /no abre/, url)
+  }
+  assert.equal(enviados.filter((e) => e.metodo === 'Page.navigate').length, 0)
+  await mandar({ id: 6, method: 'Page.navigate', params: { url: 'https://example.com/file:x' }, sessionId })
+  assert.equal(enviados.filter((e) => e.metodo === 'Page.navigate').length, 1)
+})

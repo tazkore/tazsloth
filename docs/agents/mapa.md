@@ -47,11 +47,13 @@ Este es el mapa:
   globs `listo`. Los videos terminados son los de la etapa «Video» (los `_*` son a medias); `server/reglas-repo.test.ts`
   comprueba que ningún glob cuente un borrador. Los estilos que cada quien hace con la card «Nuevo estilo» (skill
   `crear-estilo`) van en `data/tus-cards.json` y `skills/<id>`, que ninguna actualización toca. Si su card se pierde
-  (un agente la puso en `cards.json`, que cada versión reemplaza), la venta la devuelve al arrancar desde su hilo de
-  «Nuevo estilo» o rehecha con su SKILL.md (`server/estilos-perdidos.ts`). Son las únicas que la
-  venta deja borrar (`tuya`); la skill sale a `data/skills-tuyas` (`guardarSkillTuya`). «Compartir» en su card lo
-  empaqueta en un `.sloth-estilo` (`server/estilos.ts`, ADR 0017): como archivo, o en la comunidad, en Estilos, donde
-  sale cuando el creador lo aprueba; «Importar» o «Instalar» lo pone entre los tuyos, con su `origen`.
+  (un agente la puso en `cards.json`, que cada versión reemplaza, o no llegó a escribirla), la venta la devuelve al
+  arrancar y al acabar cada turno de «Nuevo estilo», desde su hilo o rehecha con su SKILL.md
+  (`server/estilos-perdidos.ts`). Son las únicas que la
+  venta deja borrar (`tuya`); la skill sale a `data/skills-tuyas` (`guardarSkillTuya`). «Compartir» (en su card, junto a
+  su nombre o en Comunidad → Estilos) abre `CompartirEstilo` (`web/src/Estilos.tsx`): una pantalla ya llena que lo
+  empaqueta en un `.sloth-estilo` (`server/estilos.ts`, ADR 0017) y lo publica en Estilos, donde sale cuando el creador
+  lo aprueba, o lo guarda como archivo; «Importar» o «Instalar» lo pone entre los tuyos, con su `origen`.
 - Lo que el estudio ve en vivo: `server/claude.ts` saca los borradores de lo que escribe el agente (Write y los heredocs
   de Bash), el WebSocket los lleva a `web/src/App.tsx` y `Etapas.tsx` los dibuja.
 - El estudio de video (`web/src/Estudio.tsx`): toda card cuyas etapas tengan `fase` se ve igual, con las cinco fases
@@ -64,6 +66,10 @@ Este es el mapa:
   `Carpeta: <nombre>`, que leen las skills. Con `lote`, varios enlaces pueden ser un video cada uno
   (`lote-MMDD-HHMM-NN`, ver `skills/video-base/LOTE.md`). Cambiar la carpeta desde el estudio usa una que ya existe.
   Todo estilo de video hace vertical y horizontal: el compositor manda la línea `Formato:` (`skills/video-base/FORMATO.md`).
+  La marca del canal (tono, nicho, cierre) vive en la carpeta de trabajo de la card: `marca.json`, la de siempre, y una
+  más por canal en `marcas/<nombre>.json`, con el mismo formato. Con dos o más, el compositor deja elegir en «Marca»
+  (`marcasDe` en `server/skills.ts`) y manda la línea `Marca: <nombre>`; la leen `marca.py` del explicativo y `nuevo.py`
+  de El Diff. Nada recuerda la última: sin elegir, va la de siempre.
 - `modelos` (`web/src/Modelos.tsx`): en «Optimizado», el modelo y el esfuerzo medidos para el hilo. Una card sin medir
   usa lo último que eligió el usuario a mano. En «Avanzado» se eligen. Los subagentes van siempre en el modelo y el
   esfuerzo del hilo: en Claude, Sloth los manda en la línea `Subagentes: todos = <alias> <esfuerzo>.` (las `tareas`
@@ -103,6 +109,8 @@ Este es el mapa:
   `Avatar:` del primer mensaje (`shared/avatar.ts`) la documenta `skills/video-base/AVATAR.md`; las skills oficiales de
   HeyGen están en `skills/heygen-*`. Nada que baje gigas o gaste créditos corre solo: lo pide un botón de Opciones →
   Avatares y voz o el agente.
+- Música de fondo: en los estilos con `musica` en su card (el explicativo), el pie del menú «Voz» la enciende y manda la
+  línea `Música: de fondo` (`lineaMusica`, `shared/voz.ts`), que pone `skills/video-base/scripts/musica.py`.
 - `server/flow/` y `web/src/Flow.tsx`: imágenes (Nano Banana) y videos (Veo) de Google Flow, con la cuenta de la voz (en
   su Edge y su turno, `voz().google`) y las que se agregan en Opciones (`cuentas.ts`, cada una en su Edge), hasta dos a la
   vez y con ritmo. `elegirCuenta`, el ritmo y los descansos están en `shared/flow.ts`. `pagina.ts` maneja la página, por sus iconos: texto,

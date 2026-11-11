@@ -60,7 +60,7 @@ import { avisoDeVideos } from '../shared/limites.ts'
 import { eventosEnVivo } from './eventos-en-vivo.ts'
 import { enviarCliente } from './enviar-cliente.ts'
 import { anteriorDe, conservarAnterior, olvidarAnterior } from './anteriores.ts'
-import { cambiosDeCard, carpetaSkill, configClaude, duplicateCard, enlazarSkillsCodex, skillsDeClaude, guardarSkillTuya, readCards, removeCard, seriesDe, sincronizarSesion, SKILLS, skillRef, volverAOriginal } from './skills.ts'
+import { cambiosDeCard, carpetaSkill, configClaude, duplicateCard, enlazarSkillsCodex, skillsDeClaude, guardarSkillTuya, marcasDe, readCards, removeCard, seriesDe, sincronizarSesion, SKILLS, skillRef, volverAOriginal } from './skills.ts'
 import { cuidarEstilos, mudarTuyas } from './estilos-perdidos.ts'
 import { estaticos } from './estaticos.ts'
 import { type Agente, version } from './version.ts'
@@ -135,7 +135,12 @@ function broadcast(msg: ServerPush) {
   avance?.oir(msg)
 }
 
-const eventos = eventosEnVivo((sessionId, from, events) => broadcast({ type: 'events', sessionId, from, events }))
+const eventos = eventosEnVivo((sessionId, from, events) => {
+  broadcast({ type: 'events', sessionId, from, events })
+  // Al acabar cada turno de «Nuevo estilo», el estilo que ya está en `skills/` y no tiene card la recibe ahí mismo (la
+  // que escribió el hilo, o una hecha con su SKILL.md), aunque el agente no la haya guardado o la haya puesto en cards.json.
+  if (events.some((e) => e.t === 'turn_end') && sessions.meta(sessionId)?.cardId === 'nuevo-estilo') cuidarTuyas(cuidarEstilos)
+})
 const sessions = new Sessions(
   join(APP, 'data', 'sessions'),
   eventos,
@@ -665,6 +670,12 @@ async function api(req: IncomingMessage, res: ServerResponse, url: URL): Promise
     const card = cards().find((c) => c.id === ser[1])
     return send(res, 200, card?.skill ? seriesDe(card.skill, !!card.etapas) : []), true
   }
+  // Sus marcas (una por canal), para elegir cuál lleva el video: el compositor manda la línea `Marca:`.
+  const mar = /^\/api\/cards\/([\w-]+)\/marcas$/.exec(path)
+  if (mar && method === 'GET') {
+    const card = cards().find((c) => c.id === mar[1])
+    return send(res, 200, card ? marcasDe(card.cwd) : { otras: [] }), true
+  }
 
   // «Con tus cambios»: lo que el usuario (o su agente) cambió en la skill de una card, y volver a la original, entera o un
   // archivo. Solo en la app que se vende, que trae la original (`server/originales.ts`).
@@ -905,7 +916,11 @@ async function api(req: IncomingMessage, res: ServerResponse, url: URL): Promise
   }
 
   if (path === '/api/open' && method === 'POST') {
-    const { path: target } = await body<{ path: string }>(req)
+    const pedido = await body<{ path: string; sessionId?: string }>(req)
+    // Una ruta relativa (un enlace del agente: `out/video.mp4`) es de donde trabaja su hilo, o de la carpeta de su video.
+    const meta = pedido.sessionId ? sessions.meta(pedido.sessionId) : undefined
+    const bases = meta ? [meta.cwd, folderOf(meta)] : []
+    const target = bases.map((b) => resolve(b, pedido.path)).find((r) => existsSync(r)) ?? (bases[0] ? resolve(bases[0], pedido.path) : pedido.path)
     // Señalado en su carpeta: el Explorador y el Finder saben; en Linux se abre la carpeta que lo tiene.
     const [programa, ...args] =
       process.platform === 'win32' ? ['explorer.exe', `/select,${target}`] : process.platform === 'darwin' ? ['open', '-R', target] : ['xdg-open', existsSync(target) && statSync(target).isDirectory() ? target : dirname(target)]

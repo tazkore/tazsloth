@@ -2,6 +2,7 @@ import { type ReactNode, useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import type { Modelo3D } from '../../shared/types'
 import { api } from './api'
+import { Icono } from './Iconos'
 import './Modelos3DAcciones.css'
 
 /**
@@ -26,15 +27,17 @@ const abrirHilo = (id: string) => void (location.hash = `/s/${id}`)
 type Modal = 'nuevo' | 'importar' | null
 
 /** Los botones de la cabecera de la biblioteca y las ventanas que abren. */
-export function Acciones3D({ tipos, onImportado }: { tipos: string[]; onImportado(): void }) {
+export function Acciones3D({ tipos, onImportado }: { tipos: string[]; onImportado(id: string): void }) {
   const [modal, setModal] = useState<Modal>(null)
   return (
     <>
       <div className="m3d-acciones">
         <button className="m3d-accion principal" onClick={() => setModal('nuevo')}>
+          <Icono de="mas" />
           Nuevo modelo
         </button>
         <button className="m3d-accion" onClick={() => setModal('importar')}>
+          <Icono de="importar" />
           Importar .glb
         </button>
       </div>
@@ -43,9 +46,9 @@ export function Acciones3D({ tipos, onImportado }: { tipos: string[]; onImportad
         <Importar
           tipos={tipos}
           onCerrar={() => setModal(null)}
-          onHecho={() => {
+          onHecho={(id) => {
             setModal(null)
-            onImportado()
+            onImportado(id)
           }}
         />
       )}
@@ -181,7 +184,7 @@ function Ampliar({ modelo, onCerrar }: { modelo: Modelo3D; onCerrar(): void }) {
   )
 }
 
-function Importar({ tipos, onCerrar, onHecho }: { tipos: string[]; onCerrar(): void; onHecho(): void }) {
+function Importar({ tipos, onCerrar, onHecho }: { tipos: string[]; onCerrar(): void; onHecho(id: string): void }) {
   const [archivo, setArchivo] = useState<File | null>(null)
   const [nombre, setNombre] = useState('')
   const [tipo, setTipo] = useState(tipos.includes('Objetos') ? 'Objetos' : (tipos[0] ?? 'Objetos'))
@@ -197,9 +200,9 @@ function Importar({ tipos, onCerrar, onHecho }: { tipos: string[]; onCerrar(): v
       const q = new URLSearchParams({ nombre, categoria: tipo, archivo: archivo.name })
       if (licencia.trim()) q.set('licencia', licencia.trim())
       const res = await fetch(`/api/modelos3d/importar?${q}`, { method: 'POST', body: archivo })
-      const datos = (await res.json().catch(() => ({}))) as { error?: string }
-      if (!res.ok) throw new Error(datos.error ?? `El servidor respondió ${res.status}`)
-      onHecho()
+      const datos = (await res.json().catch(() => ({}))) as { error?: string; id?: string }
+      if (!res.ok || !datos.id) throw new Error(datos.error ?? `El servidor respondió ${res.status}`)
+      onHecho(datos.id)
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e))
       setTrabajando(false)

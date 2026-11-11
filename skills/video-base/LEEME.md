@@ -8,8 +8,8 @@ Lo que comparten los estilos de vídeo: el lote, los errores ya vistos y los scr
   (`FLOW.md`, `vid.py`, la hoja, masterizar, comprobar y la portada), los estilos que hace
   cada quien con `crear-estilo` y los procesos de Python de v!d (`vid.py`).
 - **`video-el-diff`** es un estilo propio que el usuario afina a mano: ni lo toques desde aquí ni le muevas nada. Solo
-  toma prestados `chrome.mjs`, `recorte.py` y la portada (`PORTADA.md`, `portada.mjs`), así que un cambio en ellos
-  también le llega.
+  toma prestados `chrome.mjs`, `recorte.py`, la portada (`PORTADA.md`, `portada.mjs`) y `sloth.py` (con su
+  `ffmpeg_h264`), así que un cambio en ellos también le llega.
 
 | Archivo | Qué es |
 |---|---|
@@ -40,6 +40,9 @@ en el script.
 - FFmpeg dentro de un ciclo de la shell, con `-nostdin` (se come la entrada del ciclo).
 - En `drawtext`, la ruta de la fuente en Windows se escapa: `C\:/Windows/Fonts/arial.ttf`.
 - H.264 en `yuv420p` pide ancho y alto pares.
+- Para recodificar un vídeo en H.264, `ffmpeg_h264` (`sloth.py`) o `ffmpegH264` (`ffmpeg.mjs`), no `libx264` a mano:
+  usan la NVIDIA si de verdad codifica (varias veces más rápido) y vuelven a x264 si no hay o falla. Les das el crf de
+  x264. En clips de menos de un segundo no gana: arrancar NVENC cuesta más que lo que ahorra.
 - Remotion saca `yuvj420p` (rango completo) aunque se le pida `--pixel-format=yuv420p`; hay reproductores que lo ven
   lavado. Hace falta además `--color-space=bt709`. `comprobar.mjs` lo marca.
 - `loudnorm` solo no limita el true peak: un episodio salió a +0,7 dBTP. `masterizar.mjs` limita con sobremuestreo.
@@ -100,10 +103,12 @@ Todos dicen cómo se usan si los corres sin argumentos. Node sin dependencias y 
 | Script | Qué hace |
 |---|---|
 | `masterizar.mjs crudo.wav audio.wav` | −14 LUFS y true peak ≤ −1 dBTP, 48 kHz 24 bits; falla si no lo clava |
+| `musica.py --poner video.mp4 [--pista a.mp3]` | La línea `Música: de fondo`: música sintetizada (libre de derechos) o la `--pista` del usuario bajo la voz del video terminado, que baja sola al hablar; masterizada y sin tocar la imagen. Una segunda vez no hace nada |
 | `comprobar.mjs video.mp4 --duracion 10 --fps 30 --tamano 1080x1920` | Códec, tamaño, fps, fotogramas, audio, sonoridad, pico, faststart, negros, arranque vacío |
 | `hoja.mjs video.mp4 hoja.png [--n 16 \| --cada 0.25 \| --t …] [--zonas] [--recomprimir 3M]` | Hoja de contacto con tiempos; zonas seguras; prueba de recompresión |
 | `hoja.mjs carpeta hoja.png` | Hoja de una carpeta de imágenes |
 | `portada.mjs video.mp4 portada.png` | Pone la portada como primer fotograma, en un segundo y sin recodificar el vídeo (si no puede, recodifica); otra vez, la cambia |
+| `portada_ia.py <chatgpt\|modelo de Flow> salida.png --titulo "…" --estilo "…" --que "…" [--ref img]… [--horizontal]` | La portada con IA de fondo, desde el principio y sin cuadros del vídeo, con lo elegido en `Imágenes:`; deja `salida.png.json` con cómo va y lo que gastó, y si no hay cuenta o falla, lo dice para que el estilo use su respaldo |
 | `portada_sin_ia.mjs video.mp4 portada.png --titulo "…" [--horizontal]` | La portada sin cuenta de ChatGPT: un cuadro del vídeo y el título encima, en la zona que se ve; con `--horizontal`, la miniatura de YouTube (1280x720) |
 | `chrome.mjs` (librería) | Busca Chrome o Edge (o el de `CHROME`) y lo abre sin ventana: `abrirChrome({ ancho, alto })` |
 | `vid.py`, `fuente.py` | El Python de v!d (el transcriptor, yt-dlp) y bajar y transcribir un vídeo. `proceso()` dice antes cuánto tardará la voz en este equipo y luego cuánto falta, cada 10 %. WhisperX va de uno en uno en toda la máquina (`turno_gpu`) y, con una NVIDIA, ya cargado (`voz_viva.py`, que se va tras 10 min sin uso): 6 min de voz salen en ~40 s en vez de cargar Whisper cada vez (de 36 s a 10 min con la máquina ocupada), y las descargas de YouTube también (`turno_youtube`): los vídeos de un lote esperan ahí su turno. `vectorizar` usa el modelo de vectores ya cargado (`vectores_vivo.py`, que se va tras 10 min sin uso): un texto nuevo tarda menos de un segundo en vez de ~18. Un video de YouTube que otro vídeo ya bajó se enlaza de su carpeta en vez de bajarlo |

@@ -282,13 +282,14 @@ import React, {{ useMemo }} from "react";
 import {{ staticFile, useCurrentFrame, useVideoConfig }} from "remotion";
 import * as THREE from "three";
 import {{ GLTFLoader }} from "three/examples/jsm/loaders/GLTFLoader.js";
+import {{ clone }} from "three/examples/jsm/utils/SkeletonUtils.js";{importa}
 
 export const {componente}: React.FC<{{ alto?: number; giro?: number; pos?: [number, number, number] }}> = ({{ alto = 1.5, giro = 0, pos = [0, 0, 0] }}) => {{
-  const gltf = useLoader(GLTFLoader, staticFile("modelos/{id}/modelo.glb"));
+  const gltf = useLoader(GLTFLoader, staticFile("modelos/{id}/modelo.glb"){extension});
   const frame = useCurrentFrame();
   const {{ fps }} = useVideoConfig();
   const {{ objeto, escala, base }} = useMemo(() => {{
-    const objeto = gltf.scene.clone(true);
+    const objeto = clone(gltf.scene);
     objeto.traverse((o) => {{
       if ((o as THREE.Mesh).isMesh) {{
         o.castShadow = true;
@@ -312,14 +313,42 @@ export const {componente}: React.FC<{{ alto?: number; giro?: number; pos?: [numb
 export const Muestra: React.FC = () => <{componente} />;
 """
 
+# Lo que GLTFLoader de three abre (con Draco y Meshopt, que el componente le pone). Un .glb que exige otra cosa no se importa.
+ABRE = {"KHR_draco_mesh_compression", "EXT_meshopt_compression", "KHR_mesh_quantization", "KHR_texture_transform", "KHR_lights_punctual",
+        "EXT_texture_webp", "EXT_texture_avif", "EXT_mesh_gpu_instancing"}
+# Draco: el decodificador va con el modelo (public/modelos/<id>/draco/, ~250 KB), servido en local; así `usar` lo lleva a cada video.
+DRACO = ("draco_wasm_wrapper.js", "draco_decoder.wasm")
+
+
+def leer_glb(ruta: Path) -> dict:
+    """El JSON de un .glb, después de ver que se puede abrir: que es un .glb, que trae todo dentro y que nada pide lo que three no lee."""
+    with ruta.open("rb") as f:
+        cabeza = f.read(20)
+        if len(cabeza) < 20 or cabeza[:4] != b"glTF":
+            sys.exit(f"{ruta.name} no es un .glb (no empieza con «glTF»). Si es un .gltf, expórtalo como .glb, con todo dentro.")
+        largo = int.from_bytes(cabeza[12:16], "little")
+        if cabeza[16:20] != b"JSON":
+            sys.exit("El .glb está dañado: no trae su descripción.")
+        try:
+            datos = json.loads(f.read(largo))
+        except ValueError:
+            sys.exit("El .glb está dañado: su descripción no se lee.")
+    fuera = [x["uri"] for x in [*datos.get("buffers", []), *datos.get("images", [])] if x.get("uri") and not x["uri"].startswith("data:")]
+    if fuera:
+        sys.exit(f"El .glb busca archivos que no vienen dentro ({', '.join(fuera[:3])}): expórtalo como .glb con las texturas incluidas.")
+    pide = [e for e in datos.get("extensionsRequired", []) if e not in ABRE and not e.startswith("KHR_materials_")]
+    if "KHR_texture_basisu" in pide:
+        sys.exit("El .glb trae texturas KTX2 (KHR_texture_basisu), que v!d todavía no abre: expórtalo con texturas PNG, JPG o WebP.")
+    if pide:
+        sys.exit(f"El .glb pide {', '.join(pide)}, que v!d todavía no abre: expórtalo sin esa extensión.")
+    return datos
+
 
 def importar(ruta: str, nombre: str, categoria: str, id_: str | None, licencia: str | None, sin_modulos: bool = False, sin_vista: bool = False) -> None:
     origen = Path(ruta).expanduser().resolve()
     if not origen.is_file() or origen.suffix.lower() != ".glb":
         sys.exit(f"{ruta} no es un archivo .glb.")
-    with origen.open("rb") as f:
-        if f.read(4) != b"glTF":
-            sys.exit(f"{origen.name} no parece un .glb (no empieza con «glTF»).")
+    datos = leer_glb(origen)
     if categoria not in CATEGORIAS:
         sys.exit(f"«{categoria}» no es un tipo: {', '.join(CATEGORIAS)}.")
     id_ = id_ or slug(nombre)
@@ -332,26 +361,56 @@ def importar(ruta: str, nombre: str, categoria: str, id_: str | None, licencia: 
     carpeta_glb = raiz_ / "public" / "modelos" / id_
     carpeta_glb.mkdir(parents=True, exist_ok=True)
     shutil.copyfile(origen, carpeta_glb / "modelo.glb")
+    usados = set(datos.get("extensionsUsed", []))
+    draco, meshopt = "KHR_draco_mesh_compression" in usados, "EXT_meshopt_compression" in usados
+    if draco:
+        libs = raiz_ / "node_modules" / "three" / "examples" / "jsm" / "libs" / "draco" / "gltf"
+        (carpeta_glb / "draco").mkdir(exist_ok=True)
+        for f in DRACO:
+            if (libs / f).exists():
+                shutil.copyfile(libs / f, carpeta_glb / "draco" / f)
+            elif not sin_modulos:
+                sys.exit(f"Falta {libs / f} para abrir un .glb con Draco.")
+    importa, partes = "", []
+    if draco:
+        importa += '\nimport { DRACOLoader } from "three/examples/jsm/loaders/DRACOLoader.js";'
+        partes.append(f'    const draco = new DRACOLoader();\n    draco.setDecoderPath(staticFile("modelos/{id_}/draco/{DRACO[1]}").replace(/[^/]+$/, ""));\n    loader.setDRACOLoader(draco);')
+    if meshopt:
+        importa += '\nimport { MeshoptDecoder } from "three/examples/jsm/libs/meshopt_decoder.module.js";'
+        partes.append("    loader.setMeshoptDecoder(MeshoptDecoder);")
+    extension = ", (loader) => {\n" + "\n".join(partes) + "\n  }" if partes else ""
     fuente = raiz_ / "src" / "modelos" / f"{id_}.tsx"
     fuente.write_text(
-        IMPORTADO.format(nombre=nombre, archivo=origen.name, id=id_, componente=pascal(id_), licencia=f"\n// Licencia: {licencia}" if licencia else ""),
+        IMPORTADO.format(nombre=nombre, archivo=origen.name, id=id_, componente=pascal(id_), importa=importa, extension=extension,
+                         licencia=f"\n// Licencia: {licencia}" if licencia else ""),
         "utf-8",
         newline="\n",
     )
     palabras = [w for w in plano(nombre).split() if len(w) > 2]
-    guardar(
-        id_,
-        {
-            "nombre": nombre,
-            "resumen": nombre[:45],
-            "categoria": categoria,
-            "descripcion": f"{nombre}, un modelo 3D importado de {origen.name}.{f' Licencia: {licencia}.' if licencia else ''}",
-            "hace": "se escala a la altura que pidas; gira sobre sí mismo; se apoya en el piso",
-            "etiquetas": ", ".join([*palabras, "glb", "importado", nombre.lower()]),
-        },
-        None,
-        sin_vista,
-    )
+    try:
+        guardar(
+            id_,
+            {
+                "nombre": nombre,
+                "resumen": nombre[:45],
+                "categoria": categoria,
+                "descripcion": f"{nombre}, un modelo 3D importado de {origen.name}.{f' Licencia: {licencia}.' if licencia else ''}",
+                "hace": "se escala a la altura que pidas; gira sobre sí mismo; se apoya en el piso",
+                "etiquetas": ", ".join([*palabras, "glb", "importado", nombre.lower()]),
+            },
+            None,
+            sin_vista,
+        )
+        m = MODELOS / id_ / "modelo.json"
+        ficha_ = json.loads(m.read_text("utf-8"))
+        ficha_["origen"] = "importado"
+        m.write_text(json.dumps(ficha_, ensure_ascii=False, indent=2) + "\n", "utf-8", newline="\n")
+    except BaseException:
+        # A medias no se queda en la biblioteca: sin vista, v!d lo enseñaría roto. Antes no estaba (se miró arriba).
+        shutil.rmtree(MODELOS / id_, ignore_errors=True)
+        raise
+    print(f"importado: {id_}", flush=True)
+
 
 def props_de(id_: str) -> str:
     """Las props del componente de un modelo con su valor por omisión («abierto=0, nivel=0.85»), sin gris, apaga ni fondo."""

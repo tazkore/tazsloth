@@ -3,6 +3,50 @@
 TazSloth es el fork de Tazkore de [Sloth](https://github.com/Vancci-sloth/sloth) (Apache 2.0 + Commons Clause).
 Uso interno, sin venta. Los cambios propios viven en la rama `tazkore`; `main` sigue a `upstream`.
 
+## Sincronización con Sloth 11-nov-2026 (upstream 853f1eb)
+
+- **De Sloth (27 commits, d941f02 → 853f1eb), integrado:**
+  - **Música de fondo al crear un video** (5af09d5): en el menú «Voz», «Música de fondo» en los estilos con `musica`
+    en su card (el explicativo); la línea `Música: de fondo` (`lineaMusica`). `musica.py` queda el de Sloth (ya hacía
+    el ducking que v!d tenía y más), con la forma de `kold-gold/scripts/final.py` y la caché de v!d.
+  - **Varias marcas por card** (5d17fef): selector «Marca» en el compositor con dos o más en la carpeta de trabajo,
+    `GET /api/cards/<id>/marcas` (`marcasDe`), El Diff y el explicativo con `--marca`.
+  - **NVENC en los renders** (26afd5e, 6f93def; vino del PR #11 de Alan): `ffmpeg_h264`, `codificador_h264` y
+    `ajustes_h264` en `vid.py` (con `VID_SIN_NVENC` y `%TEMP%/vid-h264.json`, la caché de `ffmpeg.mjs`); El Diff,
+    la frutinovela y el documental los usan.
+  - **Portadas del explicativo** (7d0f191, 509aced): el cuadro del titular, y una portada con IA (Flow o ChatGPT) en
+    paralelo (`skills/video-base/scripts/portada_ia.py`).
+  - **Seguridad del navegador integrado** (872fa4b): el relevo rechaza `Page.navigate` a file:, chrome:, devtools:,
+    view-source:, javascript:. Se suma la prueba a la de v!d (la revisión de entradas).
+  - **Textos de redes** (be3db7e): cierran con una pregunta corta o un «Mándaselo a…» (en los estilos que no son
+    Kold Gold; Kold Gold sigue con «Comenta <PALABRA>»), y sin guion ni notas el texto va vacío con aviso
+    (`textosDelVideo`, que tampoco lee `vid.json`).
+  - **Estilos nuevos con su card al acabar cada turno** (9878432), compartir un estilo en un paso desde su card o
+    Comunidad → Estilos (183c80e), colores de los botones de las cards (9a304f1), feed de la comunidad «Más recientes»
+    y aviso si se cae (063c9f7, 853f1eb, solo la parte de la app), enlaces del chat que abren web, correo o archivo
+    (bfeaed0).
+  - **Mac**: `scripts/notarizar.mjs` como `afterSign` (notariza con tiempo máximo si hay certificado de Apple;
+    sin él no hace nada) y el certificado de Apple solo en Mac; `compilar` falla si la de Windows sale con firmante.
+  - **Dependencias**: Remotion 4.0.540 en las cuatro plantillas, `fast-uri` y `overrides` de `minimatch` (avisos de
+    Dependabot). Los PR #8 (wss) y #9 (puerto reservado) de Alan ya estaban.
+- **Modelos 3D** (3cbb13c): Sloth integró su versión de «Importar .glb» y «Nuevo modelo»; se queda la de v!d
+  (`server/modelos3d-hilos.ts`, con «Ampliar» y el proyecto de prueba) y se le porta de Sloth: 413 arriba de 300 MB,
+  el id de la línea `importado: <id>`, borrar el adjunto, validar el .glb (`leer_glb`), Draco/Meshopt con su
+  decodificador, `clone` de SkeletonUtils y abrir el modelo recién importado. Fuera `server/modelos3d-acciones.ts` y
+  `shared/modelos3d.ts` (`MODELO3D_CARD`).
+- **Descartado:** `licencias/` (cobro, comunidad del Worker, regalos de créditos: 063c9f7, a33db98, 387f67a, 853f1eb),
+  `.github/workflows/venta.yml` y `recuperar-mac.yml`, `scripts/publicar.mjs`, `scripts/pedidos.json`, la guía de
+  novedades 0.4.x y `novedad.txt` de Sloth, el actualizador y la mudanza de disco de `electron/main.ts`, `publish`
+  y `releaseInfo` del cobro en `compilar.mjs`, `docs/agents/publicacion.md` y ADR 0006 de Sloth. El cambio de
+  licencia de Sloth a MIT (aecef0e) no toca a v!d: LICENSE, README, CONTRIBUTING y el `license` de package.json
+  se quedan como estaban.
+- **Marca:** textos nuevos con «Sloth» como nombre de la app → «v!d» (relevo, crear-estilo, portada_ia, marca.py,
+  Estilos, Timeline); «la cuenta gratis de Sloth» y «el creador de Sloth» de la comunidad se quedan, porque son de Sloth.
+- **Seguridad:** sin telemetría, backdoors ni dominios del creador en el código integrado; lo de servidores de Vancci
+  (cobro, `sloth.vancci.org` en el aviso del actualizador) se quedó fuera. `portada_ia.py` solo habla con el servidor
+  local de v!d.
+- **Pruebas:** typecheck limpio, `npm test` 474/474, `comprobar-skills` bien, los .py se analizan bien.
+
 ## Sincronización con Sloth 8-nov-2026 (upstream d941f02)
 
 - **De Sloth (9 commits, a4c7f8e → d941f02), integrado:**

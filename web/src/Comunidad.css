@@ -43,6 +43,11 @@
 /* Escribe algo: cerrado, una fila con tu cara; abierto, el compositor con quién publica y dónde. */
 .com-escribe { display: flex; align-items: center; gap: 12px; width: 100%; margin-top: 22px; padding: 12px 16px; border-radius: 16px; border: 1px solid var(--line); background: linear-gradient(180deg, var(--panel-2), var(--panel)); color: var(--muted); font-size: 16px; text-align: left; transition: border-color 0.2s, box-shadow 0.2s; }
 .com-escribe:hover:not(:disabled) { border-color: #4a4236; box-shadow: 0 0 0 4px var(--amber-tinte); color: var(--text); }
+/* En Estilos, escribir es compartir uno tuyo (`CompartirTuyo`). */
+.com-compartir-estilo { font-size: 13.5px; line-height: 1.4; }
+.com-compartir-estilo strong { display: block; color: var(--amber); font-size: 16px; font-weight: 650; }
+.com-compartir-icono { flex: none; display: grid; place-items: center; width: 40px; height: 40px; border-radius: 12px; background: var(--amber-tinte); color: var(--amber); }
+.com-compartir-icono .com-ico { width: 20px; height: 20px; }
 .com-nueva { margin-top: 22px; }
 .com-nueva-cabeza { display: flex; align-items: center; gap: 10px; margin: 0 0 10px 2px; color: var(--muted); font-size: 13px; }
 .com-nueva-cabeza .com-cara { width: 30px; height: 30px; font-size: 12px; }
@@ -62,6 +67,14 @@
 .com-secciones button.on { background: var(--amber); border-color: var(--amber); color: var(--sobre-ambar); }
 .com-secciones .com-ico { width: 14px; height: 14px; }
 
+/* El orden del feed: texto con su icono, a la derecha bajo las secciones. */
+.com-orden-fila { display: flex; justify-content: flex-end; margin-top: 10px; }
+.com-orden { display: inline-flex; align-items: center; gap: 6px; padding: 4px 8px; border-radius: 10px; color: var(--muted); font-size: 13px; font-weight: 600; cursor: pointer; transition: color 0.15s, background 0.15s; }
+.com-orden:hover { color: var(--text); background: var(--panel); }
+.com-orden .com-ico { width: 14px; height: 14px; }
+.com-orden select { appearance: none; padding: 0; border: 0; outline: none; background: none; color: inherit; font: inherit; cursor: pointer; }
+.com-orden select option { background: var(--panel); color: var(--text); }
+
 /* Comienza aquí: un anillo con lo que llevas y los pasos. */
 .com-bienvenida { margin-top: 18px; border-radius: 14px; border: 1px solid var(--line); background: var(--panel); overflow: hidden; }
 .com-bienvenida header { display: flex; align-items: center; gap: 12px; padding: 13px 14px 13px 16px; border-bottom: 1px solid var(--line); }
@@ -77,7 +90,9 @@
 .com-paso-marca .com-ico { width: 12px; height: 12px; stroke-width: 3.5; }
 
 .com-error { display: flex; align-items: center; gap: 10px; margin-top: 16px; padding: 9px 10px 9px 14px; border-radius: 10px; border: 1px solid rgba(224, 108, 85, 0.35); background: rgba(224, 108, 85, 0.1); color: var(--bad); font-size: 13px; }
-.com-error button { margin-left: auto; padding: 3px 11px; border-radius: 999px; color: var(--text); font-size: 12.5px; font-weight: 600; }
+.com-error-texto { margin: 0; line-height: 1.45; }
+.com-error-texto a { color: var(--text); text-decoration: underline; word-break: break-all; }
+.com-error button { flex: none; margin-left: auto; padding: 3px 11px; border-radius: 999px; color: var(--text); font-size: 12.5px; font-weight: 600; }
 .com-error button:hover { background: rgba(224, 108, 85, 0.15); }
 .com-cargando { margin-top: 40px; text-align: center; color: var(--muted); }
 .com-cargando.chico { margin: 8px 0; font-size: 13px; text-align: left; }
